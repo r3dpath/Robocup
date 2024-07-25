@@ -14,22 +14,21 @@ well.
 #include <VL53L1X.h>
 #include <SparkFunSX1509.h>
 
-const byte SX1509_ADDRESS = 0x3F;
-#define VL53L0X_ADDRESS_START 0x30
-#define VL53L1X_ADDRESS_START 0x35
+const int8_t SX1509_ADDRESS = 0x3F;
+#define VL53L0X_ADDRESS_START 0x35
+#define VL53L1X_ADDRESS_START 0x26
 
 
 // The number of sensors in your system.
-const uint8_t sensorCountL0 = 2;
-const uint8_t sensorCountL1 = 1;
-
+const uint8_t sensorCount_L0 = 2;
+const uint8_t sensorCount_L1 = 1;
 // The Arduino pin connected to the XSHUT pin of each sensor.
 const uint8_t xshutPinsL0[8] = {0,1};
 const uint8_t xshutPinsL1[8] = {2};
 
 SX1509 io; // Create an SX1509 object to be used throughout
-VL53L0X sensorsL0[sensorCountL0];
-VL53L1X sensorsL1[sensorCountL1];
+VL53L0X sensorsL0[sensorCount_L0];
+VL53L1X sensorsL1[sensorCount_L1];
 
 void setup()
 {
@@ -42,26 +41,23 @@ void setup()
   Wire.setClock(400000); // use 400 kHz I2C
 
   // Disable/reset all sensors by driving their XSHUT pins low.
-  for (uint8_t i = 0; i < sensorCountL0; i++)
+  for (uint8_t i = 0; i < sensorCount_L0; i++)
   {
     io.pinMode(xshutPinsL0[i], OUTPUT);
     io.digitalWrite(xshutPinsL0[i], LOW);
   }
 
-  for (uint8_t i = 0; i < sensorCountL1; i++)
+  for (uint8_t i = 0; i < sensorCount_L1; i++)
   {
     io.pinMode(xshutPinsL1[i], OUTPUT);
     io.digitalWrite(xshutPinsL1[i], LOW);
   }
 
   // L0 Enable, initialize, and start each sensor, one by one.
-  for (uint8_t i = 0; i < sensorCountL0; i++)
+  for (uint8_t i = 0; i < sensorCount_L0; i++)
   {
     // Stop driving this sensor's XSHUT low. This should allow the carrier
-    // board to pull it high. (We do NOT want to drive XSHUT high since it is
-    // not level shifted.) Then wait a bit for the sensor to start up.
-    //pinMode(xshutPins[i], INPUT);
-    io.digitalWrite(xshutPinsL0[i], HIGH);
+    //.digitalWrite(xshutPinsL0[i], HIGH);
     delay(10);
 
     sensorsL0[i].setTimeout(500);
@@ -81,7 +77,7 @@ void setup()
   }
 
   // L1 Enable, initialize, and start each sensor, one by one.
-  for (uint8_t i = 0; i < sensorCountL1; i++)
+  for (uint8_t i = 0; i < sensorCount_L1; i++)
   {
     // Stop driving this sensor's XSHUT low. This should allow the carrier
     // board to pull it high. (We do NOT want to drive XSHUT high since it is
@@ -109,14 +105,14 @@ void setup()
 
 void loop()
 {
-  for (uint8_t i = 0; i < sensorCountL0; i++)
+  for (uint8_t i = 0; i < sensorCount_L0; i++)
   {
     Serial.print(sensorsL0[i].readRangeContinuousMillimeters());
     if (sensorsL0[i].timeoutOccurred()) { Serial.print(" TIMEOUT"); }
     Serial.print('\t');
   }
 
-  for (uint8_t i = 0; i < sensorCountL1; i++)
+  for (uint8_t i = 0; i < sensorCount_L1; i++)
   {
     Serial.print(sensorsL1[i].read());
     if (sensorsL1[i].timeoutOccurred()) { Serial.print(" TIMEOUT"); }
