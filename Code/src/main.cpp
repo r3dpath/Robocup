@@ -13,6 +13,7 @@ well.
 #include <VL53L0X.h>
 #include <VL53L1X.h>
 #include <SparkFunSX1509.h>
+#include <Servo.h>
 
 const byte SX1509_ADDRESS = 0x3F;
 #define VL53L0X_ADDRESS_START 0x30
@@ -21,19 +22,24 @@ const byte SX1509_ADDRESS = 0x3F;
 
 // The number of sensors in your system.
 const uint8_t sensorCountL0 = 2;
-const uint8_t sensorCountL1 = 1;
+const uint8_t sensorCountL1 = 2;
 
 // The Arduino pin connected to the XSHUT pin of each sensor.
 const uint8_t xshutPinsL0[8] = {0,1};
-const uint8_t xshutPinsL1[8] = {2};
+const uint8_t xshutPinsL1[8] = {2,3};
 
 SX1509 io; // Create an SX1509 object to be used throughout
 VL53L0X sensorsL0[sensorCountL0];
 VL53L1X sensorsL1[sensorCountL1];
 
+Servo myservoA,myservoB;
+
 void setup()
 {
-  while (!Serial) {}
+
+  myservoA.attach(28);  
+  myservoB.attach(29);  
+  
   Serial.begin(115200);
 
   io.begin(SX1509_ADDRESS);
@@ -107,6 +113,79 @@ void setup()
   }
 }
 
+void Forward()
+{
+  myservoA.writeMicroseconds(1200);     
+  myservoB.writeMicroseconds(1800);      
+  
+}
+
+void Backward()
+{
+  myservoA.writeMicroseconds(1800);      
+  myservoB.writeMicroseconds(1200);      
+}
+
+void RightTurn()
+{
+  myservoA.writeMicroseconds(1800);      
+  myservoB.writeMicroseconds(1800);
+}
+
+void LeftTurn()
+{
+  myservoA.writeMicroseconds(1200);      
+  myservoB.writeMicroseconds(1200);
+}
+
+void Stop()
+{
+  myservoA.writeMicroseconds(1500);      
+  myservoB.writeMicroseconds(1500);
+}
+
+void MoveMent_Controller()
+{
+    
+        // Read sensor values
+  int sensorL1Value = sensorsL1[0].read();
+  int sensorL1_2 = sensorsL1[1].read();
+  int sensorL0Distance1 = sensorsL0[0].readRangeContinuousMillimeters();
+  int sensorL0Distance2 = sensorsL0[1].readRangeContinuousMillimeters();
+  bool left = false, right = false;
+  
+  // , forward = false, backward = false
+      
+  Forward();
+  
+  if ((sensorL0Distance1 <= 200) && (!left))
+    {
+      RightTurn();
+      right = true;
+    } else
+    {
+      right = false;
+    }
+  if (sensorL0Distance2 <= 200 && (!right))
+    {
+      LeftTurn();
+      left = true;
+    } else
+    {
+      left = false;
+    }
+  if ((sensorL1Value <= 150))
+    {
+      Backward();
+    } 
+  if (((sensorL1Value >= 1500) | (sensorL1_2 <= 150)) )
+    {
+      Forward();
+    } 
+    
+}
+
+
 void loop()
 {
   for (uint8_t i = 0; i < sensorCountL0; i++)
@@ -124,4 +203,7 @@ void loop()
   }
   
   Serial.println();
+  MoveMent_Controller();
+  
+
 }
