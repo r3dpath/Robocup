@@ -1,47 +1,35 @@
 #include <Arduino.h>
-#include <QuadEncoder.h>
 
-uint32_t mCurPosValueL;
-uint32_t old_position = 0;
-uint32_t mCurPosValueR;
-uint32_t old_position1 = 0;
-QuadEncoder encLeft(1, 2, 3, 0);  // Encoder on channel 1 of 4 available
-                                 // Phase A (pin0), PhaseB(pin1), Pullups Req(0)
-QuadEncoder encRight(2, 4, 5, 0);  // Encoder on channel 2 of 4 available
-                                 //Phase A (pin2), PhaseB(pin3), Pullups Req(0)
-                                 
+int MAdirpin = 32;
+int MAsteppin = 33;
+int MBdirpin = 30;
+int MBsteppin = 31;
+
 void setup()
-{
-  while(!Serial && millis() < 4000);
-
-  /* Initialize the ENC module. */
-  QuadEncodersInit(encLeft, encRight);
+{   
+  pinMode(MAdirpin,OUTPUT);
+  pinMode(MAsteppin,OUTPUT);
+  pinMode(MBdirpin,OUTPUT);
+  pinMode(MBsteppin,OUTPUT);
 }
 
-void loop(){
+void loop()
+{
+  int j;
   
-  /* This read operation would capture all the position counter to responding hold registers. */
-  mCurPosValueL = encLeft.read();
+  //Set direction for all channels
 
-  if(mCurPosValueL != old_position){
-    /* Read the position values. */
-    Serial.printf("Current position value1: %ld\r\n", mCurPosValueL);
-    Serial.printf("Position differential value1: %d\r\n", (int16_t)encLeft.getHoldDifference());
-    Serial.printf("Position HOLD revolution value1: %d\r\n", encLeft.getHoldRevolution());
-    Serial.println();
+  digitalWrite(MAdirpin,HIGH);
+  digitalWrite(MBdirpin,LOW);
+  
+  for(j=0;j<=1000;j++)            //Move 1000 steps
+  {
+
+    digitalWrite(MAsteppin,LOW);
+    digitalWrite(MBsteppin,LOW);
+    delayMicroseconds(20);
+    digitalWrite(MAsteppin,HIGH);
+    digitalWrite(MBsteppin,HIGH);
+    delay(1);
   }
-
-  old_position = mCurPosValueL;
-
-  mCurPosValueR = encRight.read();
-
-  if(mCurPosValueR != old_position1){
-    /* Read the position values. */
-    Serial.printf("Current position value2: %ld\r\n", mCurPosValueR);
-    Serial.printf("Position differential value2: %d\r\n", (int16_t)encRight.getHoldDifference());
-    Serial.printf("Position revolution value2: %d\r\n", encRight.getHoldRevolution());
-    Serial.println();
-  }
-
-  old_position1 = mCurPosValueR;
 }
