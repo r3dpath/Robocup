@@ -19,6 +19,9 @@ const byte SX1509_ADDRESS = 0x3F;
 #define VL53L0X_ADDRESS_START 0x30
 #define VL53L1X_ADDRESS_START 0x35
 
+#define STOP_SPEED  1500
+#define MOVE_SPEED  350
+#define TURNING_RATIO  2/3
 
 // The number of sensors in your system.
 const uint8_t sensorCountL0 = 2;
@@ -32,7 +35,7 @@ SX1509 io; // Create an SX1509 object to be used throughout
 VL53L0X sensorsL0[sensorCountL0];
 VL53L1X sensorsL1[sensorCountL1];
 
-Servo myservoA,myservoB;
+Servo myservoA,myservoB; //A left, B right
 
 void setup()
 {
@@ -113,29 +116,57 @@ void setup()
   }
 }
 
+// void Forward()
+//     {
+//   int sensorL1_1 = sensorsL1[0].read();
+//   int sensorL1_2 = sensorsL1[1].read();
+//   int Left_motor = 1200;
+//   int Right_Motor = 1800;
+
+//   if((sensorL1_1 > 1000) && (sensorL1_2 >= 500))
+//   {
+//     myservoA.writeMicroseconds(Left_motor);     
+//     myservoB.writeMicroseconds(Right_Motor); 
+//   } 
+  
+// }
+
+// void Reverse()
+// {
+//   int sensorL1_1 = sensorsL1[0].read();
+//   int sensorL1_2 = sensorsL1[1].read();
+//   int Left_motor = 1800;
+//   int Right_Motor = 1200;
+
+//   if((sensorL1_1 < 200) && (sensorL1_2 >= 200))
+//   {
+//     myservoA.writeMicroseconds(Left_motor);     
+//     myservoB.writeMicroseconds(Right_Motor); 
+//   }     
+  
+// }
 void Forward()
 {
-  myservoA.writeMicroseconds(1200);     
-  myservoB.writeMicroseconds(1800);      
-  
+  myservoA.writeMicroseconds(1050);      
+  myservoB.writeMicroseconds(1950);      
 }
 
 void Backward()
 {
-  myservoA.writeMicroseconds(1800);      
-  myservoB.writeMicroseconds(1200);      
+  myservoA.writeMicroseconds(1950);      
+  myservoB.writeMicroseconds(1050);      
 }
 
 void RightTurn()
 {
-  myservoA.writeMicroseconds(1800);      
-  myservoB.writeMicroseconds(1800);
+  myservoA.writeMicroseconds(1050);      
+  myservoB.writeMicroseconds(1050);
 }
 
 void LeftTurn()
 {
-  myservoA.writeMicroseconds(1200);      
-  myservoB.writeMicroseconds(1200);
+  myservoA.writeMicroseconds(1950);      
+  myservoB.writeMicroseconds(1950);
 }
 
 void Stop()
@@ -144,45 +175,98 @@ void Stop()
   myservoB.writeMicroseconds(1500);
 }
 
+void mangItBackward()
+{
+  myservoA.writeMicroseconds(2000);      
+  myservoB.writeMicroseconds(1000);
+}
 void MoveMent_Controller()
 {
-    
-        // Read sensor values
-  int sensorL1Value = sensorsL1[0].read();
-  int sensorL1_2 = sensorsL1[1].read();
-  int sensorL0Distance1 = sensorsL0[0].readRangeContinuousMillimeters();
-  int sensorL0Distance2 = sensorsL0[1].readRangeContinuousMillimeters();
-  bool left = false, right = false;
-  
-  // , forward = false, backward = false
-      
+  // Read sensor values
+  int sensorL1_1 = sensorsL1[0].read(); 
+  int sensorL1_2 = sensorsL1[1].read(); 
+  int sensorL0Distance1 = sensorsL0[0].readRangeContinuousMillimeters(); //Left side
+  int sensorL0Distance2 = sensorsL0[1].readRangeContinuousMillimeters(); //Right side
+
+  static bool left = false, right = false; // Using static to retain state between function calls
+
+  // Assume Forward() is the default action
   Forward();
-  
-  if ((sensorL0Distance1 <= 200) && (!left))
-    {
-      RightTurn();
-      right = true;
-    } else
-    {
-      right = false;
-    }
-  if (sensorL0Distance2 <= 200 && (!right))
-    {
-      LeftTurn();
-      left = true;
-    } else
-    {
-      left = false;
-    }
-  if ((sensorL1Value <= 150))
+
+  if ((sensorL0Distance1 <= 250) && !right) // Check if close to an obstacle on the right
+  {
+    RightTurn();
+    right = true;
+    left = false; // Reset left turn flag
+    delay(300); // Adding delay to allow the turn to complete
+    right = false;
+  }
+
+  if (sensorL0Distance2 <= 250 && !left) // Check if close to an obstacle on the left
+  {
+    LeftTurn();
+    left = true;
+    right = false; // Reset right turn flag
+    delay(300); // Adding delay to allow the turn to complete
+    left = false;
+  }
+
+  if (!left && !right)
+  {
+    if ((sensorL1_1 <= 250) && (sensorL1_2 >= 250) ) // Check if there's an obstacle close in the back
     {
       Backward();
-    } 
-  if (((sensorL1Value >= 1500) | (sensorL1_2 <= 150)) )
+      delay(300); // Adding delay to allow the backward movement to complete
+      if(sensorL0Distance1 > sensorL0Distance2)
+      {
+        LeftTurn();
+        delay(300);
+      }
+      else if (sensorL0Distance2 > sensorL0Distance1)
+      {
+        RightTurn();
+        delay(300);
+      }
+
+    }
+
+    if ((sensorL1_1 >= 1000) && (sensorL1_2 <= 200)) // Check if clear to move forward
     {
       Forward();
-    } 
+    }
+  }
+
+  if (((sensorL0Distance1 <= 350) && (sensorL0Distance2 <= 350)) && (((sensorL1_1) <= 400) && ((sensorL1_2) > 1000)))
+  {
+    mangItBackward();
+    delay(1300);
+    if(sensorL0Distance1 > sensorL0Distance2)
+    {
+      LeftTurn();
+      delay(500);
+    }
+    else if (sensorL0Distance2 > sensorL0Distance1)
+    {
+      RightTurn();
+      delay(500);
+    }
     
+  }
+
+  if (((sensorL1_1) <= 300) && ((sensorL1_2 <= 300)))
+  {
+    if(sensorL0Distance1 > sensorL0Distance2)
+    {
+      LeftTurn();
+      delay(300);
+    }
+    else if (sensorL0Distance2 > sensorL0Distance1)
+    {
+      RightTurn();
+      delay(300);
+    }
+  }
+  
 }
 
 
@@ -204,6 +288,5 @@ void loop()
   
   Serial.println();
   MoveMent_Controller();
-  
 
 }
