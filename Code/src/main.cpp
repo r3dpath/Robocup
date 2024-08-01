@@ -14,6 +14,9 @@ well.
 #include <VL53L1X.h>
 #include <SparkFunSX1509.h>
 #include <Servo.h>
+#include <Arduino.h>
+#include <QuadEncoder.h>
+#include "BNO055_support.h"
 
 const byte SX1509_ADDRESS = 0x3F;
 #define VL53L0X_ADDRESS_START 0x30
@@ -36,6 +39,20 @@ VL53L0X sensorsL0[sensorCountL0];
 VL53L1X sensorsL1[sensorCountL1];
 
 Servo myservoA,myservoB; //A left, B right
+
+uint32_t mCurPosValueL;
+uint32_t old_position = 0;
+uint32_t mCurPosValueR;
+uint32_t old_position1 = 0;
+QuadEncoder encLeft(1, 2, 3, 0);  // Encoder on channel 1 of 4 available
+                                 // Phase A (pin0), PhaseB(pin1), Pullups Req(0)
+QuadEncoder encRight(2, 5, 4, 0);  // Encoder on channel 2 of 4 available
+                                 //Phase A (pin2), PhaseB(pin3), Pullups Req(0)
+
+struct bno055_t myBNO;
+struct bno055_euler myEulerData; //Structure to hold the Euler data
+
+unsigned long lastTime = 0;
 
 void setup()
 {
@@ -114,37 +131,25 @@ void setup()
 
     sensorsL1[i].startContinuous(50);
   }
+  //set up encoder
+  QuadEncodersInit(encLeft, encRight);
+
+  //IMU setup
+  //Initialize I2C communication
+  Wire1.begin();
+
+  //Initialization of the BNO055
+  BNO_Init(&myBNO); //Assigning the structure to hold information about the device
+
+  //Configuration to NDoF mode
+  bno055_set_operation_mode(OPERATION_MODE_NDOF);
+
+  delay(1);
+
+  //Initialize the Serial Port to view information on the Serial Monitor
+  Serial.begin(115200);
 }
 
-// void Forward()
-//     {
-//   int sensorL1_1 = sensorsL1[0].read();
-//   int sensorL1_2 = sensorsL1[1].read();
-//   int Left_motor = 1200;
-//   int Right_Motor = 1800;
-
-//   if((sensorL1_1 > 1000) && (sensorL1_2 >= 500))
-//   {
-//     myservoA.writeMicroseconds(Left_motor);     
-//     myservoB.writeMicroseconds(Right_Motor); 
-//   } 
-  
-// }
-
-// void Reverse()
-// {
-//   int sensorL1_1 = sensorsL1[0].read();
-//   int sensorL1_2 = sensorsL1[1].read();
-//   int Left_motor = 1800;
-//   int Right_Motor = 1200;
-
-//   if((sensorL1_1 < 200) && (sensorL1_2 >= 200))
-//   {
-//     myservoA.writeMicroseconds(Left_motor);     
-//     myservoB.writeMicroseconds(Right_Motor); 
-//   }     
-  
-// }
 void Forward()
 {
   myservoA.writeMicroseconds(1050);      
@@ -169,10 +174,10 @@ void LeftTurn()
   myservoB.writeMicroseconds(1950);
 }
 
-void Stop()
+void SlowBackward()
 {
-  myservoA.writeMicroseconds(1500);      
-  myservoB.writeMicroseconds(1500);
+  myservoA.writeMicroseconds(1800);      
+  myservoB.writeMicroseconds(1200);
 }
 
 void mangItBackward()
@@ -236,7 +241,7 @@ void MoveMent_Controller()
     }
   }
 
-  if (((sensorL0Distance1 <= 350) && (sensorL0Distance2 <= 350)) && (((sensorL1_1) <= 400) && ((sensorL1_2) > 1000)))
+  if (((sensorL0Distance1 <= 350) && (sensorL0Distance2 <= 350)) && (((sensorL1_1) <= 400) && ((sensorL1_2) > 1000))) // unstucking
   {
     mangItBackward();
     delay(1300);
@@ -272,21 +277,80 @@ void MoveMent_Controller()
 
 void loop()
 {
-  for (uint8_t i = 0; i < sensorCountL0; i++)
-  {
-    Serial.print(sensorsL0[i].readRangeContinuousMillimeters());
-    if (sensorsL0[i].timeoutOccurred()) { Serial.print(" TIMEOUT"); }
-    Serial.print('\t');
+  // for (uint8_t i = 0; i < sensorCountL0; i++)
+  // {
+  //   Serial.print(sensorsL0[i].readRangeContinuousMillimeters());
+  //   if (sensorsL0[i].timeoutOccurred()) { Serial.print(" TIMEOUT"); }
+  //   Serial.print('\t');
+  // }
+
+  // for (uint8_t i = 0; i < sensorCountL1; i++)
+  // {
+  //   Serial.print(sensorsL1[i].read());
+  //   if (sensorsL1[i].timeoutOccurred()) { Serial.print(" TIMEOUT"); }
+  //   Serial.print('\t');
+  // }
+
+  mCurPosValueL = encLeft.read();
+
+  if(mCurPosValueL != old_position){
+    /* Read the position values. */
+    Serial.printf("Current position value1: %ld\r\n", mCurPosValueL);
+    Serial.printf("Position differential value1: %d\r\n", (int16_t)encLeft.getHoldDifference());
+    Serial.printf("Position HOLD revolution value1: %d\r\n", encLeft.getHoldRevolution());
+    Serial.println();
   }
 
-  for (uint8_t i = 0; i < sensorCountL1; i++)
-  {
-    Serial.print(sensorsL1[i].read());
-    if (sensorsL1[i].timeoutOccurred()) { Serial.print(" TIMEOUT"); }
-    Serial.print('\t');
+  old_position = mCurPosValueL;
+
+  mCurPosValueR = encRight.read();
+
+  if(mCurPosValueR != old_position1){
+    /* Read the position values. */
+    Serial.printf("Current position value2: %ld\r\n", mCurPosValueR);
+    Serial.printf("Position differential value2: %d\r\n", (int16_t)encRight.getHoldDifference());
+    Serial.printf("Position revolution value2: %d\r\n", encRight.getHoldRevolution());
+    Serial.println();
   }
+
+  old_position1 = mCurPosValueR;
   
-  Serial.println();
+  //Serial.println();
   MoveMent_Controller();
+
+  if ((millis() - lastTime) >= 100) //To stream at 10Hz without using additional timers
+  {
+    lastTime = millis();
+
+    bno055_read_euler_hrp(&myEulerData);			//Update Euler data into the structure
+
+    Serial.print("Time Stamp: ");				//To read out the Time Stamp
+    Serial.println(lastTime);
+
+    Serial.print("Heading(Yaw): ");				//To read out the Heading (Yaw)
+    Serial.println(float(myEulerData.h) / 16.00);		//Convert to degrees
+
+    Serial.print("Roll: ");					//To read out the Roll
+    Serial.println(float(myEulerData.r) / 16.00);		//Convert to degrees
+
+    Serial.print("Pitch: ");				//To read out the Pitch
+    Serial.println(float(myEulerData.p) / 16.00);		//Convert to degrees
+
+    if ((float(myEulerData.r) / 16.00) < -20) {
+      mangItBackward();
+      delay(300);
+    }
+    if ((float(myEulerData.r) / 16.00) > 20) {
+      Forward();
+      delay(300);
+    }
+
+    if (((float(myEulerData.p) / 16.00) < -20) || ((float(myEulerData.p) / 16.00) > 20))
+    {
+      SlowBackward();
+      delay(500);
+    }
+    Serial.println();					//Extra line to differentiate between packets
+  }
 
 }
