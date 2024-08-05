@@ -6,6 +6,8 @@
 #include <VL53L1X.h>
 #include <SparkFunSX1509.h>
 
+#define TOF_SCAN_HEIGHT 4
+
 enum TOFType {
     L0,
     L1
@@ -18,6 +20,7 @@ public:
     uint16_t read();
     bool timeoutOccurred();
     void startContinuous(uint16_t period = 50);
+    uint16_t* scan();
 
 private:
     TOFType type;
