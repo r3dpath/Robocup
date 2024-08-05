@@ -45,10 +45,14 @@ struct bno055_euler myEulerData; //Structure to hold the Euler data
 
 unsigned long lastTime = 0;
 
-TOF tof_l(L0, 0, 0x30, &io);
-TOF tof_r(L0, 1, 0x31, &io);
-TOF tof_b(L1, 2, 0x35, &io);
-TOF tof_f(L1, 3, 0x36, &io);
+int distance = 0;
+int strength = 0;
+boolean receiveComplete = false;
+
+TOF tof_l(L0, 0, 0x30, &io); // Left TOF
+TOF tof_r(L0, 1, 0x31, &io); // Right TOF
+TOF tof_f(L1, 2, 0x35, &io); // Back TOF
+TOF tof_b(L1, 3, 0x36, &io); // Front TOF
 
 void setup()
 {
@@ -56,6 +60,7 @@ void setup()
   myservoB.attach(29);  
   
   Serial.begin(115200);
+  Serial1.begin(115200);
   Serial2.begin(19200);
 
   io.begin(SX1509_ADDRESS);
@@ -66,14 +71,14 @@ void setup()
   //set up encoder
   QuadEncodersInit(encLeft, encRight);
 
+  tof_f.disable();
+  tof_b.disable();
+  tof_l.disable();
+  tof_r.disable();
   tof_f.init();
   tof_b.init();
   tof_l.init();
   tof_r.init();
-  tof_f.startContinuous();
-  tof_b.startContinuous();
-  tof_l.startContinuous();
-  tof_r.startContinuous();
 
   //IMU setup
   //Initialize I2C communication
@@ -126,8 +131,8 @@ void mangItBackward()
 void MoveMent_Controller()
 {
   // Read sensor values
-  int sensorL1_1 = tof_b.read(); 
-  int sensorL1_2 = tof_f.read(); 
+  int sensorL1_1 = tof_f.read(); 
+  int sensorL1_2 = tof_b.read(); 
   int sensorL0Distance1 = tof_l.read();  //Left side
   int sensorL0Distance2 = tof_r.read();  //Right side
 
@@ -212,83 +217,123 @@ void MoveMent_Controller()
   
 }
 
+void getTFminiData(int* distance, int* strength, boolean* complete) {
+  static char i = 0;
+  char j = 0;
+  int checksum = 0; 
+  static int rx[9];
+  if(Serial1.available()) {  
+    rx[i] = Serial1.read();
+    if(rx[0] != 0x59) {
+      i = 0;
+    } else if(i == 1 && rx[1] != 0x59) {
+      i = 0;
+    } else if(i == 8) {
+      for(j = 0; j < 8; j++) {
+        checksum += rx[j];
+      }
+      if(rx[8] == (checksum % 256)) {
+        *distance = rx[2] + rx[3] * 256;
+        *strength = rx[4] + rx[5] * 256;
+        *complete = true;
+      }
+      i = 0;
+    } else {
+      i++;
+    } 
+  } 
+}
 
 void loop()
 {
-  // for (uint8_t i = 0; i < sensorCountL0; i++)
-  // {
-  //   Serial.print(sensorsL0[i].readRangeContinuousMillimeters());
-  //   if (sensorsL0[i].timeoutOccurred()) { Serial.print(" TIMEOUT"); }
-  //   Serial.print('\t');
+  /* ENCODER STUFF */
+
+  // mCurPosValueL = encLeft.read();
+
+  // if(mCurPosValueL != old_position){
+  //   /* Read the position values. */
+  //   Serial.printf("Current position value1: %ld\r\n", mCurPosValueL);
+  //   Serial.printf("Position differential value1: %d\r\n", (int16_t)encLeft.getHoldDifference());
+  //   Serial.printf("Position HOLD revolution value1: %d\r\n", encLeft.getHoldRevolution());
+  //   Serial.println();
   // }
 
-  // for (uint8_t i = 0; i < sensorCountL1; i++)
-  // {
-  //   Serial.print(sensorsL1[i].read());
-  //   if (sensorsL1[i].timeoutOccurred()) { Serial.print(" TIMEOUT"); }
-  //   Serial.print('\t');
+  // old_position = mCurPosValueL;
+
+  // mCurPosValueR = encRight.read();
+
+  // if(mCurPosValueR != old_position1){
+  //   /* Read the position values. */
+  //   Serial.printf("Current position value2: %ld\r\n", mCurPosValueR);
+  //   Serial.printf("Position differential value2: %d\r\n", (int16_t)encRight.getHoldDifference());
+  //   Serial.printf("Position revolution value2: %d\r\n", encRight.getHoldRevolution());
+  //   Serial.println();
   // }
 
-  mCurPosValueL = encLeft.read();
-
-  if(mCurPosValueL != old_position){
-    /* Read the position values. */
-    Serial.printf("Current position value1: %ld\r\n", mCurPosValueL);
-    Serial.printf("Position differential value1: %d\r\n", (int16_t)encLeft.getHoldDifference());
-    Serial.printf("Position HOLD revolution value1: %d\r\n", encLeft.getHoldRevolution());
-    Serial.println();
-  }
-
-  old_position = mCurPosValueL;
-
-  mCurPosValueR = encRight.read();
-
-  if(mCurPosValueR != old_position1){
-    /* Read the position values. */
-    Serial.printf("Current position value2: %ld\r\n", mCurPosValueR);
-    Serial.printf("Position differential value2: %d\r\n", (int16_t)encRight.getHoldDifference());
-    Serial.printf("Position revolution value2: %d\r\n", encRight.getHoldRevolution());
-    Serial.println();
-  }
-
-  old_position1 = mCurPosValueR;
+  // old_position1 = mCurPosValueR;
   
-  //Serial.println();
-  MoveMent_Controller();
 
-  if ((millis() - lastTime) >= 100) //To stream at 10Hz without using additional timers
-  {
-    lastTime = millis();
+  /* MOVEMENT STUFF */
 
-    bno055_read_euler_hrp(&myEulerData);			//Update Euler data into the structure
+  //MoveMent_Controller();
 
-    Serial.print("Time Stamp: ");				//To read out the Time Stamp
-    Serial.println(lastTime);
 
-    Serial.print("Heading(Yaw): ");				//To read out the Heading (Yaw)
-    Serial.println(float(myEulerData.h) / 16.00);		//Convert to degrees
 
-    Serial.print("Roll: ");					//To read out the Roll
-    Serial.println(float(myEulerData.r) / 16.00);		//Convert to degrees
+  /* IMU STUFF */
 
-    Serial.print("Pitch: ");				//To read out the Pitch
-    Serial.println(float(myEulerData.p) / 16.00);		//Convert to degrees
+  // if ((millis() - lastTime) >= 100) //To stream at 10Hz without using additional timers
+  // {
+  //   lastTime = millis();
 
-    if ((float(myEulerData.r) / 16.00) < -20) {
-      mangItBackward();
-      delay(300);
-    }
-    if ((float(myEulerData.r) / 16.00) > 20) {
-      Forward();
-      delay(300);
-    }
+  //   bno055_read_euler_hrp(&myEulerData);			//Update Euler data into the structure
 
-    if (((float(myEulerData.p) / 16.00) < -20) || ((float(myEulerData.p) / 16.00) > 20))
-    {
-      SlowBackward();
-      delay(500);
-    }
-    Serial.println();					//Extra line to differentiate between packets
+  //   Serial.print("Time Stamp: ");				//To read out the Time Stamp
+  //   Serial.println(lastTime);
+
+  //   Serial.print("Heading(Yaw): ");				//To read out the Heading (Yaw)
+  //   Serial.println(float(myEulerData.h) / 16.00);		//Convert to degrees
+
+  //   Serial.print("Roll: ");					//To read out the Roll
+  //   Serial.println(float(myEulerData.r) / 16.00);		//Convert to degrees
+
+  //   Serial.print("Pitch: ");				//To read out the Pitch
+  //   Serial.println(float(myEulerData.p) / 16.00);		//Convert to degrees
+
+  //   if ((float(myEulerData.r) / 16.00) < -20) {
+  //     mangItBackward();
+  //     delay(300);
+  //   }
+  //   if ((float(myEulerData.r) / 16.00) > 20) {
+  //     Forward();
+  //     delay(300);
+  //   }
+
+  //   if (((float(myEulerData.p) / 16.00) < -20) || ((float(myEulerData.p) / 16.00) > 20))
+  //   {
+  //     SlowBackward();
+  //     delay(500);
+  //   }
+  //   Serial.println();					//Extra line to differentiate between packets
+  // }
+
+  // static uint16_t* distances; 
+  // distances = tof_f.scan();
+  // Serial.print(distances[0]);
+  // Serial.print(":");
+  // Serial.print(distances[1]);
+  // Serial.print(":");
+  // Serial.print(distances[2]);
+  // Serial.print(":");
+  // Serial.println(distances[3]);
+  //delay(100);
+
+  getTFminiData(&distance, &strength, &receiveComplete);
+  if(receiveComplete) {
+    receiveComplete = false;
+    Serial.print(distance);
+    Serial.print("cm\t");
+    Serial.print("strength: ");
+    Serial.println(strength);
   }
 
 }

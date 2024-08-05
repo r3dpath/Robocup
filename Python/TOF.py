@@ -9,13 +9,13 @@ class TOFVisualizer:
     def __init__(self, root, serial_port):
         self.root = root
         self.serial_port = serial_port
-        self.canvas = tk.Canvas(root, width=600, height=700)
+        self.canvas = tk.Canvas(root, width=600, height=900)
         self.canvas.pack()
 
-        self.tof_angles = [90, 135, 45, 270]  # Default start angles for the TOF sensors
-        self.tof_distances = [10, 10, 10, 10]
+        self.tof_angles = [90+15, 90+7.5, 90-7.5, 90-15]  # Default start angles for the TOF sensors
+        self.tof_distances = [1, 1, 1, 1]
 
-        self.start_points = [(300, 350), (250, 350), (350, 350), (300, 450)]  # Starting points for each TOF sensor
+        self.start_points = [(300, 650), (300, 650), (300, 650), (300, 650)]  # Starting points for each TOF sensor
         self.lines = [None] * 4
 
         self.draw_square()
@@ -25,14 +25,14 @@ class TOFVisualizer:
         self.serial_thread.start()
 
     def draw_square(self):
-        self.canvas.create_rectangle(250, 350, 350, 450)
+        self.canvas.create_rectangle(250, 650, 350, 750)
 
     def parse_serial_input(self, data):
         try:
             distances = data.split(':')
         except:
             return
-        self.tof_distances = [int(distance) for distance in distances]
+        self.tof_distances = [int(distance)/3 for distance in distances]
         self.visualize_distances()
 
     def visualize_distances(self):
@@ -68,7 +68,7 @@ class TOFVisualizer:
 
 def run_gui():
     root = tk.Tk()
-    serial_port = 'COM3'  # Change to your serial port
+    serial_port = 'COM14'  # Change to your serial port
     visualizer = TOFVisualizer(root, serial_port)
 
     def update_angle_0(val):

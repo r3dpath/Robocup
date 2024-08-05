@@ -3,12 +3,13 @@
 TOF::TOF(TOFType type, uint8_t xshutPin, uint8_t address, SX1509* io)
     : type(type), xshutPin(xshutPin), address(address), io(io) {}
 
-bool TOF::init() {
-    // Disable/reset the sensor
+void TOF::disable() {
     io->pinMode(xshutPin, OUTPUT);
     io->digitalWrite(xshutPin, LOW);
     delay(10);
-    
+}
+
+bool TOF::init() {
     // Enable the sensor
     io->digitalWrite(xshutPin, HIGH);
     delay(10);
@@ -16,17 +17,19 @@ bool TOF::init() {
     if (type == L0) {
         sensorL0.setTimeout(500);
         if (!sensorL0.init()) {
+            Serial.println("TOF Panic");
             return false;
         }
         sensorL0.setAddress(address);
-        sensorL0.startContinuous();
+        sensorL0.startContinuous(50);
     } else {
         sensorL1.setTimeout(500);
         if (!sensorL1.init()) {
+            Serial.println("TOF Panic");
             return false;
         }
         sensorL1.setAddress(address);
-        sensorL1.startContinuous();
+        sensorL1.startContinuous(50);
     }
     return true;
 }
@@ -56,7 +59,7 @@ void TOF::startContinuous(uint16_t period) {
 }
 
 uint16_t* TOF::scan() {
-    static uint16_t spad_locations[4] = {23, 55, 87, 111};
+    static uint16_t spad_locations[4] = {150, 174, 206, 238};
     static uint16_t distances[4];
     if (type == L0) {
         return 0;
@@ -64,7 +67,8 @@ uint16_t* TOF::scan() {
         sensorL1.setROISize(5, 5);
         for (int i = 0; i < 4; i++) {
             sensorL1.setROICenter(spad_locations[i]);
-            distances[i] = sensorL1.read();
+            //delay(100);
+            distances[i] = sensorL1.readSingle();
         }
         sensorL1.setROISize(16, 16);
         sensorL1.setROICenter(223);

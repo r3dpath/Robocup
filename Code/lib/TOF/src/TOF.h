@@ -17,6 +17,7 @@ class TOF {
 public:
     TOF(TOFType type, uint8_t xshutPin, uint8_t address, SX1509* io);
     bool init();
+    void disable();
     uint16_t read();
     bool timeoutOccurred();
     void startContinuous(uint16_t period = 50);
