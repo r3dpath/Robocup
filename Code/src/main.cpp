@@ -51,8 +51,9 @@ boolean receiveComplete = false;
 
 TOF tof_l(L0, 0, 0x30, &io); // Left TOF
 TOF tof_r(L0, 1, 0x31, &io); // Right TOF
-TOF tof_f(L1, 2, 0x35, &io); // Back TOF
-TOF tof_b(L1, 3, 0x36, &io); // Front TOF
+TOF tof_b(L1, 2, 0x35, &io); // Back TOF
+TOF tof_NAV(L1, 3, 0x36, &io); // Navigation
+TOF tof_f(L1, 4, 0x37, &io);// Front TOF
 
 void setup()
 {
@@ -75,10 +76,12 @@ void setup()
   tof_b.disable();
   tof_l.disable();
   tof_r.disable();
+  tof_NAV.disable();
   tof_f.init();
   tof_b.init();
   tof_l.init();
   tof_r.init();
+  tof_NAV.init();
 
   //IMU setup
   //Initialize I2C communication
@@ -131,8 +134,8 @@ void mangItBackward()
 void MoveMent_Controller()
 {
   // Read sensor values
-  int sensorL1_1 = tof_f.read(); 
-  int sensorL1_2 = tof_b.read(); 
+  int sensorL1_1 = tof_b.read(); 
+  int sensorL1_2 = tof_f.read(); 
   int sensorL0Distance1 = tof_l.read();  //Left side
   int sensorL0Distance2 = tof_r.read();  //Right side
 
@@ -244,6 +247,20 @@ void getTFminiData(int* distance, int* strength, boolean* complete) {
   } 
 }
 
+void Wight_detection()
+{
+  static uint16_t* distances_TOF_L1; 
+  distances_TOF_L1 = tof_NAV.scan();
+  
+
+  uint16_t Further_Left = distances_TOF_L1[0];
+  uint16_t Mid_Left = distances_TOF_L1[1];
+  uint16_t Mid_Right = distances_TOF_L1[2];
+  uint16_t Further_Right = distances_TOF_L1[3];
+
+
+}
+
 void loop()
 {
   /* ENCODER STUFF */
@@ -275,7 +292,7 @@ void loop()
 
   /* MOVEMENT STUFF */
 
-  //MoveMent_Controller();
+  // MoveMent_Controller();
 
 
 
@@ -325,7 +342,7 @@ void loop()
   // Serial.print(distances[2]);
   // Serial.print(":");
   // Serial.println(distances[3]);
-  //delay(100);
+  // delay(100);
 
   getTFminiData(&distance, &strength, &receiveComplete);
   if(receiveComplete) {
