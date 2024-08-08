@@ -22,6 +22,7 @@ public:
     bool timeoutOccurred();
     void startContinuous(uint16_t period = 50);
     uint16_t* scan();
+    uint16_t* scan_1();
 
 private:
     TOFType type;

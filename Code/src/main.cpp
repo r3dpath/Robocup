@@ -51,8 +51,8 @@ boolean receiveComplete = false;
 
 TOF tof_l(L0, 0, 0x30, &io); // Left TOF
 TOF tof_r(L0, 1, 0x31, &io); // Right TOF
-TOF tof_b(L1, 2, 0x35, &io); // Back TOF
-TOF tof_NAV(L1, 3, 0x36, &io); // Navigation
+TOF tof_NAV(L1, 2, 0x35, &io); // Back TOF
+TOF tof_b(L1, 3, 0x36, &io); // Navigation
 TOF tof_f(L1, 4, 0x37, &io);// Front TOF
 
 void setup()
@@ -130,6 +130,18 @@ void mangItBackward()
 {
   myservoA.writeMicroseconds(2000);      
   myservoB.writeMicroseconds(1000);
+}
+
+void smallLeft()
+{
+  myservoA.writeMicroseconds(1750);      
+  myservoB.writeMicroseconds(1750);
+}
+void smallRight()
+{
+  myservoA.writeMicroseconds(1150);      
+  myservoB.writeMicroseconds(1150);
+  
 }
 void MoveMent_Controller()
 {
@@ -247,18 +259,47 @@ void getTFminiData(int* distance, int* strength, boolean* complete) {
   } 
 }
 
-void Wight_detection()
+void Weight_detection()
 {
-  static uint16_t* distances_TOF_L1; 
+  static uint16_t* distances_TOF_L1;
+  static uint16_t* distances_TOF_L1_Upper;
+
   distances_TOF_L1 = tof_NAV.scan();
+  distances_TOF_L1_Upper = tof_f.scan_1();
   
 
-  uint16_t Further_Left = distances_TOF_L1[0];
-  uint16_t Mid_Left = distances_TOF_L1[1];
-  uint16_t Mid_Right = distances_TOF_L1[2];
-  uint16_t Further_Right = distances_TOF_L1[3];
+  uint16_t Further_Left_Lower = distances_TOF_L1[0];
+  uint16_t Mid_Left_Lower = distances_TOF_L1[1];
+  uint16_t Mid_Right_Lower = distances_TOF_L1[2];
+  uint16_t Further_Right_Lower = distances_TOF_L1[3];
 
+  uint16_t Further_Left_Upper = distances_TOF_L1_Upper[0];
+  uint16_t Mid_Left_Upper = distances_TOF_L1_Upper[1];
+  uint16_t Mid_Right_Upper = distances_TOF_L1_Upper[2];
+  uint16_t Further_Right_Upper = distances_TOF_L1_Upper[3];
 
+  getTFminiData(&distance, &strength, &receiveComplete);
+  if(receiveComplete) {
+    receiveComplete = false;
+    Serial.print(distance);
+    Serial.print("cm\t");
+    Serial.print("strength: ");
+    Serial.println(strength);
+  }
+  
+  if ( Further_Left_Lower < Further_Left_Upper)
+  {
+    Serial.print("Weight on the left\n");
+  }
+  if ( Further_Right_Lower < Further_Right_Upper)
+  {
+    Serial.print("Weight on the left\n");
+  }
+
+  if ((Mid_Left_Upper && Mid_Right_Upper) > ((Mid_Left_Lower) && (Mid_Right_Lower)))
+  {
+    Serial.print("Some thing is in the middle\n");
+  }
 }
 
 void loop()
@@ -333,24 +374,18 @@ void loop()
   //   Serial.println();					//Extra line to differentiate between packets
   // }
 
-  // static uint16_t* distances; 
-  // distances = tof_f.scan();
-  // Serial.print(distances[0]);
-  // Serial.print(":");
-  // Serial.print(distances[1]);
-  // Serial.print(":");
-  // Serial.print(distances[2]);
-  // Serial.print(":");
-  // Serial.println(distances[3]);
-  // delay(100);
+  static uint16_t* distances; 
+  distances = tof_NAV.scan();
+  Serial.print(distances[0]);
+  Serial.print(":");
+  Serial.print(distances[1]);
+  Serial.print(":");
+  Serial.print(distances[2]);
+  Serial.print(":");
+  Serial.println(distances[3]);
+  delay(100);
 
-  getTFminiData(&distance, &strength, &receiveComplete);
-  if(receiveComplete) {
-    receiveComplete = false;
-    Serial.print(distance);
-    Serial.print("cm\t");
-    Serial.print("strength: ");
-    Serial.println(strength);
-  }
+  
+  Weight_detection();
 
 }

@@ -76,3 +76,22 @@ uint16_t* TOF::scan() {
 
     return distances;
 }
+
+uint16_t* TOF::scan_1() {
+    static uint16_t spad_locations[4] = {150, 174, 206, 238};
+    static uint16_t distances[4];
+    if (type == L0) {
+        return 0;
+    } else {
+        sensorL1.setROISize(5, 5);
+        for (int i = 0; i < 4; i++) {
+            sensorL1.setROICenter(spad_locations[i]);
+            //delay(100);
+            distances[i] = sensorL1.readSingle();
+        }
+        sensorL1.setROISize(16, 16);
+        sensorL1.setROICenter(223);
+    }
+
+    return distances;
+}
