@@ -49,11 +49,20 @@ int distance = 0;
 int strength = 0;
 boolean receiveComplete = false;
 
+bool Find_weight_flag = false;
+
 TOF tof_l(L0, 0, 0x30, &io); // Left TOF
 TOF tof_r(L0, 1, 0x31, &io); // Right TOF
 TOF tof_NAV(L1, 2, 0x35, &io); // Back TOF
 TOF tof_b(L1, 3, 0x36, &io); // Navigation
 TOF tof_f(L1, 4, 0x37, &io);// Front TOF
+
+typedef enum {
+  ROAMING,
+  WEIGHT_FINDING,
+  COLLECTING_WEIGHT,
+
+} Robot_states;
 
 void setup()
 {
@@ -146,8 +155,8 @@ void smallRight()
 void MoveMent_Controller()
 {
   // Read sensor values
-  int sensorL1_1 = tof_b.read(); 
-  int sensorL1_2 = tof_f.read(); 
+  int sensorL1_2 = tof_b.read(); 
+  int sensorL1_1 = tof_f.read(); 
   int sensorL0Distance1 = tof_l.read();  //Left side
   int sensorL0Distance2 = tof_r.read();  //Right side
 
@@ -229,7 +238,7 @@ void MoveMent_Controller()
       delay(300);
     }
   }
-  
+  Serial.println(sensorL1_2);
 }
 
 void getTFminiData(int* distance, int* strength, boolean* complete) {
@@ -279,31 +288,58 @@ void Weight_detection()
   uint16_t Further_Right_Upper = distances_TOF_L1_Upper[3];
 
   getTFminiData(&distance, &strength, &receiveComplete);
-  if(receiveComplete) {
-    receiveComplete = false;
-    Serial.print(distance);
-    Serial.print("cm\t");
-    Serial.print("strength: ");
-    Serial.println(strength);
-  }
   
-  if ( Further_Left_Lower < Further_Left_Upper)
+
+  if ( (Further_Left_Lower < Further_Left_Upper) && (strength < 100))
   {
     Serial.print("Weight on the left\n");
+    smallLeft();
   }
-  if ( Further_Right_Lower < Further_Right_Upper)
+  if ( (Further_Right_Lower < Further_Right_Upper) && (strength < 100))
   {
-    Serial.print("Weight on the left\n");
+    Serial.print("Weight on the Right\n");
+    smallRight();
+  }
+  if ((Mid_Left_Upper && Mid_Right_Upper) > ((Mid_Left_Lower) && (Mid_Right_Lower)) && (strength > 100))
+  {
+    Serial.print("Found Weight\n");
+    Forward();
+    Find_weight_flag = true;
+  } else {
+    Find_weight_flag = false;
   }
 
-  if ((Mid_Left_Upper && Mid_Right_Upper) > ((Mid_Left_Lower) && (Mid_Right_Lower)))
-  {
-    Serial.print("Some thing is in the middle\n");
-  }
 }
 
+Robot_states Robot_State_Machine(Robot_states current_state)
+{
+  switch (current_state)
+  {
+    case ROAMING:
+      /* MOVEMENT STUFF */
+      MoveMent_Controller();
+      if (Find_weight_flag == true)
+      {
+        return WEIGHT_FINDING;
+      }
+      break;
+    
+    case WEIGHT_FINDING:
+      Weight_detection();
+      if (Find_weight_flag == false)
+      {
+        return ROAMING;
+      }
+      break;
+    // case COLLECTING_WEIGHT:
+    //   break;
+  }
+  return current_state;
+}
 void loop()
 {
+  
+
   /* ENCODER STUFF */
 
   // mCurPosValueL = encLeft.read();
@@ -330,62 +366,70 @@ void loop()
 
   // old_position1 = mCurPosValueR;
   
+  static Robot_states state = ROAMING;
+  state = Robot_State_Machine(state);
 
-  /* MOVEMENT STUFF */
-
-  // MoveMent_Controller();
+  Serial.print(state);
+  Serial.print(Find_weight_flag);
+  
 
 
 
   /* IMU STUFF */
 
-  // if ((millis() - lastTime) >= 100) //To stream at 10Hz without using additional timers
-  // {
-  //   lastTime = millis();
+  if ((millis() - lastTime) >= 100) //To stream at 10Hz without using additional timers
+  {
+    lastTime = millis();
 
-  //   bno055_read_euler_hrp(&myEulerData);			//Update Euler data into the structure
+    bno055_read_euler_hrp(&myEulerData);			//Update Euler data into the structure
 
-  //   Serial.print("Time Stamp: ");				//To read out the Time Stamp
-  //   Serial.println(lastTime);
+    // Serial.print("Time Stamp: ");				//To read out the Time Stamp
+    // Serial.println(lastTime);
 
-  //   Serial.print("Heading(Yaw): ");				//To read out the Heading (Yaw)
-  //   Serial.println(float(myEulerData.h) / 16.00);		//Convert to degrees
+    // Serial.print("Heading(Yaw): ");				//To read out the Heading (Yaw)
+    // Serial.println(float(myEulerData.h) / 16.00);		//Convert to degrees
 
-  //   Serial.print("Roll: ");					//To read out the Roll
-  //   Serial.println(float(myEulerData.r) / 16.00);		//Convert to degrees
+    // Serial.print("Roll: ");					//To read out the Roll
+    // Serial.println(float(myEulerData.r) / 16.00);		//Convert to degrees
 
-  //   Serial.print("Pitch: ");				//To read out the Pitch
-  //   Serial.println(float(myEulerData.p) / 16.00);		//Convert to degrees
+    // Serial.print("Pitch: ");				//To read out the Pitch
+    // Serial.println(float(myEulerData.p) / 16.00);		//Convert to degrees
 
-  //   if ((float(myEulerData.r) / 16.00) < -20) {
-  //     mangItBackward();
-  //     delay(300);
-  //   }
-  //   if ((float(myEulerData.r) / 16.00) > 20) {
-  //     Forward();
-  //     delay(300);
-  //   }
+    if ((float(myEulerData.r) / 16.00) < -20) {
+      mangItBackward();
+      delay(300);
+    }
+    if ((float(myEulerData.r) / 16.00) > 20) {
+      Forward();
+      delay(300);
+    }
 
-  //   if (((float(myEulerData.p) / 16.00) < -20) || ((float(myEulerData.p) / 16.00) > 20))
-  //   {
-  //     SlowBackward();
-  //     delay(500);
-  //   }
-  //   Serial.println();					//Extra line to differentiate between packets
+    if (((float(myEulerData.p) / 16.00) < -20) || ((float(myEulerData.p) / 16.00) > 20))
+    {
+      SlowBackward();
+      delay(500);
+    }
+    Serial.println();					//Extra line to differentiate between packets
+  }
+
+  // static uint16_t* distances; //For printing the scanned TOF
+  // distances = tof_NAV.scan();
+  // Serial.print(distances[0]);
+  // Serial.print(":");
+  // Serial.print(distances[1]);
+  // Serial.print(":");
+  // Serial.print(distances[2]);
+  // Serial.print(":");
+  // Serial.println(distances[3]);
+  // delay(100);
+
+  // getTFminiData(&distance, &strength, &receiveComplete);
+  // if(receiveComplete) {
+  //   receiveComplete = false;
+  //   Serial.print(distance);
+  //   Serial.print("cm\t");
+  //   Serial.print("strength: ");
+  //   Serial.println(strength);
   // }
-
-  static uint16_t* distances; 
-  distances = tof_NAV.scan();
-  Serial.print(distances[0]);
-  Serial.print(":");
-  Serial.print(distances[1]);
-  Serial.print(":");
-  Serial.print(distances[2]);
-  Serial.print(":");
-  Serial.println(distances[3]);
-  delay(100);
-
-  
-  Weight_detection();
 
 }
