@@ -64,6 +64,26 @@ typedef enum {
 
 } Robot_states;
 
+//IR sensor
+int IRsensorAddress = 0xB0;
+//int IRsensorAddress = 0x58;
+int slaveAddress;
+int ledPin = 13;
+boolean ledState = false;
+byte data_buf[16];
+int i;
+
+int Ix[4];
+int Iy[4];
+int s;
+
+void Write_2bytes(byte d1, byte d2)
+{
+    Wire.beginTransmission(slaveAddress);
+    Wire.write(d1); Wire.write(d2);
+    Wire.endTransmission();
+}
+
 void setup()
 {
   myservoA.attach(28);  
@@ -103,6 +123,20 @@ void setup()
   bno055_set_operation_mode(OPERATION_MODE_NDOF);
 
   delay(1);
+
+  //IR camera setup
+  slaveAddress = IRsensorAddress >> 1;   // This results in 0x21 as the address to pass to TWI
+  Serial.begin(19200);
+  pinMode(ledPin, OUTPUT);      // Set the LED pin as output
+  Wire.begin();
+  // IR sensor initialize
+  Write_2bytes(0x30,0x01); delay(10);
+  Write_2bytes(0x30,0x08); delay(10);
+  Write_2bytes(0x06,0x90); delay(10);
+  Write_2bytes(0x08,0xC0); delay(10);
+  Write_2bytes(0x1A,0x40); delay(10);
+  Write_2bytes(0x33,0x33); delay(10);
+  delay(100);
 }
 
 void Forward()
@@ -300,7 +334,7 @@ void Weight_detection()
     Serial.print("Weight on the Right\n");
     smallRight();
   }
-  if ((Mid_Left_Upper && Mid_Right_Upper) > ((Mid_Left_Lower) && (Mid_Right_Lower)) && (strength > 100))
+  if (((Mid_Left_Upper && Mid_Right_Upper) > (Mid_Left_Lower && Mid_Right_Lower)) && (strength > 100))
   {
     Serial.print("Found Weight\n");
     Forward();
@@ -329,12 +363,18 @@ Robot_states Robot_State_Machine(Robot_states current_state)
       if (Find_weight_flag == false)
       {
         return ROAMING;
+      } else if (Find_weight_flag = true) {
+        return COLLECTING_WEIGHT;
       }
       break;
-    // case COLLECTING_WEIGHT:
-    //   break;
+    case COLLECTING_WEIGHT:
+      myservoA.writeMicroseconds(1500);      
+      myservoB.writeMicroseconds(1500);
+      break;
   }
+
   return current_state;
+  Serial.print(current_state);
 }
 void loop()
 {
