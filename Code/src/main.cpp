@@ -304,23 +304,19 @@ void getTFminiData(int* distance, int* strength, boolean* complete) {
 
 void Weight_detection()
 {
-  static uint16_t* distances_TOF_L1;
-  static uint16_t* distances_TOF_L1_Upper;
+  static uint16_t front_scan[4];
+  static uint16_t nav_scan[4];
 
-  distances_TOF_L1 = tof_NAV.scan();
-  distances_TOF_L1_Upper = tof_f.scan_1();
-  
+  uint16_t Further_Left_Lower = nav_scan[0];
+  uint16_t Mid_Left_Lower = nav_scan[1];
+  uint16_t Mid_Right_Lower = nav_scan[2]; 
+  uint16_t Further_Right_Lower = nav_scan[3];
 
-  uint16_t Further_Left_Lower = distances_TOF_L1[0];
-  uint16_t Mid_Left_Lower = distances_TOF_L1[1];
-  uint16_t Mid_Right_Lower = distances_TOF_L1[2];
-  uint16_t Further_Right_Lower = distances_TOF_L1[3];
-
-  uint16_t Further_Left_Upper = distances_TOF_L1_Upper[0];
-  uint16_t Mid_Left_Upper = distances_TOF_L1_Upper[1];
-  uint16_t Mid_Right_Upper = distances_TOF_L1_Upper[2];
-  uint16_t Further_Right_Upper = distances_TOF_L1_Upper[3];
-
+  uint16_t Further_Left_Upper = front_scan[0];
+  uint16_t Mid_Left_Upper = front_scan[1];
+  uint16_t Mid_Right_Upper = front_scan[2];
+  uint16_t Further_Right_Upper = front_scan[3];
+ 
   getTFminiData(&distance, &strength, &receiveComplete);
   
 
