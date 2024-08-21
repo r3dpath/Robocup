@@ -59,7 +59,7 @@ void TOF::startContinuous(uint16_t period) {
 }
 
 void TOF::scan(uint16_t* distances) {
-    static uint16_t spad_locations[4] = {150, 174, 206, 238};
+    static uint16_t spad_locations[8] = {151, 175, 207, 239};
     if (type == L0) {
         return;
     } else {

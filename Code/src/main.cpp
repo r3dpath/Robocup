@@ -307,37 +307,80 @@ void Weight_detection()
   static uint16_t front_scan[4];
   static uint16_t nav_scan[4];
 
-  uint16_t Further_Left_Lower = nav_scan[0];
-  uint16_t Mid_Left_Lower = nav_scan[1];
-  uint16_t Mid_Right_Lower = nav_scan[2]; 
-  uint16_t Further_Right_Lower = nav_scan[3];
+  tof_f.scan(front_scan);
+  tof_NAV.scan(nav_scan);
 
-  uint16_t Further_Left_Upper = front_scan[0];
-  uint16_t Mid_Left_Upper = front_scan[1];
-  uint16_t Mid_Right_Upper = front_scan[2];
-  uint16_t Further_Right_Upper = front_scan[3];
+  uint16_t Further_Left_Lower = nav_scan[3];
+  uint16_t Mid_Left_Lower = nav_scan[2];
+  uint16_t Mid_Right_Lower = nav_scan[1]; 
+  uint16_t Further_Right_Lower = nav_scan[0];
+
+  uint16_t Further_Left_Upper = front_scan[3];
+  uint16_t Mid_Left_Upper = front_scan[2];
+  uint16_t Mid_Right_Upper = front_scan[1];
+  uint16_t Further_Right_Upper = front_scan[0];
  
   getTFminiData(&distance, &strength, &receiveComplete);
   
+  uint16_t AVG_Left_TOF = (Further_Left_Lower + Further_Left_Upper) / 2;
+  uint16_t AVG_Right_TOF = (Further_Right_Lower + Further_Right_Upper) / 2;
+  uint16_t AVG_Mid_TOF = ((Mid_Left_Upper + Mid_Left_Lower)/ 2) + ((Mid_Right_Upper + Mid_Right_Lower)/2);
 
-  if ( (Further_Left_Lower < Further_Left_Upper) && (strength < 100))
-  {
-    Serial.print("Weight on the left\n");
-    smallLeft();
-  }
-  if ( (Further_Right_Lower < Further_Right_Upper) && (strength < 100))
-  {
-    Serial.print("Weight on the Right\n");
-    smallRight();
-  }
-  if (((Mid_Left_Upper && Mid_Right_Upper) > (Mid_Left_Lower && Mid_Right_Lower)) && (strength > 100))
-  {
-    Serial.print("Found Weight\n");
-    Forward();
-    Find_weight_flag = true;
-  } else {
-    Find_weight_flag = false;
-  }
+  int16_t Diff_Left_TOF = Further_Left_Upper - Further_Left_Lower;
+  int16_t Diff_Right_TOF = Further_Right_Upper - Further_Right_Lower;
+  int16_t Diff_Mid_TOF_Left = Mid_Left_Upper - Mid_Left_Lower;
+  int16_t Diff_Mid_TOF_Right = Mid_Right_Upper - Mid_Right_Lower;
+
+
+
+  // Serial.print(AVG_Left_TOF);
+  // Serial.print(" : ");
+  // Serial.print(AVG_Mid_TOF);
+  // Serial.print(" : ");
+  // Serial.println(AVG_Right_TOF);
+
+  Serial.print(Further_Left_Upper);
+  Serial.print(" : ");
+  Serial.print(Mid_Left_Upper);
+  Serial.print(" : ");
+  Serial.print(Mid_Right_Upper);
+  Serial.print(" : ");
+  Serial.println(Further_Right_Upper);
+
+  Serial.print(Further_Left_Lower);
+  Serial.print(" : ");
+  Serial.print(Mid_Left_Lower);
+  Serial.print(" : ");
+  Serial.print(Mid_Right_Lower);
+  Serial.print(" : ");
+  Serial.println(Further_Right_Lower);
+
+  Serial.print(Diff_Left_TOF);
+  Serial.print(" : ");
+  Serial.print(Diff_Mid_TOF_Left);
+  Serial.print(" : ");
+  Serial.print(Diff_Mid_TOF_Right);
+  Serial.print(" : ");
+  Serial.println(Diff_Right_TOF);
+
+  // if ( (Further_Left_Lower < Further_Left_Upper) )
+  // {
+  //   Serial.print("Weight on the left\n");
+  //   smallLeft();
+  // }
+  // if ( (Further_Right_Lower < Further_Right_Upper))
+  // {
+  //   Serial.print("Weight on the Right\n");
+  //   smallRight();
+  // }
+  // if (((Mid_Left_Upper && Mid_Right_Upper) > (Mid_Left_Lower && Mid_Right_Lower)) && (strength > 100))
+  // {
+  //   Serial.print("Found Weight\n");
+  //   Forward();
+  //   Find_weight_flag = true;
+  // } else {
+  //   Find_weight_flag = false;
+  // }
 
 }
 
@@ -374,8 +417,9 @@ Robot_states Robot_State_Machine(Robot_states current_state)
 }
 void loop()
 {
-  
 
+  
+  Weight_detection();
   /* ENCODER STUFF */
 
   // mCurPosValueL = encLeft.read();
@@ -402,51 +446,51 @@ void loop()
 
   // old_position1 = mCurPosValueR;
   
-  static Robot_states state = ROAMING;
-  state = Robot_State_Machine(state);
+  // static Robot_states state = ROAMING;
+  // state = Robot_State_Machine(state);
 
-  Serial.print(state);
-  Serial.print(Find_weight_flag);
+  // Serial.print(state);
+  // Serial.print(Find_weight_flag);
   
 
 
 
   /* IMU STUFF */
 
-  if ((millis() - lastTime) >= 100) //To stream at 10Hz without using additional timers
-  {
-    lastTime = millis();
+  // if ((millis() - lastTime) >= 100) //To stream at 10Hz without using additional timers
+  // {
+  //   lastTime = millis();
 
-    bno055_read_euler_hrp(&myEulerData);			//Update Euler data into the structure
+  //   bno055_read_euler_hrp(&myEulerData);			//Update Euler data into the structure
 
-    // Serial.print("Time Stamp: ");				//To read out the Time Stamp
-    // Serial.println(lastTime);
+  //   // Serial.print("Time Stamp: ");				//To read out the Time Stamp
+  //   // Serial.println(lastTime);
 
-    // Serial.print("Heading(Yaw): ");				//To read out the Heading (Yaw)
-    // Serial.println(float(myEulerData.h) / 16.00);		//Convert to degrees
+  //   // Serial.print("Heading(Yaw): ");				//To read out the Heading (Yaw)
+  //   // Serial.println(float(myEulerData.h) / 16.00);		//Convert to degrees
 
-    // Serial.print("Roll: ");					//To read out the Roll
-    // Serial.println(float(myEulerData.r) / 16.00);		//Convert to degrees
+  //   // Serial.print("Roll: ");					//To read out the Roll
+  //   // Serial.println(float(myEulerData.r) / 16.00);		//Convert to degrees
 
-    // Serial.print("Pitch: ");				//To read out the Pitch
-    // Serial.println(float(myEulerData.p) / 16.00);		//Convert to degrees
+  //   // Serial.print("Pitch: ");				//To read out the Pitch
+  //   // Serial.println(float(myEulerData.p) / 16.00);		//Convert to degrees
 
-    if ((float(myEulerData.r) / 16.00) < -20) {
-      mangItBackward();
-      delay(300);
-    }
-    if ((float(myEulerData.r) / 16.00) > 20) {
-      Forward();
-      delay(300);
-    }
+  //   if ((float(myEulerData.r) / 16.00) < -20) {
+  //     mangItBackward();
+  //     delay(300);
+  //   }
+  //   if ((float(myEulerData.r) / 16.00) > 20) {
+  //     Forward();
+  //     delay(300);
+  //   }
 
-    if (((float(myEulerData.p) / 16.00) < -20) || ((float(myEulerData.p) / 16.00) > 20))
-    {
-      SlowBackward();
-      delay(500);
-    }
-    Serial.println();					//Extra line to differentiate between packets
-  }
+  //   if (((float(myEulerData.p) / 16.00) < -20) || ((float(myEulerData.p) / 16.00) > 20))
+  //   {
+  //     SlowBackward();
+  //     delay(500);
+  //   }
+  //   Serial.println();					//Extra line to differentiate between packets
+  // }
 
   // static uint16_t* distances; //For printing the scanned TOF
   // distances = tof_NAV.scan();
@@ -467,5 +511,69 @@ void loop()
   //   Serial.print("strength: ");
   //   Serial.println(strength);
   // }
+
+  //**IR camera stuff**
+  // ledState = !ledState;
+  // if (ledState) { digitalWrite(ledPin,HIGH); } else { digitalWrite(ledPin,LOW); }
+
+  // //IR sensor read
+  // Wire.beginTransmission(slaveAddress);
+  // Wire.write(0x36);
+  // Wire.endTransmission();
+
+  // Wire.requestFrom(slaveAddress, 16);        // Request the 2 byte heading (MSB comes first)
+  // for (i=0;i<16;i++) { data_buf[i]=0; }
+  // i=0;
+  // while(Wire.available() && i < 16) {
+  //     data_buf[i] = Wire.read();
+  //     i++;
+  // }
+
+  // Ix[0] = data_buf[1];
+  // Iy[0] = data_buf[2];
+  // s   = data_buf[3];
+  // Ix[0] += (s & 0x30) <<4;
+  // Iy[0] += (s & 0xC0) <<2;
+
+  // Ix[1] = data_buf[4];
+  // Iy[1] = data_buf[5];
+  // s   = data_buf[6];
+  // Ix[1] += (s & 0x30) <<4;
+  // Iy[1] += (s & 0xC0) <<2;
+
+  // Ix[2] = data_buf[7];
+  // Iy[2] = data_buf[8];
+  // s   = data_buf[9];
+  // Ix[2] += (s & 0x30) <<4;
+  // Iy[2] += (s & 0xC0) <<2;
+
+  // Ix[3] = data_buf[10];
+  // Iy[3] = data_buf[11];
+  // s   = data_buf[12];
+  // Ix[3] += (s & 0x30) <<4;
+  // Iy[3] += (s & 0xC0) <<2;
+
+  // for(i=0; i<4; i++)
+  // {
+  //   if (Ix[i] < 1000)
+  //     Serial.print("");
+  //   if (Ix[i] < 100)
+  //     Serial.print("");
+  //   if (Ix[i] < 10)
+  //     Serial.print("");
+  //   Serial.print( int(Ix[i]) );
+  //   Serial.print(",");
+  //   if (Iy[i] < 1000)
+  //     Serial.print("");
+  //   if (Iy[i] < 100)
+  //     Serial.print("");
+  //   if (Iy[i] < 10)
+  //     Serial.print("");
+  //   Serial.print( int(Iy[i]) );
+  //   if (i<3)
+  //     Serial.print(",");
+  // }
+  // Serial.println("");
+  // delay(15);
 
 }
