@@ -23,10 +23,6 @@ const byte SX1509_ADDRESS = 0x3F;
 #define VL53L0X_ADDRESS_START 0x30
 #define VL53L1X_ADDRESS_START 0x35
 
-#define STOP_SPEED  1500
-#define MOVE_SPEED  350
-#define TURNING_RATIO  2/3
-
 SX1509 io; // Create an SX1509 object to be used throughout
 
 Servo myservoA,myservoB; //A left, B right
@@ -50,6 +46,7 @@ int strength = 0;
 boolean receiveComplete = false;
 
 bool Find_weight_flag = false;
+bool Found_weight_flag = false;
 
 TOF tof_l(L0, 0, 0x30, &io); // Left TOF
 TOF tof_r(L0, 1, 0x31, &io); // Right TOF
@@ -76,6 +73,8 @@ int i;
 int Ix[4];
 int Iy[4];
 int s;
+
+static Robot_states current_state = ROAMING;
 
 void Write_2bytes(byte d1, byte d2)
 {
@@ -189,17 +188,17 @@ void smallRight()
 void MoveMent_Controller()
 {
   // Read sensor values
-  int sensorL1_2 = tof_b.read(); 
-  int sensorL1_1 = tof_f.read(); 
-  int sensorL0Distance1 = tof_l.read();  //Left side
-  int sensorL0Distance2 = tof_r.read();  //Right side
+  int back_TOF = tof_b.read(); //Back
+  int front_TOF = tof_f.read(); //Front
+  int Left_TOF = tof_l.read();  //Left side
+  int Right_TOF = tof_r.read();  //Right side
 
   static bool left = false, right = false; // Using static to retain state between function calls
 
   // Assume Forward() is the default action
   Forward();
 
-  if ((sensorL0Distance1 <= 250) && !right) // Check if close to an obstacle on the right
+  if ((Left_TOF <= 250) && !right) // Check if close to an obstacle on the right
   {
     RightTurn();
     right = true;
@@ -208,7 +207,7 @@ void MoveMent_Controller()
     right = false;
   }
 
-  if (sensorL0Distance2 <= 250 && !left) // Check if close to an obstacle on the left
+  if (Right_TOF <= 250 && !left) // Check if close to an obstacle on the left
   {
     LeftTurn();
     left = true;
@@ -219,16 +218,16 @@ void MoveMent_Controller()
 
   if (!left && !right)
   {
-    if ((sensorL1_1 <= 250) && (sensorL1_2 >= 250) ) // Check if there's an obstacle close in the back
+    if ((front_TOF <= 250) && (back_TOF >= 250) ) // Check if there's an obstacle close in the back
     {
       Backward();
       delay(300); // Adding delay to allow the backward movement to complete
-      if(sensorL0Distance1 > sensorL0Distance2)
+      if(Left_TOF > Right_TOF)
       {
         LeftTurn();
         delay(300);
       }
-      else if (sensorL0Distance2 > sensorL0Distance1)
+      else if (Right_TOF > Left_TOF)
       {
         RightTurn();
         delay(300);
@@ -236,22 +235,23 @@ void MoveMent_Controller()
 
     }
 
-    if ((sensorL1_1 >= 1000) && (sensorL1_2 <= 200)) // Check if clear to move forward
+    if ((front_TOF >= 1000) && (back_TOF <= 200)) // Check if clear to move forward
     {
       Forward();
     }
   }
 
-  if (((sensorL0Distance1 <= 350) && (sensorL0Distance2 <= 350)) && (((sensorL1_1) <= 400) && ((sensorL1_2) > 1000))) // unstucking
+  if (((Left_TOF <= 350) && (Right_TOF <= 350)) && 
+        ((front_TOF <= 400) && (back_TOF > 1000))) 
   {
     mangItBackward();
     delay(1300);
-    if(sensorL0Distance1 > sensorL0Distance2)
+    if(Left_TOF > Right_TOF)
     {
       LeftTurn();
       delay(500);
     }
-    else if (sensorL0Distance2 > sensorL0Distance1)
+    else if (Right_TOF > Left_TOF)
     {
       RightTurn();
       delay(500);
@@ -259,48 +259,47 @@ void MoveMent_Controller()
     
   }
 
-  if (((sensorL1_1) <= 300) && ((sensorL1_2 <= 300)))
+  if (((front_TOF) <= 300) && ((back_TOF <= 300)))
   {
-    if(sensorL0Distance1 > sensorL0Distance2)
+    if(Left_TOF > Right_TOF)
     {
       LeftTurn();
       delay(300);
     }
-    else if (sensorL0Distance2 > sensorL0Distance1)
+    else if (Right_TOF > Left_TOF)
     {
       RightTurn();
       delay(300);
     }
   }
-  Serial.println(sensorL1_2);
 }
 
-void getTFminiData(int* distance, int* strength, boolean* complete) {
-  static char i = 0;
-  char j = 0;
-  int checksum = 0; 
-  static int rx[9];
-  if(Serial1.available()) {  
-    rx[i] = Serial1.read();
-    if(rx[0] != 0x59) {
-      i = 0;
-    } else if(i == 1 && rx[1] != 0x59) {
-      i = 0;
-    } else if(i == 8) {
-      for(j = 0; j < 8; j++) {
-        checksum += rx[j];
-      }
-      if(rx[8] == (checksum % 256)) {
-        *distance = rx[2] + rx[3] * 256;
-        *strength = rx[4] + rx[5] * 256;
-        *complete = true;
-      }
-      i = 0;
-    } else {
-      i++;
-    } 
-  } 
-}
+// void getTFminiData(int* distance, int* strength, boolean* complete) {
+//   static char i = 0;
+//   char j = 0;
+//   int checksum = 0; 
+//   static int rx[9];
+//   if(Serial1.available()) {  
+//     rx[i] = Serial1.read();
+//     if(rx[0] != 0x59) {
+//       i = 0;
+//     } else if(i == 1 && rx[1] != 0x59) {
+//       i = 0;
+//     } else if(i == 8) {
+//       for(j = 0; j < 8; j++) {
+//         checksum += rx[j];
+//       }
+//       if(rx[8] == (checksum % 256)) {
+//         *distance = rx[2] + rx[3] * 256;
+//         *strength = rx[4] + rx[5] * 256;
+//         *complete = true;
+//       }
+//       i = 0;
+//     } else {
+//       i++;
+//     } 
+//   } 
+// }
 
 void Weight_detection()
 {
@@ -320,11 +319,11 @@ void Weight_detection()
   uint16_t Mid_Right_Upper = front_scan[1];
   uint16_t Further_Right_Upper = front_scan[0];
  
-  getTFminiData(&distance, &strength, &receiveComplete);
+  // getTFminiData(&distance, &strength, &receiveComplete);
   
-  uint16_t AVG_Left_TOF = (Further_Left_Lower + Further_Left_Upper) / 2;
-  uint16_t AVG_Right_TOF = (Further_Right_Lower + Further_Right_Upper) / 2;
-  uint16_t AVG_Mid_TOF = ((Mid_Left_Upper + Mid_Left_Lower)/ 2) + ((Mid_Right_Upper + Mid_Right_Lower)/2);
+  // uint16_t AVG_Left_TOF = (Further_Left_Lower + Further_Left_Upper) / 2;
+  // uint16_t AVG_Right_TOF = (Further_Right_Lower + Further_Right_Upper) / 2;
+  // uint16_t AVG_Mid_TOF = ((Mid_Left_Upper + Mid_Left_Lower)/ 2) + ((Mid_Right_Upper + Mid_Right_Lower)/2);
 
   int16_t Diff_Left_TOF = Further_Left_Upper - Further_Left_Lower;
   int16_t Diff_Right_TOF = Further_Right_Upper - Further_Right_Lower;
@@ -339,21 +338,21 @@ void Weight_detection()
   // Serial.print(" : ");
   // Serial.println(AVG_Right_TOF);
 
-  Serial.print(Further_Left_Upper);
-  Serial.print(" : ");
-  Serial.print(Mid_Left_Upper);
-  Serial.print(" : ");
-  Serial.print(Mid_Right_Upper);
-  Serial.print(" : ");
-  Serial.println(Further_Right_Upper);
+  // Serial.print(Further_Left_Upper);
+  // Serial.print(" : ");
+  // Serial.print(Mid_Left_Upper);
+  // Serial.print(" : ");
+  // Serial.print(Mid_Right_Upper);
+  // Serial.print(" : ");
+  // Serial.println(Further_Right_Upper);
 
-  Serial.print(Further_Left_Lower);
-  Serial.print(" : ");
-  Serial.print(Mid_Left_Lower);
-  Serial.print(" : ");
-  Serial.print(Mid_Right_Lower);
-  Serial.print(" : ");
-  Serial.println(Further_Right_Lower);
+  // Serial.print(Further_Left_Lower);
+  // Serial.print(" : ");
+  // Serial.print(Mid_Left_Lower);
+  // Serial.print(" : ");
+  // Serial.print(Mid_Right_Lower);
+  // Serial.print(" : ");
+  // Serial.println(Further_Right_Lower);
 
   Serial.print(Diff_Left_TOF);
   Serial.print(" : ");
@@ -363,63 +362,90 @@ void Weight_detection()
   Serial.print(" : ");
   Serial.println(Diff_Right_TOF);
 
-  // if ( (Further_Left_Lower < Further_Left_Upper) )
-  // {
-  //   Serial.print("Weight on the left\n");
-  //   smallLeft();
-  // }
-  // if ( (Further_Right_Lower < Further_Right_Upper))
-  // {
-  //   Serial.print("Weight on the Right\n");
-  //   smallRight();
-  // }
-  // if (((Mid_Left_Upper && Mid_Right_Upper) > (Mid_Left_Lower && Mid_Right_Lower)) && (strength > 100))
-  // {
-  //   Serial.print("Found Weight\n");
-  //   Forward();
-  //   Find_weight_flag = true;
-  // } else {
-  //   Find_weight_flag = false;
-  // }
-
-}
-
-Robot_states Robot_State_Machine(Robot_states current_state)
-{
-  switch (current_state)
+  if ( (Diff_Left_TOF > 500))
   {
-    case ROAMING:
-      /* MOVEMENT STUFF */
-      MoveMent_Controller();
-      if (Find_weight_flag == true)
-      {
-        return WEIGHT_FINDING;
-      }
-      break;
-    
-    case WEIGHT_FINDING:
-      Weight_detection();
-      if (Find_weight_flag == false)
-      {
-        return ROAMING;
-      } else if (Find_weight_flag = true) {
-        return COLLECTING_WEIGHT;
-      }
-      break;
-    case COLLECTING_WEIGHT:
-      myservoA.writeMicroseconds(1500);      
-      myservoB.writeMicroseconds(1500);
-      break;
+    Serial.print("Weight on the left\n");
+    smallLeft();
+    Find_weight_flag = true;
+    delay(200);
+  } 
+
+  if ( (Diff_Right_TOF > 500))
+  {
+    Serial.print("Weight on the Right\n");
+    smallRight();
+    Find_weight_flag = true;
+    delay(200);
+  } 
+
+  if (Diff_Mid_TOF_Left > 500 || Diff_Mid_TOF_Right > 500)
+  {
+    Serial.print("Found Weight\n");
+    Found_weight_flag = true;
+  } else {
+    Found_weight_flag = false;
   }
 
-  return current_state;
-  Serial.print(current_state);
 }
+
+void Robot_State_Machine()
+{
+    switch (current_state)
+    {
+        case ROAMING:
+            MoveMent_Controller();
+            Weight_detection();
+            // Check for a transition to WEIGHT_FINDING
+            if (Find_weight_flag) {
+                current_state = WEIGHT_FINDING;
+            }
+            break;
+        
+        case WEIGHT_FINDING:
+            Weight_detection();
+            MoveMent_Controller();  // Ensure movement is controlled here too
+            // Check for a transition to COLLECTING_WEIGHT
+            if (Found_weight_flag) {
+                current_state = COLLECTING_WEIGHT;
+            } else if (!Find_weight_flag) {
+                current_state = ROAMING;  // If weight is not found, return to ROAMING
+            }
+            break;
+            
+        case COLLECTING_WEIGHT:
+            myservoA.writeMicroseconds(1500);      
+            myservoB.writeMicroseconds(1500);
+            delay(2000);
+            current_state = ROAMING;
+            // Optionally, add logic to return to ROAMING or remain in COLLECTING_WEIGHT
+            break;
+    }
+
+    Serial.print("Current state: ");
+    switch (current_state) {
+        case ROAMING: Serial.println("ROAMING"); break;
+        case WEIGHT_FINDING: Serial.println("WEIGHT_FINDING"); break;
+        case COLLECTING_WEIGHT: Serial.println("COLLECTING_WEIGHT"); break;
+    }
+    // return current_state;
+}
+
+
 void loop()
 {
 
-  
-  Weight_detection();
+  // current_state = Robot_State_Machine(current_state);
+  Robot_State_Machine();
+  // MoveMent_Controller();
+  Serial.print(tof_f.read());
+  Serial.print(" : ");
+  Serial.print(tof_b.read());
+  Serial.print(" : ");
+  Serial.print(tof_l.read());
+  Serial.print(" : ");
+  Serial.println(tof_r.read());
+
+  // Weight_detection();
   /* ENCODER STUFF */
 
   // mCurPosValueL = encLeft.read();
@@ -446,8 +472,8 @@ void loop()
 
   // old_position1 = mCurPosValueR;
   
-  // static Robot_states state = ROAMING;
-  // state = Robot_State_Machine(state);
+  
+  
 
   // Serial.print(state);
   // Serial.print(Find_weight_flag);
