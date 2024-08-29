@@ -29,8 +29,8 @@ TOF tof_f(L1, 4, 0x37, &io);// Front TOF
 void setup()
 {
 
-  Serial.begin(115200);
-  Serial2.begin(115200);
+  Serial.begin(921600);
+  Serial2.begin(921600);
 
   io.begin(SX1509_ADDRESS);
 

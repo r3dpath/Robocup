@@ -30,7 +30,7 @@ _UART_SERVICE = (
     (_UART_TX, _UART_RX),
 )
 
-uart1 = UART(1, baudrate=115200, tx=Pin(4), rx=Pin(5))
+uart1 = UART(1, baudrate=921600, tx=Pin(4), rx=Pin(5))
 
 
 class BLESimplePeripheral:
