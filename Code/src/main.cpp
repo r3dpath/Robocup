@@ -30,7 +30,7 @@ void setup()
 {
 
   Serial.begin(115200);
-  Serial1.begin(115200);
+  Serial2.begin(115200);
 
   io.begin(SX1509_ADDRESS);
 
@@ -98,28 +98,28 @@ void loop()
 
   if(receiveComplete) {
     receiveComplete = false;
-    Serial.println(longrange);
+    Serial2.println(longrange);
   }
 
-  Serial.print(front_scan[0]);
-  Serial.print(":");
-  Serial.print(front_scan[1]);
-  Serial.print(":");
-  Serial.print(front_scan[2]);
-  Serial.print(":");
-  Serial.print(front_scan[3]);
-  Serial.print(":");
-  Serial.print(nav_scan[0]);
-  Serial.print(":");
-  Serial.print(nav_scan[1]);
-  Serial.print(":");
-  Serial.print(nav_scan[2]);
-  Serial.print(":");
-  Serial.print(nav_scan[3]);
-  Serial.print(":");
-  Serial.print(left);
-  Serial.print(":");
-  Serial.print(right);
-  Serial.print(":");
-  Serial.println(back);
+  Serial2.print(front_scan[0]);
+  Serial2.print(":");
+  Serial2.print(front_scan[1]);
+  Serial2.print(":");
+  Serial2.print(front_scan[2]);
+  Serial2.print(":");
+  Serial2.print(front_scan[3]);
+  Serial2.print(":");
+  Serial2.print(nav_scan[0]);
+  Serial2.print(":");
+  Serial2.print(nav_scan[1]);
+  Serial2.print(":");
+  Serial2.print(nav_scan[2]);
+  Serial2.print(":");
+  Serial2.print(nav_scan[3]);
+  Serial2.print(":");
+  Serial2.print(left);
+  Serial2.print(":");
+  Serial2.print(right);
+  Serial2.print(":");
+  Serial2.println(back);
 }
