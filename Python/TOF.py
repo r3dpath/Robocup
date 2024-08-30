@@ -18,11 +18,11 @@ class TOFVisualizer:
         self.canvas = tk.Canvas(root, width=600, height=900)
         self.canvas.pack()
 
-        self.tof_angles = [90+15, 90+7.5, 90-7.5, 90-15, 90+16, 90+8.5, 90-8.5, 90-16, 90+30, 90-30, 270]  # Default start angles for the TOF sensors
-        self.tof_distances = [0] * 11
+        self.tof_angles = [90+15, 90+7.5, 90, 90-7.5, 90-15, 90+16, 90+8.5, 90+1, 90-8.5, 90-16, 90+30, 90-30, 270]  # Default start angles for the TOF sensors
+        self.tof_distances = [0] * 13
 
-        self.start_points = [(300, 650), (300, 650), (300, 650), (300, 650), (300, 650), (300, 650), (300, 650), (300, 650), (280, 650), (320, 650), (300, 750)]  # Starting points for each TOF sensor
-        self.lines = [None] * 12
+        self.start_points = [(300, 650), (300, 650), (300, 650), (300, 650), (300, 650), (300, 650), (300, 650), (300, 650), (300, 650), (300, 650), (280, 650), (320, 650), (300, 750)]  # Starting points for each TOF sensor
+        self.lines = [None] * 13
 
         self.draw_square()
 
