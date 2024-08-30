@@ -24,12 +24,14 @@ bool TOF::init() {
         sensorL0.startContinuous(50);
     } else {
         sensorL1.setTimeout(500);
+        sensorL1.setDistanceMode(VL53L1X::Medium);
+        sensorL1.setMeasurementTimingBudget(75000);
         if (!sensorL1.init()) {
             Serial.println("TOF Panic");
             return false;
         }
         sensorL1.setAddress(address);
-        sensorL1.startContinuous(50);
+        //sensorL1.startContinuous(50);
     }
     return true;
 }
@@ -38,7 +40,7 @@ uint16_t TOF::read() {
     if (type == L0) {
         return sensorL0.readRangeContinuousMillimeters();
     } else {
-        return sensorL1.read();
+        return sensorL1.readSingle();
     }
 }
 
@@ -64,7 +66,7 @@ void TOF::scan(uint16_t* distances) {
         return;
     } else {
         sensorL1.setROISize(4, 5);
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 5; i++) {
             sensorL1.setROICenter(spad_locations[i]);
             //delay(100);
             distances[i] = sensorL1.readSingle();
