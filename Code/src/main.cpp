@@ -81,8 +81,8 @@ void getTFminiData(int* distance, int* strength, boolean* complete) {
 void loop()
 {
 
-  static uint16_t front_scan[4];
-  static uint16_t nav_scan[4];
+  static uint16_t front_scan[5];
+  static uint16_t nav_scan[5];
   static uint16_t left;
   static uint16_t right;
   static uint16_t back;
@@ -109,6 +109,8 @@ void loop()
   Serial2.print(":");
   Serial2.print(front_scan[3]);
   Serial2.print(":");
+  Serial2.print(front_scan[4]);
+  Serial2.print(":");
   Serial2.print(nav_scan[0]);
   Serial2.print(":");
   Serial2.print(nav_scan[1]);
@@ -116,6 +118,8 @@ void loop()
   Serial2.print(nav_scan[2]);
   Serial2.print(":");
   Serial2.print(nav_scan[3]);
+  Serial2.print(":");
+  Serial2.print(nav_scan[4]);
   Serial2.print(":");
   Serial2.print(left);
   Serial2.print(":");

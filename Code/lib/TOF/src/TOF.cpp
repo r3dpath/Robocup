@@ -59,11 +59,11 @@ void TOF::startContinuous(uint16_t period) {
 }
 
 void TOF::scan(uint16_t* distances) {
-    static uint16_t spad_locations[4] = {150, 174, 206, 238};
+    static uint16_t spad_locations[5] = {150, 174, 198, 222, 246};
     if (type == L0) {
         return;
     } else {
-        sensorL1.setROISize(5, 5);
+        sensorL1.setROISize(4, 5);
         for (int i = 0; i < 4; i++) {
             sensorL1.setROICenter(spad_locations[i]);
             //delay(100);
