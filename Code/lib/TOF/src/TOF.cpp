@@ -1,4 +1,7 @@
 #include "TOF.h"
+#include <TaskScheduler.h>
+
+// Single TOF Sensor
 
 TOF::TOF(TOFType type, uint8_t xshutPin, uint8_t address, SX1509* io)
     : type(type), xshutPin(xshutPin), address(address), io(io) {}
@@ -74,4 +77,56 @@ void TOF::scan(uint16_t* distances) {
         sensorL1.setROISize(16, 16);
         sensorL1.setROICenter(223);
     }
+}
+
+
+// TOF Pair
+
+TOF2::TOF2(uint8_t xshutPin1, uint8_t address1, uint8_t xshutPin2, uint8_t address2, SX1509* io)
+    : xshutPin1(xshutPin1), address1(address1), xshutPin2(xshutPin2), address2(address2), io(io) {}
+
+void TOF2::disable() {
+    io->pinMode(xshutPin1, OUTPUT);
+    io->digitalWrite(xshutPin1, LOW);
+    io->pinMode(xshutPin2, OUTPUT);
+    io->digitalWrite(xshutPin2, LOW);
+    delay(10);
+}
+
+bool TOF2::init() {
+    disable();
+    // Enable sensor 
+    io->digitalWrite(xshutPin1, HIGH);
+    delay(10);
+    sensor_top.setTimeout(500);
+    sensor_top.setDistanceMode(VL53L1X::Medium);
+    sensor_top.setMeasurementTimingBudget(75000);
+    sensor_top.setAddress(address1);
+    if (!sensor_top.init()) {
+        Serial.println("TOF Panic");
+        return false;
+    }
+    io->digitalWrite(xshutPin2, HIGH);
+    delay(10);
+    sensor_bottom.setTimeout(500);
+    sensor_bottom.setDistanceMode(VL53L1X::Medium);
+    sensor_bottom.setMeasurementTimingBudget(75000);
+    sensor_bottom.setAddress(address2);
+    if (!sensor_bottom.init()) {
+        Serial.println("TOF Panic");
+        return false;
+    }
+    return true;
+}
+
+void TOF2::scan(uint16_t* distances) {
+    static uint16_t spad_locations[5] = {150, 174, 198, 222, 246};
+    sensor_top.setROISize(4, 5);
+    for (int i = 0; i < 5; i++) {
+        sensor_top.setROICenter(spad_locations[i]);
+        //delay(100);
+        distances[i] = sensor_top.readSingle();
+    }
+    sensor_top.setROISize(16, 16);
+    sensor_top.setROICenter(223);
 }

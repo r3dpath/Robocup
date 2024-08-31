@@ -32,4 +32,21 @@ private:
     VL53L1X sensorL1;
 };
 
+class TOF2 {
+public:
+    TOF2(uint8_t xshutPin1, uint8_t address1, uint8_t xshutPin2, uint8_t address2, SX1509* io);
+    bool init();
+    void disable();
+    void scan(uint16_t* distances);
+
+private:
+    uint8_t xshutPin1;
+    uint8_t address1;
+    uint8_t xshutPin2;
+    uint8_t address2;
+    SX1509* io;
+    VL53L1X sensor_top;
+    VL53L1X sensor_bottom;
+};
+
 #endif // __TOF_H__

@@ -7,11 +7,11 @@
 #include <QuadEncoder.h>
 #include "BNO055_support.h"
 #include <TOF.h>
+#include <TaskScheduler.h>
 
 const byte SX1509_ADDRESS = 0x3F;
 #define VL53L0X_ADDRESS_START 0x30
 #define VL53L1X_ADDRESS_START 0x35
-
 SX1509 io; // Create an SX1509 object to be used throughout
 
 int distance = 0;
@@ -117,7 +117,7 @@ void loop()
   Serial2.print(":");
   Serial2.print(nav_scan[2]);
   Serial2.print(":");
-  Serial2.print(nav_scan[3]);
+  Serial2.print(nav_scan[3]); 
   Serial2.print(":");
   Serial2.print(nav_scan[4]);
   Serial2.print(":");
