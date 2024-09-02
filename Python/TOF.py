@@ -3,7 +3,13 @@ import math
 import unittest
 import serial
 import threading
+import socket
 
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+HOST = "127.0.0.1"  # The server's hostname or IP address
+PORT = 8880  # The port used by the server
+s.connect((HOST, PORT))
 
 class TOFVisualizer:
     def __init__(self, root, serial_port):
@@ -12,11 +18,11 @@ class TOFVisualizer:
         self.canvas = tk.Canvas(root, width=600, height=900)
         self.canvas.pack()
 
-        self.tof_angles = [90+15, 90+7.5, 90-7.5, 90-15]  # Default start angles for the TOF sensors
-        self.tof_distances = [1, 1, 1, 1]
+        self.tof_angles = [90+15, 90+7.5, 90, 90-7.5, 90-15, 90+16, 90+8.5, 90+1, 90-8.5, 90-16, 90+30, 90-30, 270]  # Default start angles for the TOF sensors
+        self.tof_distances = [0] * 13
 
-        self.start_points = [(300, 650), (300, 650), (300, 650), (300, 650)]  # Starting points for each TOF sensor
-        self.lines = [None] * 4
+        self.start_points = [(300, 650), (300, 650), (300, 650), (300, 650), (300, 650), (300, 650), (300, 650), (300, 650), (300, 650), (300, 650), (280, 650), (320, 650), (300, 750)]  # Starting points for each TOF sensor
+        self.lines = [None] * 13
 
         self.draw_square()
 
@@ -32,25 +38,38 @@ class TOFVisualizer:
             distances = data.split(':')
         except:
             return
+        if (len(distances) == 1):
+            self.visualize_longrange(int(data)*10/3)
+            return
         self.tof_distances = [int(distance)/3 for distance in distances]
         self.visualize_distances()
 
     def visualize_distances(self):
         for i, (start_x, start_y) in enumerate(self.start_points):
+            colour = 'red' if i < 5 else 'green'
             angle_rad = math.radians(self.tof_angles[i])
             end_x = start_x + self.tof_distances[i] * math.cos(angle_rad)
             end_y = start_y - self.tof_distances[i] * math.sin(angle_rad)
 
             if self.lines[i]:
                 self.canvas.delete(self.lines[i])
-            self.lines[i] = self.canvas.create_line(start_x, start_y, end_x, end_y, fill='red')
+            self.lines[i] = self.canvas.create_line(start_x, start_y, end_x, end_y, fill=colour)
+
+    def visualize_longrange(self, distance):
+        start_x, start_y = (300, 700)
+        angle_rad = math.radians(90)
+        end_x = start_x + distance * math.cos(angle_rad)
+        end_y = start_y - distance * math.sin(angle_rad)
+        if self.lines[11]:
+            self.canvas.delete(self.lines[11])
+        self.lines[11] = self.canvas.create_line(start_x, start_y, end_x, end_y, fill='blue')
 
     def set_angle(self, index, angle):
         self.tof_angles[index] = angle
         self.visualize_distances()
 
     def read_serial(self):
-        x = 1
+        '''
         with serial.Serial(self.serial_port, 9600, timeout=1) as ser:
             while True:
                 line = ser.readline().decode('utf-8').strip()
@@ -58,17 +77,19 @@ class TOFVisualizer:
                     self.parse_serial_input(line)
                     self.root.update_idletasks()
                     self.root.update()
-        # while True:
-        #     self.parse_serial_input(f"{x}:{x}:{x}:{x}")
-        #     x += 1
-        #     self.root.update_idletasks()
-        #     self.root.update()
-        #     if x > 1000:
-        #         x = 1
+        '''
+        while True:
+            data = s.recv(1024)
+            if data:
+                print(data)
+                self.parse_serial_input(data.decode('utf-8'))
+                self.root.update_idletasks()
+                self.root.update()
+        
 
 def run_gui():
     root = tk.Tk()
-    serial_port = 'COM14'  # Change to your serial port
+    serial_port = '/dev/tty.usbmodem76988001'  # Change to your serial port
     visualizer = TOFVisualizer(root, serial_port)
 
     def update_angle_0(val):
