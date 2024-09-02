@@ -46,7 +46,7 @@ class TOFVisualizer:
 
     def visualize_distances(self):
         for i, (start_x, start_y) in enumerate(self.start_points):
-            colour = 'red' if i < 4 else 'green'
+            colour = 'red' if i < 5 else 'green'
             angle_rad = math.radians(self.tof_angles[i])
             end_x = start_x + self.tof_distances[i] * math.cos(angle_rad)
             end_y = start_y - self.tof_distances[i] * math.sin(angle_rad)

@@ -36,11 +36,29 @@ def plot_spline(x, y1, y2, label):
     line, = ax.plot(x_fine, y_fine, 'r', label=label)
     return line
 
+def plot_heading(x, y1, y2, label):
+    y1 = [int(i) for i in y1]
+    y2 = [int(i) for i in y2]
+    for i in range(len(y1)):
+        if (y1[i] < y2[i]*1.10 and y1[i] > y2[i]*0.90):
+            y1[i] = y2[i]
+    
+    diff = [y1[i] - y2[i] for i in range(len(y1))]
+
+    if max(diff) > 0:
+        angle = x[diff.index(max(diff))]
+    else:
+        return None
+
+    line, = ax.plot(angle, max(diff), 'bo', label=label)
+    return line
+    
+    
 # Initialize the x-coordinates (angles in degrees)
 x_coords = [-15, -7.5, 0, 7.5, 15]
 
 # Function to update the plot with new data
-def update_plot(sensor1_data, sensor2_data):
+def update_plot(sensor1_data, sensor2_data, heading, distance):
     global lines
     
     # Clear previous lines if they exist
@@ -48,9 +66,13 @@ def update_plot(sensor1_data, sensor2_data):
         line.remove()
     lines.clear()
     
+    heading = -(heading-2)*15
+
     # Plot the new data for each sensor
     line1 = plot_spline(x_coords, sensor1_data, sensor2_data, label='Sensor 1')
-    lines.extend([line1])
+    #line2 = plot_heading(x_coords, sensor1_data, sensor2_data, label='Heading')
+    line2, = ax.plot(heading, distance, 'bo', label='Heading')
+    lines.extend([line1, line2])
     
     # Update plot properties
     ax.set_xlabel('Angle (degrees)')
@@ -65,9 +87,8 @@ def parse_input(data):
     try:
         data = data.split(':')
         sensor1_data, sensor2_data = data[:5], data[5:10]
-        sensor1_data.reverse()
-        sensor2_data.reverse()
-        update_plot(sensor1_data, sensor2_data)
+        heading, distance = int(data[10]), int(data[11])
+        update_plot(sensor1_data, sensor2_data, heading, distance)
     except:
         pass
 
