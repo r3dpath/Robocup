@@ -23,16 +23,16 @@ bool Find_weight_flag = false;
 TOF tof_l(L0, 0, 0x30, &io); // Left TOF
 TOF tof_r(L0, 1, 0x31, &io); // Right TOF
 TOF tof_b(L1, 3, 0x36, &io); // Navigation
-TOF2 tof_scan(2, 0x35, 4, 0x37, &io);
+TOF2 tof_scan(4, 0x35, 2, 0x37, &io);
 
 Scheduler taskManager;
-Task tScan(200, TASK_FOREVER, []() { tof_scan.tick(); });
+Task tScan(80, TASK_FOREVER, []() { tof_scan.tick(); });
 Task tPrint(500, TASK_FOREVER, &print_weight);
 
 void setup()
 {
 
-  Serial.begin(921600);
+  Serial1.begin(921600);
   Serial2.begin(921600);
 
   io.begin(SX1509_ADDRESS);
@@ -43,10 +43,11 @@ void setup()
   tof_b.disable();
   tof_l.disable();
   tof_r.disable();
-  tof_scan.init();
+  tof_scan.disable();
   tof_b.init();
   tof_l.init();
   tof_r.init();
+  tof_scan.init();
 
 
   task_init();
@@ -73,29 +74,29 @@ void print_weight () {
   uint16_t heading;
 
   tof_scan.weight(&heading, &distance);
-  // Serial2.print(tof_scan.top[4]);
-  // Serial2.print(":");
-  // Serial2.print(tof_scan.top[3]);
-  // Serial2.print(":");
-  // Serial2.print(tof_scan.top[2]);
-  // Serial2.print(":");
-  // Serial2.print(tof_scan.top[1]);
-  // Serial2.print(":");
-  // Serial2.print(tof_scan.top[0]);
-  // Serial2.print(":");
-  // Serial2.print(tof_scan.bottom[4]);
-  // Serial2.print(":");
-  // Serial2.print(tof_scan.bottom[3]);
-  // Serial2.print(":");
-  // Serial2.print(tof_scan.bottom[2]);
-  // Serial2.print(":");
-  // Serial2.print(tof_scan.bottom[1]);
-  // Serial2.print(":");
-  // Serial2.print(tof_scan.bottom[0]);
-  // Serial2.print(":");
-  // Serial2.print(heading);
-  // Serial2.print(":");
-  // Serial2.println(distance);
+  Serial2.print(tof_scan.top[4]);
+  Serial2.print(":");
+  Serial2.print(tof_scan.top[3]);
+  Serial2.print(":");
+  Serial2.print(tof_scan.top[2]);
+  Serial2.print(":");
+  Serial2.print(tof_scan.top[1]);
+  Serial2.print(":");
+  Serial2.print(tof_scan.top[0]);
+  Serial2.print(":");
+  Serial2.print(tof_scan.bottom[4]);
+  Serial2.print(":");
+  Serial2.print(tof_scan.bottom[3]);
+  Serial2.print(":");
+  Serial2.print(tof_scan.bottom[2]);
+  Serial2.print(":");
+  Serial2.print(tof_scan.bottom[1]);
+  Serial2.print(":");
+  Serial2.print(tof_scan.bottom[0]);
+  Serial2.print(":");
+  Serial2.print(heading);
+  Serial2.print(":");
+  Serial2.println(distance);
 }
 
 

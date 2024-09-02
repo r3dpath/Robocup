@@ -1,4 +1,5 @@
 #include "TOF.h"
+#include <Arduino.h>
 
 // Single TOF Sensor
 
@@ -94,29 +95,28 @@ void TOF2::disable() {
 }
 
 bool TOF2::init() {
-    disable();
     // Enable top sensor
     io->digitalWrite(xshutPin1, HIGH);
     delay(10);
     sensor_top.setTimeout(500);
+    if (!sensor_top.init()) {
+        Serial2.println("TOF2 Panic 1");
+        return false;
+    }
     sensor_top.setDistanceMode(VL53L1X::Medium);
     sensor_top.setMeasurementTimingBudget(75000);
     sensor_top.setAddress(address1);
-    if (!sensor_top.init()) {
-        Serial2.println("TOF Panic");
-        return false;
-    }
     // Enable bottom sensor
     io->digitalWrite(xshutPin2, HIGH);
     delay(10);
     sensor_bottom.setTimeout(500);
+    if (!sensor_bottom.init()) {
+        Serial2.println("TOF2 Panic 2");
+        return false;
+    }
     sensor_bottom.setDistanceMode(VL53L1X::Medium);
     sensor_bottom.setMeasurementTimingBudget(75000);
     sensor_bottom.setAddress(address2);
-    if (!sensor_bottom.init()) {
-        Serial2.println("TOF Panic");
-        return false;
-    }
     // Set SPAD size
     sensor_top.setROISize(4, 5);
     sensor_bottom.setROISize(4, 5);
@@ -127,6 +127,7 @@ bool TOF2::init() {
 void TOF2::tick() {
     static const uint16_t spad_locations[5] = {150, 174, 198, 222, 246};
     static uint8_t iter = 0;
+    uint32_t start = micros();
 
     
     // Non-blocking read, will give zero if no good
@@ -140,9 +141,10 @@ void TOF2::tick() {
 
     // Only record difference if out by more than 10%
     if (bottom[iter] > top[iter]*0.9) {
-        bottom[iter] = top[iter];
+        differences[iter] = 0;
+    } else {
+        differences[iter] = top[iter] - bottom[iter];
     }
-    differences[iter] = top[iter] - bottom[iter];
     
     // Record actual center distance for navigation
     if (iter == 2) {
@@ -182,7 +184,7 @@ void TOF2::weight(uint16_t* heading, uint16_t* distance) {
         *distance = bottom[max_idx];
     } else {
         *heading = -1;
-        *distance = 0;
+        *distance = -1;
     }
 
 }
