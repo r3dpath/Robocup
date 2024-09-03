@@ -5,6 +5,5 @@
 
 void setupTOF();
 void MoveMent_Controller();
-TOF2 tofScan();
 
 #endif

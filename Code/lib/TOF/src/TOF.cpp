@@ -147,8 +147,8 @@ void TOF2::tick() {
     // Record actual center distance for navigation
     if (iter == 2) {
         f_distance = top[iter];
-        Serial2.println(f_distance);
     }
+
 
     // Increment SPAD
     iter++;
@@ -186,9 +186,4 @@ void TOF2::weight(uint16_t* heading, uint16_t* distance) {
         *distance = -1;
     }
 
-}
-
-uint16_t TOF2::front_distance() {
-    Serial2.println(f_distance);
-    return f_distance;
 }

@@ -7,17 +7,18 @@
 #include <QuadEncoder.h>
 #include "BNO055_support.h"
 #include <TOF.h>
-#include "Movement.h"
-#include "TOFControl.h"
-#include "WeightDetection.h"
-#include "StateMachine.h"
-#include "IMU.h"
+#include <Movement.h>
+#include <TOFControl.h>
+#include <WeightDetection.h>
+#include <StateMachine.h>
+#include <IMU.h>
 #include <TaskScheduler.h>
 
 void task_init();
+extern TOF2 tof_scan;
 
 Scheduler taskManager;
-Task tScan(60, TASK_FOREVER, []() { tofScan().tick(); });
+Task tScan(60, TASK_FOREVER, []() { tof_scan.tick(); });
 Task tStateMachine(500, TASK_FOREVER, Robot_State_Machine);
 Task tIMU(100, TASK_FOREVER, UpdateIMU);
 
