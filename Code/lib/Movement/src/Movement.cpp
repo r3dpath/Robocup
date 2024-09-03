@@ -34,6 +34,11 @@ void SlowBackward() {
     myservoB.writeMicroseconds(1200);
 }
 
+void SlowForward() {
+    myservoA.writeMicroseconds(1800);
+    myservoB.writeMicroseconds(1200);
+}
+
 void mangItBackward() {
     myservoA.writeMicroseconds(2000);
     myservoB.writeMicroseconds(1000);

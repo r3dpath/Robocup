@@ -10,6 +10,7 @@ void Backward();
 void RightTurn();
 void LeftTurn();
 void SlowBackward();
+void SlowForward();
 void mangItBackward();
 void smallLeft();
 void smallRight();

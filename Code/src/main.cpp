@@ -14,12 +14,26 @@
 #include <IMU.h>
 #include <TaskScheduler.h>
 
+/*
+
+TODO:
+State Machine is too slow because of the TOF reads, make this asynchronous like the scanning TOF's
+Sort out how the weight found system should work
+Maybe investigate reducing the time the TOFs have to speed them up
+Slow everything down for a bit once the new frame is here
+Sort out a finalised weight detection algorithm
+Work out how to do a PS/2 connection
+Sort the IMU so it actually does something
+
+*/
+
+
 void task_init();
 extern TOF2 tof_scan;
 
 Scheduler taskManager;
 Task tScan(60, TASK_FOREVER, []() { tof_scan.tick(); });
-Task tStateMachine(500, TASK_FOREVER, Robot_State_Machine);
+Task tStateMachine(300, TASK_FOREVER, Robot_State_Machine);
 Task tIMU(100, TASK_FOREVER, UpdateIMU);
 
 void setup() {

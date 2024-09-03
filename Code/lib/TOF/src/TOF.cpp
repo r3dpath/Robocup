@@ -1,6 +1,8 @@
 #include "TOF.h"
 #include <Arduino.h>
 
+#define DEBUG
+
 // Single TOF Sensor
 
 TOF::TOF(TOFType type, uint8_t xshutPin, uint8_t address, SX1509* io)
@@ -125,7 +127,7 @@ bool TOF2::init() {
 
 // Scans through the 5 SPAD locations and records the difference between the top and bottom sensors. Non-blocking.
 void TOF2::tick() {
-    static const uint16_t spad_locations[5] = {150, 174, 198, 222, 246};
+    static const uint16_t spad_locations[5] = {246, 222, 198, 174, 150}; // {150, 174, 198, 222, 246};
     static uint8_t iter = 0;
     
     // Non-blocking read, will give zero if no good
@@ -137,12 +139,7 @@ void TOF2::tick() {
         bottom[iter] = -1;
     }
 
-    // Only record difference if out by more than 10%
-    if (bottom[iter] > top[iter]*0.9) {
-        differences[iter] = 0;
-    } else {
-        differences[iter] = top[iter] - bottom[iter];
-    }
+    differences[iter] = top[iter] - bottom[iter];
     
     // Record actual center distance for navigation
     if (iter == 2) {
@@ -161,29 +158,4 @@ void TOF2::tick() {
     sensor_bottom.setROICenter(spad_locations[iter]);
     sensor_top.readSingle(false);
     sensor_bottom.readSingle(false);
-}
-
-// Returns the heading to detected weight. 0 is 15 degrees, 1 is 7.5 degrees, 2 is 0 degrees, 3 is -7.5 degrees, 4 is -15 degrees.
-// -1 is no weight detected.
-void TOF2::weight(uint16_t* heading, uint16_t* distance) {
-    uint16_t max = 0;
-    uint8_t max_idx = 0;
-
-    // Iterate through differences and find the largest
-    for (int i = 0; i < 5; i++) {
-        if (differences[i] > max) {
-            max = differences[i];
-            max_idx = i;
-        }
-    }
-
-    // If the differences arn't all zero, return the index of the largest
-    if (max != 0) {
-        *heading = max_idx;
-        *distance = bottom[max_idx];
-    } else {
-        *heading = -1;
-        *distance = -1;
-    }
-
 }

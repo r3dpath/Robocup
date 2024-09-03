@@ -38,10 +38,10 @@ public:
     bool init();
     void disable();
     void tick();
-    void weight(uint16_t* heading, uint16_t* distance);
     uint16_t top[5];
     uint16_t bottom[5];
     uint16_t f_distance;
+    int16_t differences[5];
 
 private:
     uint8_t xshutPin1;
@@ -51,7 +51,6 @@ private:
     SX1509* io;
     VL53L1X sensor_top;
     VL53L1X sensor_bottom;
-    uint16_t differences[5];
 };
 
 #endif // __TOF_H__

@@ -34,6 +34,7 @@ void MoveMent_Controller() {
 
     static bool left = false, right = false; // Retain state between function calls
 
+    #ifdef DEBUG
     Serial2.print("Back: ");
     Serial2.print(back_TOF);
     Serial2.print(" Front: ");
@@ -42,6 +43,7 @@ void MoveMent_Controller() {
     Serial2.print(Left_TOF);
     Serial2.print(" Right: ");
     Serial2.println(Right_TOF);
+    #endif
 
     Forward();
 
