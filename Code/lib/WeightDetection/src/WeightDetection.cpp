@@ -21,14 +21,21 @@ bool getFindWeightFlag() {
 }
 
 bool getFoundWeightFlag() {
+    static uint8_t debounce = 3; 
     uint16_t distance;
     uint16_t heading;
 
     tof_scan.weight(&heading, &distance);
 
     if (heading == 2) {
-        Find_weight_flag = true;
+        if (debounce == 0) {
+            Find_weight_flag = true;
+            debounce = 3;
+        } else {
+            debounce -= 1;
+        }
     } else {
+        debounce = 3;
         Find_weight_flag = false;
     }
     return(Find_weight_flag);

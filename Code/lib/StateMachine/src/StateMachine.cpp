@@ -30,7 +30,6 @@ void Robot_State_Machine() {
             break;
 
         case COLLECTING_WEIGHT:
-            delay(2000);
             current_state = ROAMING;
             break;
     }

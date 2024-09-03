@@ -48,7 +48,7 @@ void task_init() {
   // Enable the tasks
   tScan.enable();
   tStateMachine.enable();
-  tIMU.enable();
+  //tIMU.enable();
 
   Serial2.println("Tasks have been initialised \n");
 }
