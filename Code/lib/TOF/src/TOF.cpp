@@ -26,28 +26,25 @@ bool TOF::init() {
             return false;
         }
         sensorL0.setAddress(address);
-        sensorL0.startContinuous(50);
+        sensorL0.setMeasurementTimingBudget(50000);
+        sensorL0.startContinuous(0);
     } else {
         sensorL1.setTimeout(500);
         sensorL1.setDistanceMode(VL53L1X::Medium);
-        sensorL1.setMeasurementTimingBudget(75000);
+        sensorL1.setMeasurementTimingBudget(50000);
         if (!sensorL1.init()) {
             Serial2.println("TOF Panic");
             return false;
         }
         sensorL1.setAddress(address);
-        //sensorL1.startContinuous(50);
+        sensorL1.startContinuous(50);
     }
 
     return true;
 }
 
 uint16_t TOF::read() {
-    if (type == L0) {
-        return sensorL0.readRangeContinuousMillimeters();
-    } else {
-        return sensorL1.readSingle();
-    }
+    return sensorL0.readRangeContinuousMillimeters();
 }
 
 bool TOF::timeoutOccurred() {
