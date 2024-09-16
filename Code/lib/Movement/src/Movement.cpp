@@ -9,12 +9,16 @@ void setupMovement() {
     myservoB.attach(29);
 }
 
+void Stationary() {
+    myservoA.writeMicroseconds(1500);
+    myservoB.writeMicroseconds(1500);
+}
 void Forward() {
     myservoA.writeMicroseconds(1050);
     myservoB.writeMicroseconds(1950);
 }
 
-void Backward() {
+void Reverse() {
     myservoA.writeMicroseconds(1950);
     myservoB.writeMicroseconds(1050);
 }

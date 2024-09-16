@@ -5,8 +5,9 @@
 
 // Function declarations
 void setupMovement();
+void Stationary();
 void Forward();
-void Backward();
+void Reverse();
 void RightTurn();
 void LeftTurn();
 void SlowBackward();
