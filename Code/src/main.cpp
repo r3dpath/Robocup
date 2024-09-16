@@ -27,14 +27,45 @@ Sort the IMU so it actually does something
 
 */
 
+#define PROFILE
 
 void task_init();
 extern TOF2 tof_scan;
 
+void tof_scan_time() {
+  elapsedMicros time;
+  time = 0;
+  tof_scan.tick();
+  Serial2.print(time);
+  Serial2.println(" - TOF Scan Tick Task");
+}
+
+void rsm_time() {
+  elapsedMicros time;
+  time = 0;
+  Robot_State_Machine();
+  Serial2.print(time);
+  Serial2.println(" - State Machine Task");
+}
+
+void UpdateIMU_time() {
+  elapsedMicros time;
+  time = 0;
+  UpdateIMU();
+  Serial2.print(time);
+  Serial2.println(" - IMU Task");
+}
+
 Scheduler taskManager;
+#ifndef PROFILE
 Task tScan(60, TASK_FOREVER, []() { tof_scan.tick(); });
 Task tStateMachine(300, TASK_FOREVER, Robot_State_Machine);
 Task tIMU(100, TASK_FOREVER, UpdateIMU);
+#else
+Task tScan(60, TASK_FOREVER, tof_scan_time);
+Task tStateMachine(300, TASK_FOREVER, rsm_time);
+Task tIMU(100, TASK_FOREVER, UpdateIMU_time);
+#endif
 
 void setup() {
   

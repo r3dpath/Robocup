@@ -86,8 +86,11 @@ def update_plot(sensor1_data, sensor2_data, heading, distance):
 def parse_input(data):
     try:
         data = data.split(':')
+        if len(data) != 10:
+            return
         sensor1_data, sensor2_data = data[:5], data[5:10]
         heading, distance = int(data[10]), int(data[11])
+        print(sensor1_data, sensor2_data, heading, distance)
         update_plot(sensor1_data, sensor2_data, heading, distance)
     except:
         pass
@@ -96,7 +99,7 @@ def read_socket():
     while True:
         data = s.recv(1024)
         if data:
-            print(data)
+            #print(data)
             parse_input(data.decode('utf-8'))
 
 # Example usage

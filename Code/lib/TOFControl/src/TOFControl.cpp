@@ -27,10 +27,23 @@ void setupTOF() {
 }
 
 void MoveMent_Controller() {
+    elapsedMicros time;
     int back_TOF = tof_b.read();   // Back
+    Serial2.print(time);
+    Serial2.println(" - Back");
+    time = 0;
     uint16_t front_TOF = tof_scan.top[2];  // Front
+    Serial2.print(time);
+    Serial2.println(" - Front");
+    time = 0;
     int Left_TOF = tof_l.read();   // Left side
+    Serial2.print(time);
+    Serial2.println(" - Left");
+    time = 0;
     int Right_TOF = tof_r.read();  // Right side
+    Serial2.print(time);
+    Serial2.println(" - Right");
+    time = 0;
 
     static bool left = false, right = false; // Retain state between function calls
     static unsigned long lastTurnTime = 0;

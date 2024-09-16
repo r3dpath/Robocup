@@ -26,12 +26,12 @@ bool TOF::init() {
             return false;
         }
         sensorL0.setAddress(address);
-        sensorL0.setMeasurementTimingBudget(50000);
+        sensorL0.setMeasurementTimingBudget(45000);
         sensorL0.startContinuous(0);
     } else {
         sensorL1.setTimeout(500);
         sensorL1.setDistanceMode(VL53L1X::Medium);
-        sensorL1.setMeasurementTimingBudget(50000);
+        sensorL1.setMeasurementTimingBudget(45000);
         if (!sensorL1.init()) {
             Serial2.println("TOF Panic");
             return false;
@@ -44,7 +44,11 @@ bool TOF::init() {
 }
 
 uint16_t TOF::read() {
-    return sensorL0.readRangeContinuousMillimeters();
+    if (type == L0) {
+        return sensorL0.readRangeContinuousMillimeters();
+    } else {
+        return sensorL1.readRangeContinuousMillimeters(false);
+    }
 }
 
 bool TOF::timeoutOccurred() {
@@ -55,27 +59,11 @@ bool TOF::timeoutOccurred() {
     }
 }
 
-void TOF::startContinuous(uint16_t period) {
+void TOF::startContinuous(uint16_t period = 50) {
     if (type == L0) {
         sensorL0.startContinuous(period);
     } else {
         sensorL1.startContinuous(period);
-    }
-}
-
-void TOF::scan(uint16_t* distances) {
-    static uint16_t spad_locations[5] = {150, 174, 198, 222, 246};
-    if (type == L0) {
-        return;
-    } else {
-        sensorL1.setROISize(4, 5);
-        for (int i = 0; i < 5; i++) {
-            sensorL1.setROICenter(spad_locations[i]);
-            //delay(100);
-            distances[i] = sensorL1.readSingle();
-        }
-        sensorL1.setROISize(16, 16);
-        sensorL1.setROICenter(223);
     }
 }
 

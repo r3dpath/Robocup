@@ -21,7 +21,6 @@ public:
     uint16_t read();
     bool timeoutOccurred();
     void startContinuous(uint16_t period = 50);
-    void scan(uint16_t* distances);
 
 private:
     TOFType type;
