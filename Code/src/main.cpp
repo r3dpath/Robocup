@@ -13,6 +13,7 @@
 #include <StateMachine.h>
 #include <IMU.h>
 #include <TaskScheduler.h>
+#include "debug.h"
 
 /*
 
@@ -26,8 +27,6 @@ Work out how to do a PS/2 connection
 Sort the IMU so it actually does something
 
 */
-
-#define PROFILE
 
 void task_init();
 extern TOF2 tof_scan;
@@ -57,7 +56,7 @@ void UpdateIMU_time() {
 }
 
 Scheduler taskManager;
-#ifndef PROFILE
+#ifndef PROFILING
 Task tScan(60, TASK_FOREVER, []() { tof_scan.tick(); });
 Task tStateMachine(300, TASK_FOREVER, Robot_State_Machine);
 Task tIMU(100, TASK_FOREVER, UpdateIMU);

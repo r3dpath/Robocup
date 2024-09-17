@@ -1,8 +1,6 @@
 #include "TOF.h"
 #include <Arduino.h>
 
-#define DEBUG
-
 // Single TOF Sensor
 
 TOF::TOF(TOFType type, uint8_t xshutPin, uint8_t address, SX1509* io)

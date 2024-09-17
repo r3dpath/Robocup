@@ -2,6 +2,7 @@
 #include "TOFControl.h"
 #include "WeightDetection.h"
 #include "Movement.h"
+#include "debug.h"
 
 typedef enum {
   ROAMING,
@@ -14,14 +15,10 @@ static Robot_states current_state = ROAMING;
 unsigned long startTime;
 uint8_t num_weight = 0;
 
-void setup() {
-    startTime = millis(); //initialize the timer when the robot start running
-}
-
 void Robot_State_Machine() {
 
     weight_info_t state;
-    unsigned long elapsedTime = millis() - startTime; //Robot run time
+    unsigned long elapsedTime = millis(); //Robot run time
 
     switch (current_state) {
         case ROAMING:

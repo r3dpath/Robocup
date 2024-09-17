@@ -1,14 +1,15 @@
 #include "TOFControl.h"
 #include "Movement.h"
 #include "TOF.h"
+#include "debug.h"
 
 SX1509 io;
 const byte SX1509_ADDRESS = 0x3F;
 // TOF sensor objects
-TOF tof_l(L0, 0, 0x30, &io); // Left TOF
-TOF tof_r(L0, 1, 0x31, &io); // Right TOF
-TOF tof_b(L1, 3, 0x36, &io); // Back TOF
-TOF2 tof_scan(4, 0x35, 2, 0x37, &io); // Both front facing TOF's
+TOF tof_l(L0, 2, 0x30, &io); // Left TOF
+TOF tof_r(L0, 0, 0x31, &io); // Right TOF
+TOF tof_b(L1, 1, 0x32, &io); // Back TOF
+TOF2 tof_scan(4, 0x35, 3, 0x36, &io); // Both front facing TOF's
 
 void setupTOF() {
     io.begin(SX1509_ADDRESS);
@@ -27,23 +28,41 @@ void setupTOF() {
 }
 
 void MoveMent_Controller() {
+    #ifdef PROFILING
     elapsedMicros time;
+    #endif
+
     int back_TOF = tof_b.read();   // Back
+
+    #ifdef PROFILING
     Serial2.print(time);
     Serial2.println(" - Back");
     time = 0;
+    #endif
+
     uint16_t front_TOF = tof_scan.top[2];  // Front
+
+    #ifdef PROFILING
     Serial2.print(time);
     Serial2.println(" - Front");
     time = 0;
+    #endif
+
     int Left_TOF = tof_l.read();   // Left side
+
+    #ifdef PROFILING
     Serial2.print(time);
     Serial2.println(" - Left");
     time = 0;
+    #endif
+
     int Right_TOF = tof_r.read();  // Right side
+
+    #ifdef PROFILING
     Serial2.print(time);
     Serial2.println(" - Right");
     time = 0;
+    #endif
 
     static bool left = false, right = false; // Retain state between function calls
     static unsigned long lastTurnTime = 0;
