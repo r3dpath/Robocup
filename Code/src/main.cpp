@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <Movement.h>
 
 int MAdirpin = 32;
 int MAsteppin = 33;
@@ -11,11 +12,13 @@ void setup()
   pinMode(MAsteppin,OUTPUT);
   pinMode(MBdirpin,OUTPUT);
   pinMode(MBsteppin,OUTPUT);
+  setupMovement();
 }
 
 void loop()
 {
   int j;
+  Forward();
   
   //Set direction for all channels
 
