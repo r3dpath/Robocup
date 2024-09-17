@@ -10,8 +10,8 @@ void setupMovement() {
 }
 
 void Forward() {
-    myservoA.writeMicroseconds(1050);
-    myservoB.writeMicroseconds(1950);
+    myservoA.writeMicroseconds(1250);
+    myservoB.writeMicroseconds(1750);
 }
 
 void Backward() {
