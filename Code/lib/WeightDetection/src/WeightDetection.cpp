@@ -1,10 +1,10 @@
 #include "WeightDetection.h"
 #include "Movement.h"
+#include "debug.h"
 
 #define AVG_DEADBAND 1.5
 #define ABS_DEADBAND 1.1
 #define WASHOUT_RANGE 300
-#define DEBUG
 
 extern TOF2 tof_scan;
 
