@@ -33,7 +33,7 @@ void MoveMent_Controller() {
     int Right_TOF = tof_r.read();  // Right side
 
     static bool left = false, right = false; // Retain state between function calls
-    static unsigned long lastTurnTime = 0;
+
 
     #ifdef DEBUG
     Serial2.print("Back: ");
@@ -48,30 +48,14 @@ void MoveMent_Controller() {
 
     Forward();
 
-    if(millis() - lastTurnTime > random(2000, 5000)) { //random timer trigger random between 2 and 5 seconds
-        int randomTurn = random(0, 2); // random generation of number 
-        if (randomTurn == 0) {
-            LeftTurn();
-            left = true;
-            right = false;
-        } else {
-            RightTurn();
-            left = false;
-            right = true;
-        }
-        lastTurnTime = millis(); //Resets timer
-    }
-
     if ((Left_TOF <= 250) && !right) {
         RightTurn();
         right = true;
         left = false;
-        lastTurnTime = millis();
     } else if (Right_TOF <= 250 && !left) {
         LeftTurn();
         left = true;
         right = false;
-        lastTurnTime = millis();
     }
 
     if (!left && !right) {
@@ -83,7 +67,6 @@ void MoveMent_Controller() {
                 RightTurn();
             }
         }
-        lastTurnTime = millis();
     } else  if (front_TOF >= 1000) {
             Forward();
         }
@@ -96,7 +79,6 @@ void MoveMent_Controller() {
         } else if (Right_TOF > Left_TOF) {
             RightTurn();
         }
-        lastTurnTime = millis();
     }
     //In the case of getting too close to the wall, 
     if (front_TOF <= 250) {
@@ -105,6 +87,5 @@ void MoveMent_Controller() {
         } else {
             RightTurn();
         }
-        lastTurnTime = millis();
     }
 }
