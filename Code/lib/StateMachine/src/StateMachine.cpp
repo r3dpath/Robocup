@@ -49,7 +49,10 @@ void Robot_State_Machine() {
             }
             // Stops the robot if timer is over 2 minutes
             else if (elapsedTime > 120000) { 
-                Stationary();
+                while(1)
+                {
+                    //gets it stuck in the loop stoping all other execution
+                }
             } else {
                 MoveMent_Controller();
                 if (millis() - lastTurnTime > (unsigned long)random(2000, 5000)) {
