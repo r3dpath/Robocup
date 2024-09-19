@@ -53,20 +53,11 @@ void Robot_State_Machine() {
         case RANDOM_WALK: {
             // Randomly pick direction (0 for left, 1 for right) and turn type (0 for small, 1 for large)
             int randomTurn = random(0, 2);
-            int turnType = random(0, 2);
 
             if (randomTurn == 0) {
-                if (turnType == 0) {
-                    smallLeft();
-                } else {
-                    Larger_Left_Turn();
-                }
+                smallLeft();
             } else {
-                if (turnType == 0) {
-                    smallRight();
-                } else {
-                    Larger_Right_Turn();
-                }
+                smallRight(); 
             }
 
             // Stay in random walk mode for 2-5 seconds
