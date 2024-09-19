@@ -8,7 +8,8 @@ typedef enum {
   ROAMING,
   COLLECT_WEIGHT,
   RETURNING_BASE,
-  RANDOM_WALK
+  RANDOM_WALK,
+  PURSUE_WEIGHT
 } Robot_states;
 
 static Robot_states current_state = ROAMING;
@@ -24,25 +25,18 @@ void Robot_State_Machine() {
         case ROAMING: {
             state = weightDetection();
             if (state.certainty > 1) {
-                if (state.direction == CENTER) {
-                    current_state = COLLECT_WEIGHT;
-                } else {
-                    if (state.direction == LEFT || state.direction == FAR_LEFT) {
-                        smallLeft();
-                    } else {
-                        smallRight();
-                    }
-                }
+                current_state = PURSUE_WEIGHT;
             }
             // Stops the robot if timer is over 2 minutes
-            else if (elapsedTime > 120000) { 
+            else if (elapsedTime > 120000) {
+                Stationary();
                 while(1)
                 {
                     //gets it stuck in the loop stoping all other execution
                 }
             } else {
                 MoveMent_Controller();
-                if (millis() - lastTurnTime > (unsigned long)random(2000, 5000)) {
+                if (millis() - lastTurnTime > (unsigned long)random(10000, 20000)) {
                     current_state = RANDOM_WALK;
                     lastTurnTime = millis();  // Reset the timer for random walk duration
                 }
@@ -53,7 +47,10 @@ void Robot_State_Machine() {
         case RANDOM_WALK: {
             // Randomly pick direction (0 for left, 1 for right) and turn type (0 for small, 1 for large)
             int randomTurn = random(0, 2);
-
+            state = weightDetection();
+            if (state.certainty > 1) {
+                current_state = PURSUE_WEIGHT;
+            }
             if (randomTurn == 0) {
                 smallLeft();
             } else {
@@ -61,7 +58,7 @@ void Robot_State_Machine() {
             }
 
             // Stay in random walk mode for 2-5 seconds
-            if (millis() - lastTurnTime > (unsigned long)random(2000, 5000)) {
+            if (millis() - lastTurnTime > (unsigned long)random(1000, 2000)) {
                 current_state = ROAMING;
                 lastTurnTime = millis();  // Reset timer for roaming
             }
@@ -71,15 +68,35 @@ void Robot_State_Machine() {
         case COLLECT_WEIGHT: {
             
             SlowForward();
-            num_weight += 1; // Increment weight count
-
-            if ((num_weight == 3) && (elapsedTime < 105000)) { // Return home if 3 weights collected and within time
-                current_state = RETURNING_BASE;
-            } else {
+            state = weightDetection();
+            if (state.certainty == 0) {
                 current_state = ROAMING;
             }
+            //num_weight += 1; // Increment weight count
+
+            // if ((num_weight == 3) && (elapsedTime < 105000)) { // Return home if 3 weights collected and within time
+            //     current_state = RETURNING_BASE;
+            // } else {
+            //     current_state = ROAMING;
+            // }
             break;
         }
+
+        case PURSUE_WEIGHT:
+            state = weightDetection();
+            if (state.direction == CENTER) {
+                if (state.direction < 400) {
+                    current_state = COLLECT_WEIGHT;
+                } else {
+                    SlowForward();
+                }
+                } else {
+                    if (state.direction == LEFT || state.direction == FAR_LEFT) {
+                        smallLeft();
+                    } else {
+                        smallRight();
+                    }
+                }
 
         case RETURNING_BASE: {
             if (state.certainty > 1) {
@@ -96,5 +113,6 @@ void Robot_State_Machine() {
         case COLLECT_WEIGHT: Serial2.println("COLLECTING_WEIGHT"); break;
         case RETURNING_BASE: Serial2.println("RETURNING_BASE"); break;
         case RANDOM_WALK: Serial2.println("RANDOM_WALK"); break;
+        case PURSUE_WEIGHT: Serial2.println("PURSUE_WEIGHT"); break;
     }
 }
