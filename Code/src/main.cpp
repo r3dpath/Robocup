@@ -53,7 +53,7 @@ void UpdateIMU_time() {
   UpdateIMU();
   Serial2.print(time);
   Serial2.println(" - IMU Task");
-}
+}  
 
 Scheduler taskManager;
 #ifndef PROFILING
