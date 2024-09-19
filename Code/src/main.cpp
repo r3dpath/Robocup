@@ -70,6 +70,7 @@ void task_init() {
 }
 
 void print_weight () {
+  state = 
   Serial2.print(tof_scan.top[4]);
   Serial2.print(":");
   Serial2.print(tof_scan.top[3]);
