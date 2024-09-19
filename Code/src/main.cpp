@@ -20,10 +20,10 @@ boolean receiveComplete = false;
 
 bool Find_weight_flag = false;
 
-TOF tof_l(L0, 0, 0x30, &io); // Left TOF
-TOF tof_r(L0, 1, 0x31, &io); // Right TOF
-TOF tof_b(L1, 3, 0x36, &io); // Navigation
-TOF2 tof_scan(4, 0x35, 2, 0x37, &io);
+TOF tof_l(L0, 2, 0x30, &io); // Left TOF
+TOF tof_r(L0, 0, 0x31, &io); // Right TOF
+TOF tof_b(L1, 1, 0x36, &io); // Navigation
+TOF2 tof_scan(4, 0x35, 3, 0x37, &io);
 
 Scheduler taskManager;
 Task tScan(80, TASK_FOREVER, []() { tof_scan.tick(); });
@@ -70,10 +70,6 @@ void task_init() {
 }
 
 void print_weight () {
-  uint16_t distance;
-  uint16_t heading;
-
-  tof_scan.weight(&heading, &distance);
   Serial2.print(tof_scan.top[4]);
   Serial2.print(":");
   Serial2.print(tof_scan.top[3]);
@@ -92,11 +88,7 @@ void print_weight () {
   Serial2.print(":");
   Serial2.print(tof_scan.bottom[1]);
   Serial2.print(":");
-  Serial2.print(tof_scan.bottom[0]);
-  Serial2.print(":");
-  Serial2.print(heading);
-  Serial2.print(":");
-  Serial2.println(distance);
+  Serial2.println(tof_scan.bottom[0]);
 }
 
 
