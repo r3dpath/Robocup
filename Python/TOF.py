@@ -39,7 +39,7 @@ class TOFVisualizer:
                 distances = dp.split(':')
             except:
                 return
-            if (len(distances) == 12):
+            if (len(distances) == 10):
                 self.tof_distances = [int(distance)/3 for distance in distances]
                 self.visualize_distances()
 

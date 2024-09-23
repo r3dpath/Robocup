@@ -1,10 +1,16 @@
 #ifndef MOVEMENT_H
 #define MOVEMENT_H
 
+#include <TOF.h>
 #include <Servo.h>
 
-// Function declarations
-void setupMovement();
+#define PPM_STOP 1500
+#define SPEED_SLOW 250
+#define SPEED_FAST 450
+
+void initMovement();
+void movementController();
+
 void Stationary();
 void Forward();
 void Reverse();
@@ -12,8 +18,7 @@ void RightTurn();
 void LeftTurn();
 void SlowBackward();
 void SlowForward();
-void mangItBackward();
-void smallLeft();
-void smallRight();
+void SlowLeft();
+void SlowRight();
 
 #endif

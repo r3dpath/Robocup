@@ -8,27 +8,24 @@
 #include "BNO055_support.h"
 #include <TOF.h>
 #include <Movement.h>
-#include <TOFControl.h>
 #include <WeightDetection.h>
 #include <StateMachine.h>
 #include <IMU.h>
 #include <TaskScheduler.h>
+#include <Collection.h>
 #include "debug.h"
 
 /*
 
 TODO:
-State Machine is too slow because of the TOF reads, make this asynchronous like the scanning TOF's
 Sort out how the weight found system should work
-Maybe investigate reducing the time the TOFs have to speed them up
-Slow everything down for a bit once the new frame is here
 Sort out a finalised weight detection algorithm
 Work out how to do a PS/2 connection
 Sort the IMU so it actually does something
 
 */
 
-void task_init();
+void initTask();
 extern TOF2 tof_scan;
 
 void tof_scan_time() {
@@ -69,17 +66,18 @@ Task tIMU(100, TASK_FOREVER, UpdateIMU_time);
 void setup() {
   
     Serial.begin(115200);
-    Serial1.begin(115200);
     Serial2.begin(921600);
 
     // Initialize TOF controller (includes IMU)
-    task_init();
-    setupTOF();
-    setupMovement();
-    IMU_setup();
+    initMovement();
+    initIMU();
+    initCollection();
+
+    // Initialize the task scheduler
+    initTask();
 }
 
-void task_init() {  
+void initTask() {  
   
   // This is a class/library function. Initialise the task scheduler
   taskManager.init();     

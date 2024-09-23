@@ -1,8 +1,8 @@
 #include "StateMachine.h"
-#include "TOFControl.h"
 #include "WeightDetection.h"
 #include "Movement.h"
 #include "debug.h"
+#include "Collection.h"
 
 typedef enum {
   ROAMING,
@@ -35,7 +35,7 @@ void Robot_State_Machine() {
                     //gets it stuck in the loop stoping all other execution
                 }
             } else {
-                MoveMent_Controller();
+                movementController();
                 if (millis() - lastTurnTime > (unsigned long)random(10000, 20000)) {
                     current_state = RANDOM_WALK;
                     lastTurnTime = millis();  // Reset the timer for random walk duration
@@ -52,9 +52,9 @@ void Robot_State_Machine() {
                 current_state = PURSUE_WEIGHT;
             }
             if (randomTurn == 0) {
-                smallLeft();
+                SlowLeft();
             } else {
-                smallRight(); 
+                SlowRight(); 
             }
 
             // Stay in random walk mode for 2-5 seconds
@@ -66,10 +66,11 @@ void Robot_State_Machine() {
         }
 
         case COLLECT_WEIGHT: {
-            
+            collectionOn();
             SlowForward();
             state = weightDetection();
             if (state.certainty == 0) {
+                collectionOff();
                 current_state = ROAMING;
             }
             //num_weight += 1; // Increment weight count
@@ -92,9 +93,9 @@ void Robot_State_Machine() {
                 }
                 } else {
                     if (state.direction == LEFT || state.direction == FAR_LEFT) {
-                        smallLeft();
+                        SlowLeft();
                     } else {
-                        smallRight();
+                        SlowRight();
                     }
                 }
 

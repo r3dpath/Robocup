@@ -9,7 +9,7 @@ unsigned char bno055_calib;
 
 bool cal = true;
 
-void IMU_setup()
+void initIMU()
 {
     // Initialize IMU
     Wire1.begin();
@@ -43,7 +43,7 @@ void UpdateIMU()
     Serial2.println(bno055_calib);
     #endif
     if (myEulerData.r < -320) { // When over 20 degrees inclined
-        mangItBackward();
+        Reverse();
         
     }
     if ((myEulerData.p < -320) || (myEulerData.p > 320)) { // Over 20 degrees rolled either way
