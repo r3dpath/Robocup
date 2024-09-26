@@ -5,7 +5,7 @@
 #include <Servo.h>
 
 #define PPM_STOP 1500
-#define SPEED_SLOW 360
+#define SPEED_SLOW 300
 #define SPEED_FAST 450
 
 void initMovement();

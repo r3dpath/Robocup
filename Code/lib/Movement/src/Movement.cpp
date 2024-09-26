@@ -31,6 +31,7 @@ void initMovement() {
     tof_r.init();
     tof_scan.init();
 }
+
 void movementController() {
     #ifdef PROFILING
     elapsedMicros time;
@@ -44,7 +45,7 @@ void movementController() {
     time = 0;
     #endif
 
-    uint16_t front_TOF = tof_scan.top[2];  // Front
+    uint16_t front_TOF = tof_scan.f_distance;  // Front
 
     #ifdef PROFILING
     Serial2.print(time);
@@ -72,14 +73,8 @@ void movementController() {
 
 
     #ifdef DEBUG
-    Serial2.print("Back: ");
-    Serial2.print(back_TOF);
-    Serial2.print(" Front: ");
-    Serial2.print(front_TOF);
-    Serial2.print(" Left: ");
-    Serial2.print(Left_TOF);
-    Serial2.print(" Right: ");
-    Serial2.println(Right_TOF);
+    Serial2.print("T:");
+    Serial2.print(Left_TOF);Serial2.print(":");Serial2.print(front_TOF);Serial2.print(":");Serial2.println(Right_TOF);
     #endif
 
     Forward();

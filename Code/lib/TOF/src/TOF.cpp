@@ -103,14 +103,14 @@ bool TOF2::init() {
     sensor_bottom.setMeasurementTimingBudget(45000);
     sensor_bottom.setAddress(address2);
     // Set SPAD size
-    sensor_top.setROISize(5, 4);
-    sensor_bottom.setROISize(5, 4);
+    sensor_top.setROISize(4, 5);
+    sensor_bottom.setROISize(4, 5);
     return true;
 }
 
 // Scans through the 5 SPAD locations and records the difference between the top and bottom sensors. Non-blocking.
 void TOF2::tick() {
-    static const uint16_t spad_locations[5] = {74, 77, 183, 180, 177}; // {150, 174, 198, 222, 246};
+    static const uint16_t spad_locations[5] = {246, 222, 198, 174, 150}; // {150, 174, 198, 222, 246};
     static uint8_t iter = 0;
     
     // Non-blocking read, will give zero if no good
