@@ -1,7 +1,6 @@
 import tkinter as tk
 import math
 import unittest
-import serial
 import threading
 import socket
 
