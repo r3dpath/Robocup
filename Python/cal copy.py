@@ -8,8 +8,11 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     while(True):
         data = s.recv(1024)
         if data:
-            line = data.decode().strip()
-            vals = line.split(':')
-            vals = [int(val) for val in vals]
-            print([val - (vals[int(idx+5)]-20) for idx, val in enumerate(vals[:5])])
+            try:
+                line = data.decode().strip()
+                vals = line.split(':')
+                vals = [int(val) for val in vals]
+                print([val - (vals[int(idx+5)]-20) for idx, val in enumerate(vals[:5])])
+            except:
+                pass
             
