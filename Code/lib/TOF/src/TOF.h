@@ -7,6 +7,7 @@
 #include <SparkFunSX1509.h>
 
 #define TOF_SCAN_HEIGHT 4
+#define TOF_CONSTANT_OFFSET 20
 
 enum TOFType {
     L0,

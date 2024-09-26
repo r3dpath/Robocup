@@ -122,7 +122,7 @@ void TOF2::tick() {
         bottom[iter] = -1;
     }
 
-    differences[iter] = top[iter] - bottom[iter];
+    differences[iter] = top[iter] - (bottom[iter]+TOF_CONSTANT_OFFSET);
     
     // Record actual center distance for navigation
     if (iter == 2) {
