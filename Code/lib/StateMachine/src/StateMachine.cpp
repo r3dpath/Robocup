@@ -28,15 +28,16 @@ void Robot_State_Machine() {
                 current_state = PURSUE_WEIGHT;
             }
             // Stops the robot if timer is over 2 minutes
-            else if (elapsedTime > 120000) {
-                Stationary();
-                while(1)
-                {
-                    //gets it stuck in the loop stoping all other execution
-                }
-            } else {
+            // else if (elapsedTime > 120000) {
+            //     Stationary();
+            //     while(1)
+            //     {
+            //         //gets it stuck in the loop stoping all other execution
+            //     }
+            // }
+            else {
                 movementController();
-                if (millis() - lastTurnTime > (unsigned long)random(10000, 20000)) {
+                if (millis() - lastTurnTime > (unsigned long)random(8000, 12000)) {
                     current_state = RANDOM_WALK;
                     lastTurnTime = millis();  // Reset the timer for random walk duration
                 }
