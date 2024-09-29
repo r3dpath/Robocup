@@ -17,6 +17,25 @@ unsigned long startTime;
 uint8_t num_weight = 0;
 unsigned long lastTurnTime = 0;
 
+#define TIME_LIMIT 120000000;
+
+void transition(Robot_states newState) {
+    current_state = newState;
+    lastTurnTime = millis();//after state change reset timer
+}
+
+void printCurrentState()
+{
+    Serial.print("Current state: ");
+    switch (current_state) {
+        case ROAMING: Serial.println("ROAMING"); break;
+        case COLLECT_WEIGHT: Serial.println("COLLECTING_WEIGHT"); break;
+        case RETURNING_BASE: Serial.println("RETURNING_BASE"); break;
+        case RANDOM_WALK: Serial.println("RANDOM_WALK"); break;
+        case PURSUE_WEIGHT: Serial.println("PURSUE_WEIGHT"); break;
+    }
+}
+
 void Robot_State_Machine() {
     weight_info_t state;
     unsigned long elapsedTime = millis(); //Robot run time
@@ -25,21 +44,19 @@ void Robot_State_Machine() {
         case ROAMING: {
             state = weightDetection();
             if (state.certainty > 1) {
-                current_state = PURSUE_WEIGHT;
+                transition(PURSUE_WEIGHT);
             }
             // Stops the robot if timer is over 2 minutes
-            // else if (elapsedTime > 120000) {
-            //     Stationary();
-            //     while(1)
-            //     {
-            //         //gets it stuck in the loop stoping all other execution
-            //     }
-            // }
-            else {
+            else if (elapsedTime > 120000000) {
+                Stationary();
+                while(1)
+                {
+                    //gets it stuck in the loop stoping all other execution
+                }
+            } else {
                 movementController();
                 if (millis() - lastTurnTime > (unsigned long)random(8000, 12000)) {
-                    current_state = RANDOM_WALK;
-                    lastTurnTime = millis();  // Reset the timer for random walk duration
+                    transition(RANDOM_WALK);
                 }
             }
             break;
@@ -50,7 +67,7 @@ void Robot_State_Machine() {
             int randomTurn = random(0, 2);
             state = weightDetection();
             if (state.certainty > 1) {
-                current_state = PURSUE_WEIGHT;
+                transition(PURSUE_WEIGHT);
             }
             if (randomTurn == 0) {
                 SlowLeft();
@@ -59,9 +76,8 @@ void Robot_State_Machine() {
             }
 
             // Stay in random walk mode for 2-5 seconds
-            if (millis() - lastTurnTime > (unsigned long)random(1000, 2000)) {
-                current_state = ROAMING;
-                lastTurnTime = millis();  // Reset timer for roaming
+            if (millis() - lastTurnTime > (unsigned long)random(2000, 3000)) {
+                transition(ROAMING);
             }
             break;
         }
@@ -72,7 +88,7 @@ void Robot_State_Machine() {
             state = weightDetection();
             if (state.certainty == 0) {
                 collectionOff();
-                current_state = ROAMING;
+                transition(ROAMING);
             }
             //num_weight += 1; // Increment weight count
 
@@ -84,37 +100,32 @@ void Robot_State_Machine() {
             break;
         }
 
-        case PURSUE_WEIGHT:
+        case PURSUE_WEIGHT: {
             state = weightDetection();
+            if (state.certainty == 0) {
+                transition(ROAMING);
+                break;
+            }
             if (state.direction == CENTER) {
                 if (state.direction < 400) {
-                    current_state = COLLECT_WEIGHT;
+                    transition(COLLECT_WEIGHT);
                 } else {
                     SlowForward();
                 }
+            } else {
+                if (state.direction == LEFT || state.direction == FAR_LEFT) {
+                    SlowLeft();
                 } else {
-                    if (state.direction == LEFT || state.direction == FAR_LEFT) {
-                        SlowLeft();
-                    } else {
-                        SlowRight();
-                    }
+                    SlowRight();
                 }
-
-        case RETURNING_BASE: {
-            if (state.certainty > 1) {
-                // Use IR camera to follow beacon home
             }
+            break;
+        }
+        case RETURNING_BASE: {
+            //Do return to base stuff
             break;
         }
     }
 
-    // Debugging output
-    Serial.print("Current state: ");
-    switch (current_state) {
-        case ROAMING: Serial.println("ROAMING"); break;
-        case COLLECT_WEIGHT: Serial.println("COLLECTING_WEIGHT"); break;
-        case RETURNING_BASE: Serial.println("RETURNING_BASE"); break;
-        case RANDOM_WALK: Serial.println("RANDOM_WALK"); break;
-        case PURSUE_WEIGHT: Serial.println("PURSUE_WEIGHT"); break;
-    }
+    //printCurrentState();
 }
