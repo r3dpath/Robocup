@@ -1,5 +1,6 @@
 #include "TOF.h"
 #include <Arduino.h>
+#include "debug.h"
 
 // Single TOF Sensor
 
@@ -20,7 +21,7 @@ bool TOF::init() {
     if (type == L0) {
         sensorL0.setTimeout(500);
         if (!sensorL0.init()) {
-            Serial2.println("TOF Panic");
+            Serial.println("TOF Panic");
             return false;
         }
         sensorL0.setAddress(address);
@@ -31,7 +32,7 @@ bool TOF::init() {
         sensorL1.setDistanceMode(VL53L1X::Medium);
         sensorL1.setMeasurementTimingBudget(45000);
         if (!sensorL1.init()) {
-            Serial2.println("TOF Panic");
+            Serial.println("TOF Panic");
             return false;
         }
         sensorL1.setAddress(address);
@@ -85,7 +86,7 @@ bool TOF2::init() {
     delay(10);
     sensor_top.setTimeout(500);
     if (!sensor_top.init()) {
-        Serial2.println("TOF2 Panic 1");
+        Serial.println("TOF2 Panic 1");
         return false;
     }
     sensor_top.setDistanceMode(VL53L1X::Medium);
@@ -96,7 +97,7 @@ bool TOF2::init() {
     delay(10);
     sensor_bottom.setTimeout(500);
     if (!sensor_bottom.init()) {
-        Serial2.println("TOF2 Panic 2");
+        Serial.println("TOF2 Panic 2");
         return false;
     }
     sensor_bottom.setDistanceMode(VL53L1X::Medium);

@@ -32,24 +32,24 @@ void tof_scan_time() {
   elapsedMicros time;
   time = 0;
   tof_scan.tick();
-  Serial2.print(time);
-  Serial2.println(" - TOF Scan Tick Task");
+  Serial.print(time);
+  Serial.println(" - TOF Scan Tick Task");
 }
 
 void rsm_time() {
   elapsedMicros time;
   time = 0;
   Robot_State_Machine();
-  Serial2.print(time);
-  Serial2.println(" - State Machine Task");
+  Serial.print(time);
+  Serial.println(" - State Machine Task");
 }
 
 void UpdateIMU_time() {
   elapsedMicros time;
   time = 0;
   UpdateIMU();
-  Serial2.print(time);
-  Serial2.println(" - IMU Task");
+  Serial.print(time);
+  Serial.println(" - IMU Task");
 }  
 
 Scheduler taskManager;
@@ -65,8 +65,7 @@ Task tIMU(100, TASK_FOREVER, UpdateIMU_time);
 
 void setup() {
   
-    Serial.begin(115200);
-    Serial2.begin(921600);
+    Serial.begin(BAUD);
 
     // Initialize TOF controller (includes IMU)
     initMovement();
@@ -92,7 +91,7 @@ void initTask() {
   tStateMachine.enable();
   tIMU.enable();
 
-  Serial2.println("Tasks have been initialised \n");
+  Serial.println("Tasks have been initialised \n");
 }
 
 void loop() {

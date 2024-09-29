@@ -109,12 +109,12 @@ void Robot_State_Machine() {
     }
 
     // Debugging output
-    Serial2.print("Current state: ");
+    Serial.print("Current state: ");
     switch (current_state) {
-        case ROAMING: Serial2.println("ROAMING"); break;
-        case COLLECT_WEIGHT: Serial2.println("COLLECTING_WEIGHT"); break;
-        case RETURNING_BASE: Serial2.println("RETURNING_BASE"); break;
-        case RANDOM_WALK: Serial2.println("RANDOM_WALK"); break;
-        case PURSUE_WEIGHT: Serial2.println("PURSUE_WEIGHT"); break;
+        case ROAMING: Serial.println("ROAMING"); break;
+        case COLLECT_WEIGHT: Serial.println("COLLECTING_WEIGHT"); break;
+        case RETURNING_BASE: Serial.println("RETURNING_BASE"); break;
+        case RANDOM_WALK: Serial.println("RANDOM_WALK"); break;
+        case PURSUE_WEIGHT: Serial.println("PURSUE_WEIGHT"); break;
     }
 }

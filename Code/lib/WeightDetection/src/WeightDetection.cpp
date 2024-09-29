@@ -46,10 +46,10 @@ weight_info_t weightDetection() {
     }
 
     #ifdef DEBUG
-    Serial2.print("S:");
-    Serial2.print(tof_scan.top[0]); Serial2.print(":"); Serial2.print(tof_scan.top[1]); Serial2.print(":"); Serial2.print(tof_scan.top[2]); Serial2.print(":"); Serial2.print(tof_scan.top[3]); Serial2.print(":"); Serial2.print(tof_scan.top[4]); Serial2.print(":");
-    Serial2.print(tof_scan.bottom[0]); Serial2.print(":"); Serial2.print(tof_scan.bottom[1]); Serial2.print(":"); Serial2.print(tof_scan.bottom[2]); Serial2.print(":"); Serial2.print(tof_scan.bottom[3]); Serial2.print(":"); Serial2.print(tof_scan.bottom[4]); Serial2.print(":");
-    Serial2.print(state.direction); Serial2.print(":"); Serial2.println(state.distance);
+    Serial.print("S:");
+    Serial.print(tof_scan.top[0]); Serial.print(":"); Serial.print(tof_scan.top[1]); Serial.print(":"); Serial.print(tof_scan.top[2]); Serial.print(":"); Serial.print(tof_scan.top[3]); Serial.print(":"); Serial.print(tof_scan.top[4]); Serial.print(":");
+    Serial.print(tof_scan.bottom[0]); Serial.print(":"); Serial.print(tof_scan.bottom[1]); Serial.print(":"); Serial.print(tof_scan.bottom[2]); Serial.print(":"); Serial.print(tof_scan.bottom[3]); Serial.print(":"); Serial.print(tof_scan.bottom[4]); Serial.print(":");
+    Serial.print(state.direction); Serial.print(":"); Serial.println(state.distance);
     #endif
 
     return state;

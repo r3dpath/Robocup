@@ -40,32 +40,32 @@ void movementController() {
     int back_TOF = tof_b.read();   // Back
 
     #ifdef PROFILING
-    Serial2.print(time);
-    Serial2.println(" - Back");
+    Serial.print(time);
+    Serial.println(" - Back");
     time = 0;
     #endif
 
     uint16_t front_TOF = tof_scan.f_distance;  // Front
 
     #ifdef PROFILING
-    Serial2.print(time);
-    Serial2.println(" - Front");
+    Serial.print(time);
+    Serial.println(" - Front");
     time = 0;
     #endif
 
     int Left_TOF = tof_l.read();   // Left side
 
     #ifdef PROFILING
-    Serial2.print(time);
-    Serial2.println(" - Left");
+    Serial.print(time);
+    Serial.println(" - Left");
     time = 0;
     #endif
 
     int Right_TOF = tof_r.read();  // Right side
 
     #ifdef PROFILING
-    Serial2.print(time);
-    Serial2.println(" - Right");
+    Serial.print(time);
+    Serial.println(" - Right");
     time = 0;
     #endif
 
@@ -73,8 +73,8 @@ void movementController() {
 
 
     #ifdef DEBUG
-    Serial2.print("T:");
-    Serial2.print(Left_TOF);Serial2.print(":");Serial2.print(front_TOF);Serial2.print(":");Serial2.println(Right_TOF);
+    Serial.print("T:");
+    Serial.print(Left_TOF);Serial.print(":");Serial.print(front_TOF);Serial.print(":");Serial.println(Right_TOF);
     #endif
 
     Forward();

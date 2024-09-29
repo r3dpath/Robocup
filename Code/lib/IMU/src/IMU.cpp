@@ -33,14 +33,14 @@ void UpdateIMU()
     bno055_read_euler_hrp(&myEulerData); // Euler data, pitch, roll and heading. On the robot negative pitch is when tilted up. Returns degrees*16
     bno055_get_syscalib_status(&bno055_calib);
     #ifdef DEBUG_IMU
-    Serial2.print("Roll: ");
-    Serial2.print(myEulerData.r);
-    Serial2.print(" Pitch: ");
-    Serial2.print(myEulerData.p);
-    Serial2.print(" Heading: ");
-    Serial2.println(myEulerData.h);
-    Serial2.print("Calibration status: ");
-    Serial2.println(bno055_calib);
+    Serial.print("Roll: ");
+    Serial.print(myEulerData.r);
+    Serial.print(" Pitch: ");
+    Serial.print(myEulerData.p);
+    Serial.print(" Heading: ");
+    Serial.println(myEulerData.h);
+    Serial.print("Calibration status: ");
+    Serial.println(bno055_calib);
     #endif
     if (myEulerData.r < -320) { // When over 20 degrees inclined
         Reverse();
@@ -83,6 +83,6 @@ void calibrateIMU()
         eeprom_write_word((uint16_t*)14, seven);
         eeprom_write_word((uint16_t*)16, eight);
         cal = true;
-        Serial2.println("-- CALIBRATED --");
+        Serial.println("-- CALIBRATED --");
     }
 }
