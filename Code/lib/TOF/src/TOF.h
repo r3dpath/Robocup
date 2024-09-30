@@ -39,7 +39,9 @@ public:
     void disable();
     void tick();
     uint16_t top[5];
+    uint8_t top_status[5];
     uint16_t bottom[5];
+    uint8_t bottom_status[5];
     uint16_t f_distance;
     int16_t differences[5];
 

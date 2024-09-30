@@ -117,10 +117,14 @@ void TOF2::tick() {
     // Non-blocking read, will give zero if no good
     if (sensor_top.dataReady() && sensor_bottom.dataReady()) {
         top[iter] = sensor_top.read(false);
+        top_status[iter] = sensor_top.ranging_data.range_status;
         bottom[iter] = sensor_bottom.read(false);
+        bottom_status[iter] = sensor_bottom.ranging_data.range_status;
     } else {
         top[iter] = -1;
+        top_status[iter] = -1;
         bottom[iter] = -1;
+        bottom_status[iter] = -1;
     }
 
     differences[iter] = top[iter] - (bottom[iter]+TOF_CONSTANT_OFFSET);
