@@ -3,6 +3,10 @@
 
 #include <TOF.h>
 #include <Wire.h>
-#include <SparkFunSX1509.h>
+#include <Movement.h>
+extern SX1509 io;
+
+void CheckWeightCount();
+uint8_t getWeightCount();
 
 #endif

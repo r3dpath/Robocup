@@ -3,7 +3,9 @@
 #include "Movement.h"
 #include "debug.h"
 #include "Collection.h"
+#include "WeightCount.h"
 
+#define MAX_WEIGHT_COUNT 3;
 
 static Robot_states current_state = ROAMING;
 unsigned long lastTurnTime = 0;
@@ -72,11 +74,17 @@ void Robot_State_Machine() {
             collectionOn();
             SlowForward();
             state = weightDetection();
-            if ((millis() - lastTurnTime) > 2000) {
+
+            CheckWeightCount(); // This updates the weight count
+
+            if (getWeightCount() >= MAX_WEIGHT_COUNT) { // Directly check with updated count
+                transition(RETURNING_BASE);
+            } 
+            else if ((millis() - lastTurnTime) > 3500) { // Collection time has passed, return to roaming
                 collectionOff();
                 turn180();
                 transition(ROAMING);
-            }
+            } 
             break;
         }
 
