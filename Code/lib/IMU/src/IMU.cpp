@@ -51,6 +51,13 @@ void UpdateIMU()
     }
 }
 
+uint16_t getIMUHeading() {
+    uint16_t Heading =  myEulerData.h / 16;
+    Serial.print("Robot Heading:");
+    Serial.print(Heading);
+    return Heading;
+}
+
 void calibrateIMU()
 {
     bno055_get_syscalib_status(&bno055_calib);

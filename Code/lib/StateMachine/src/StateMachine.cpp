@@ -3,6 +3,7 @@
 #include "Movement.h"
 #include "debug.h"
 #include "Collection.h"
+#include "IMU.h"
 
 typedef enum {
   ROAMING,
@@ -36,6 +37,27 @@ void printCurrentState()
     }
 }
 
+void TurnToHeading(uint16_t TargetHeading)
+{
+    uint16_t CurrentHeading = getIMUHeading();
+
+    int16_t Heading_Difference = TargetHeading - CurrentHeading;
+
+    if (Heading_Difference > 180) {
+        Heading_Difference -= 360;
+    } else if (Heading_Difference < -180) {
+        Heading_Difference += 360;
+    }
+
+    if (Heading_Difference > 5) {
+        RightTurn();
+    } else if (Heading_Difference < -5) {
+        LeftTurn();
+    } else {
+        Stationary();
+    }
+}
+
 void Robot_State_Machine() {
     weight_info_t state;
     unsigned long elapsedTime = millis(); //Robot run time
@@ -57,23 +79,22 @@ void Robot_State_Machine() {
                 movementController();
                 if (millis() - lastTurnTime > (unsigned long)random(8000, 12000)) {
                     transition(RANDOM_WALK);
-                }
+                }   
             }
             break;
         }
 
         case RANDOM_WALK: {
-            // Randomly pick direction (0 for left, 1 for right) and turn type (0 for small, 1 for large)
-            int randomTurn = random(0, 2);
-            state = weightDetection();
-            if (state.certainty > 1) {
-                transition(PURSUE_WEIGHT);
-            }
-            if (randomTurn == 0) {
-                SlowLeft();
-            } else {
-                SlowRight(); 
-            }
+            
+            uint16_t currentHeading = getIMUHeading();
+
+            uint16_t randomAngle = random(-45, 46);
+            uint16_t newHeading = currentHeading + randomAngle;
+
+            if (newHeading < 0) newHeading += 360;
+            if (newHeading >= 360) newHeading -= 360;
+
+            TurnToHeading(newHeading);
 
             // Stay in random walk mode for 2-5 seconds
             if (millis() - lastTurnTime > (unsigned long)random(2000, 3000)) {
@@ -127,5 +148,5 @@ void Robot_State_Machine() {
         }
     }
 
-    //printCurrentState();
+    printCurrentState();
 }

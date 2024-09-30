@@ -15,6 +15,7 @@ extern unsigned long lastTime;
 
 void initIMU();
 void UpdateIMU();
+uint16_t getIMUHeading();
 
 
 #endif
