@@ -7,7 +7,10 @@
 #include <SparkFunSX1509.h>
 
 #define TOF_SCAN_HEIGHT 4
-#define TOF_CONSTANT_OFFSET 20
+#define TOF_CONSTANT_OFFSET 0
+#define TOF_SCAN_PERIOD 45 // ms
+#define TOF_SCAN_WINDOW 40 * 1000 // us
+#define TOF_SCAN_RANGE VL53L1X::Long
 
 enum TOFType {
     L0,

@@ -1,6 +1,5 @@
 #include "Movement.h"
-#include "TOF.h"
-#include "debug.h"
+
 
 SX1509 io;
 const byte SX1509_ADDRESS = 0x3F;
@@ -69,54 +68,84 @@ void movementController() {
     time = 0;
     #endif
 
-    static bool left = false, right = false; // Retain state between function calls
-
 
     #ifdef DEBUG
     Serial.print("T:");
     Serial.print(Left_TOF);Serial.print(":");Serial.print(front_TOF);Serial.print(":");Serial.println(Right_TOF);
     #endif
 
-    Forward();
-
-    if ((Left_TOF <= 250) && !right) {
-        RightTurn();
-        right = true;
-        left = false;
-    } else if (Right_TOF <= 250 && !left) {
-        LeftTurn();
-        left = true;
-        right = false;
-    }
-
-    if (!left && !right) {
-        if (front_TOF <= 250) {
-            Reverse();
-            if (Left_TOF > Right_TOF) {
-                LeftTurn();
-            } else {
-                RightTurn();
-            }
-        }
-    } else  if (front_TOF >= 1000) {
-            Forward();
-        }
-
-    //When multiple obstacles detected up front and need to reverse back and turn
     if (((Left_TOF <= 350) && (Right_TOF <= 350)) && (front_TOF <= 400)) { 
         Reverse();
-        if (Left_TOF > Right_TOF) {
-            LeftTurn();
-        } else if (Right_TOF > Left_TOF) {
-            RightTurn();
-        }
+        delay(1000); // BAD! Get rid of this
     }
-    //In the case of getting too close to the wall, 
-    if (front_TOF <= 250) {
-        if (Left_TOF > Right_TOF) {
+
+    if ((Left_TOF <= MOV_MIN_DISTANCE)) {
+        RightTurn();
+    } else if (Right_TOF <= MOV_MIN_DISTANCE) {
+        LeftTurn();
+    } else if (front_TOF <= 250) {     // TODO: Need something more here to avoid ramps. Could be pretty tricky
+        Reverse();
+        int16_t heading;
+        if (Left_TOF < Right_TOF) {
+            uint16_t CurrentHeading = getIMUHeading();
+            heading = CurrentHeading + 90;
+            if (heading > 360) {
+                heading -= 360;
+            }
+        } else {
+            uint16_t CurrentHeading = getIMUHeading();
+            heading = CurrentHeading - 90;
+            if (heading < 0) {
+                heading += 360;
+            }
+        }
+        elapsedMillis time = 0;
+        while (!TurnToHeading(heading) && time<500) { // Seems like a shitty bodge too
+            delay(1);
+        }
+    } else {
+        Forward();
+    }
+}
+
+bool TurnToHeading(uint16_t TargetHeading) // Returns true once rotated to align with heading
+{
+    uint16_t CurrentHeading = getIMUHeading();
+
+    int16_t Heading_Difference = TargetHeading - CurrentHeading;
+
+    if (Heading_Difference > 180) {
+        Heading_Difference -= 360;
+    } else if (Heading_Difference < -180) {
+        Heading_Difference += 360;
+    }
+
+    if (Heading_Difference > 10) {
+        RightTurn();
+    } else if (Heading_Difference < -10) {
+        LeftTurn();
+    } else {
+        return true;
+    }
+    return false;
+}
+
+void turn180() {
+    uint16_t CurrentHeading = getIMUHeading();
+    int16_t Heading_Difference = CurrentHeading - 180;
+    if (Heading_Difference > 180) {
+        Heading_Difference -= 360;
+    } else if (Heading_Difference < -180) {
+        Heading_Difference += 360;
+    }
+    elapsedMillis time = 0;
+    while (time < 1000) {
+        if (Heading_Difference > 5) {
+            RightTurn();
+        } else if (Heading_Difference < -5) {
             LeftTurn();
         } else {
-            RightTurn();
+            return;
         }
     }
 }
@@ -164,3 +193,14 @@ void SlowRight() {
     motorLeft.writeMicroseconds(PPM_STOP-SPEED_SLOW);
     motorRight.writeMicroseconds(PPM_STOP-SPEED_SLOW);
 }
+
+void ForwardLeft() {
+    motorLeft.writeMicroseconds(PPM_STOP+SPEED_SLOW);
+    motorRight.writeMicroseconds(PPM_STOP+SPEED_SLOW-50);
+}
+
+void ForwardRight() {
+    motorLeft.writeMicroseconds(PPM_STOP-SPEED_SLOW+50);
+    motorRight.writeMicroseconds(PPM_STOP-SPEED_SLOW);
+}
+

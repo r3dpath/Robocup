@@ -3,26 +3,14 @@
 #include "Movement.h"
 #include "debug.h"
 #include "Collection.h"
-#include "IMU.h"
 
-typedef enum {
-  ROAMING,
-  COLLECT_WEIGHT,
-  RETURNING_BASE,
-  RANDOM_WALK,
-  PURSUE_WEIGHT
-} Robot_states;
 
 static Robot_states current_state = ROAMING;
-unsigned long startTime;
-uint8_t num_weight = 0;
 unsigned long lastTurnTime = 0;
-
-#define TIME_LIMIT 120000000;
 
 void transition(Robot_states newState) {
     current_state = newState;
-    lastTurnTime = millis();//after state change reset timer
+    lastTurnTime = millis(); //after state change reset timer
 }
 
 void printCurrentState()
@@ -37,44 +25,14 @@ void printCurrentState()
     }
 }
 
-void TurnToHeading(uint16_t TargetHeading)
-{
-    uint16_t CurrentHeading = getIMUHeading();
-
-    int16_t Heading_Difference = TargetHeading - CurrentHeading;
-
-    if (Heading_Difference > 180) {
-        Heading_Difference -= 360;
-    } else if (Heading_Difference < -180) {
-        Heading_Difference += 360;
-    }
-
-    if (Heading_Difference > 5) {
-        RightTurn();
-    } else if (Heading_Difference < -5) {
-        LeftTurn();
-    } else {
-        Stationary();
-    }
-}
-
 void Robot_State_Machine() {
     weight_info_t state;
-    unsigned long elapsedTime = millis(); //Robot run time
 
     switch (current_state) {
         case ROAMING: {
             state = weightDetection();
             if (state.certainty > 1) {
                 transition(PURSUE_WEIGHT);
-            }
-            // Stops the robot if timer is over 2 minutes
-            else if (elapsedTime > 120000000) {
-                Stationary();
-                while(1)
-                {
-                    //gets it stuck in the loop stoping all other execution
-                }
             } else {
                 movementController();
                 if (millis() - lastTurnTime > (unsigned long)random(8000, 12000)) {
@@ -85,7 +43,10 @@ void Robot_State_Machine() {
         }
 
         case RANDOM_WALK: {
-            
+            state = weightDetection();
+            if (state.certainty > 1) {
+                transition(PURSUE_WEIGHT);
+            }
             uint16_t currentHeading = getIMUHeading();
 
             uint16_t randomAngle = random(-45, 46);
@@ -103,24 +64,25 @@ void Robot_State_Machine() {
             break;
         }
 
+        // COLLECT_WEIGHT
+        // Active when weight is directly infront of the robot, continues moving forward for at least two seconds.
+        // Currently no obstical avoidance active
+        // Turn 180 degrees after collection. This should change for competition.
         case COLLECT_WEIGHT: {
             collectionOn();
             SlowForward();
             state = weightDetection();
-            if (state.certainty == 0) {
+            if ((millis() - lastTurnTime) > 2000) {
                 collectionOff();
+                turn180();
                 transition(ROAMING);
             }
-            //num_weight += 1; // Increment weight count
-
-            // if ((num_weight == 3) && (elapsedTime < 105000)) { // Return home if 3 weights collected and within time
-            //     current_state = RETURNING_BASE;
-            // } else {
-            //     current_state = ROAMING;
-            // }
             break;
         }
 
+        // PURSUE_WEIGHT
+        // When a weight is detected by the TOF scan persue weight will try to place the weight into the center of the field of view and move towards it
+        // TODO: Add some obstical avoidance
         case PURSUE_WEIGHT: {
             state = weightDetection();
             if (state.certainty == 0) {
@@ -128,16 +90,16 @@ void Robot_State_Machine() {
                 break;
             }
             if (state.direction == CENTER) {
-                if (state.direction < 400) {
+                if (state.direction < 300) {
                     transition(COLLECT_WEIGHT);
                 } else {
                     SlowForward();
                 }
             } else {
                 if (state.direction == LEFT || state.direction == FAR_LEFT) {
-                    SlowLeft();
+                    ForwardLeft();
                 } else {
-                    SlowRight();
+                    ForwardRight();
                 }
             }
             break;

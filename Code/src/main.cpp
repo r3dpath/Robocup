@@ -15,6 +15,8 @@
 #include <Collection.h>
 #include "debug.h"
 
+//#define TOTAL_ROUND_TIME 2*60*1000
+#define TOTAL_ROUND_TIME -1
 /*
 
 TODO:
@@ -24,12 +26,13 @@ TODO:
 */
 
 void initTask();
+void tof_scan_restart();
 extern TOF2 tof_scan;
 
 void tof_scan_time() {
   elapsedMicros time;
   time = 0;
-  tof_scan.tick();
+  tof_scan_restart();
   Serial.print(time);
   Serial.println(" - TOF Scan Tick Task");
 }
@@ -52,14 +55,20 @@ void UpdateIMU_time() {
 
 Scheduler taskManager;
 #ifndef PROFILING
-Task tScan(35, TASK_FOREVER, []() { tof_scan.tick(); });
-Task tStateMachine(200, TASK_FOREVER, Robot_State_Machine);
+//Task tScan(35, TASK_ONCE, []() { tof_scan.tick(); });
+Task tScan(TOF_SCAN_PERIOD, TASK_ONCE, tof_scan_restart);
+Task tStateMachine(TOF_SCAN_PERIOD*5, TASK_FOREVER, Robot_State_Machine);
 Task tIMU(100, TASK_FOREVER, UpdateIMU);
 #else
 Task tScan(60, TASK_FOREVER, tof_scan_time);
 Task tStateMachine(300, TASK_FOREVER, rsm_time);
 Task tIMU(100, TASK_FOREVER, UpdateIMU_time);
 #endif
+
+void tof_scan_restart() {
+  tof_scan.tick();
+  tScan.restartDelayed(TOF_SCAN_PERIOD);
+}
 
 void setup() {
   
@@ -93,5 +102,10 @@ void initTask() {
 }
 
 void loop() {
+  static elapsedMillis round_time;
   taskManager.execute();
+  if (round_time > TOTAL_ROUND_TIME) {
+    Serial.print("!Round Over!");
+    while (1) {}
+  }
 }

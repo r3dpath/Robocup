@@ -44,7 +44,11 @@ weight_info_t weightDetection() {
         }
     } else {
         if ((max > abs(average)*AVG_DEADBAND || tof_scan.bottom[max_idx] < WASHOUT_RANGE)  && tof_scan.top[max_idx] > tof_scan.bottom[max_idx] * ABS_DEADBAND) {
-            state.direction = (weight_direction_t)max_idx;
+            if (tof_scan.bottom[max_idx] < WASHOUT_RANGE) {
+                state.direction = CENTER;
+            } else {
+                state.direction = (weight_direction_t)max_idx;
+            }
             state.distance = tof_scan.bottom[max_idx];
         } else {
             state.certainty = 0;
@@ -54,8 +58,6 @@ weight_info_t weightDetection() {
     }
 
     #ifdef DEBUG
-    Serial.print("X:"); Serial.print(tof_scan.top_status[0]); Serial.print(":"); Serial.print(tof_scan.top_status[1]); Serial.print(":"); Serial.print(tof_scan.top_status[2]); Serial.print(":"); Serial.print(tof_scan.top_status[3]); Serial.print(":"); Serial.print(tof_scan.top_status[4]); Serial.print(":");
-    Serial.print(tof_scan.bottom_status[0]); Serial.print(":"); Serial.print(tof_scan.bottom_status[1]); Serial.print(":"); Serial.print(tof_scan.bottom_status[2]); Serial.print(":"); Serial.print(tof_scan.bottom_status[3]); Serial.print(":"); Serial.println(tof_scan.bottom_status[4]);
     Serial.print("S:");
     Serial.print(tof_scan.top[0]); Serial.print(":"); Serial.print(tof_scan.top[1]); Serial.print(":"); Serial.print(tof_scan.top[2]); Serial.print(":"); Serial.print(tof_scan.top[3]); Serial.print(":"); Serial.print(tof_scan.top[4]); Serial.print(":");
     Serial.print(tof_scan.bottom[0]); Serial.print(":"); Serial.print(tof_scan.bottom[1]); Serial.print(":"); Serial.print(tof_scan.bottom[2]); Serial.print(":"); Serial.print(tof_scan.bottom[3]); Serial.print(":"); Serial.print(tof_scan.bottom[4]); Serial.print(":");
