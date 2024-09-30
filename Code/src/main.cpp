@@ -18,10 +18,8 @@
 /*
 
 TODO:
-Sort out how the weight found system should work
-Sort out a finalised weight detection algorithm
-Work out how to do a PS/2 connection
-Sort the IMU so it actually does something
+
+
 
 */
 

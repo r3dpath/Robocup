@@ -57,7 +57,13 @@ async def read_bluetooth_data(client):
 
     await client.start_notify(CHARACTERISTIC_UUID, callback)
     print("Notification started")
-    await asyncio.Future()  # Keep the notification running
+
+    while True:
+        # Keep checking if the client is still connected
+        if not client.is_connected:
+            print("Bluetooth device disconnected during read.")
+            break
+        await asyncio.sleep(1)
 
 async def connect_bluetooth():
     addr = await find_device()
@@ -78,17 +84,24 @@ async def connect_bluetooth():
             await asyncio.sleep(RECONNECT_INTERVAL)
 
 async def manage_bluetooth_connection():
-    while True:
-        client = await connect_bluetooth()
+    client = None
 
-        if client:
+    while True:
+        if client is None or not client.is_connected:
+            client = await connect_bluetooth()
+        
+        if client and client.is_connected:
             try:
                 await read_bluetooth_data(client)
             except Exception as e:
-                print(f"Bluetooth connection lost: {e}")
+                print(f"Bluetooth error: {e}")
             finally:
-                await client.disconnect()
+                if client.is_connected:
+                    await client.disconnect()
                 print("Bluetooth disconnected. Retrying connection...")
+
+        # Add a small sleep to avoid rapid retries
+        await asyncio.sleep(RECONNECT_INTERVAL)
 
 async def server():
     asyncio.create_task(manage_bluetooth_connection())

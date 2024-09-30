@@ -6,6 +6,14 @@
 #define ABS_DEADBAND 1.1
 #define WASHOUT_RANGE 300
 
+/*
+TODO:
+Should remain in collection state when really close
+
+
+*/
+
+
 extern TOF2 tof_scan;
 
 weight_info_t weightDetection() {
