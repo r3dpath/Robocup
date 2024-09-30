@@ -54,8 +54,8 @@ void UpdateIMU_time() {
 
 Scheduler taskManager;
 #ifndef PROFILING
-Task tScan(60, TASK_FOREVER, []() { tof_scan.tick(); });
-Task tStateMachine(300, TASK_FOREVER, Robot_State_Machine);
+Task tScan(35, TASK_FOREVER, []() { tof_scan.tick(); });
+Task tStateMachine(200, TASK_FOREVER, Robot_State_Machine);
 Task tIMU(100, TASK_FOREVER, UpdateIMU);
 #else
 Task tScan(60, TASK_FOREVER, tof_scan_time);

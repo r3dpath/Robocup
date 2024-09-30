@@ -89,8 +89,8 @@ bool TOF2::init() {
         Serial.println("TOF2 Panic 1");
         return false;
     }
-    sensor_top.setDistanceMode(VL53L1X::Medium);
-    sensor_top.setMeasurementTimingBudget(45000);
+    sensor_top.setDistanceMode(VL53L1X::Short);
+    sensor_top.setMeasurementTimingBudget(30000);
     sensor_top.setAddress(address1);
     // Enable bottom sensor
     io->digitalWrite(xshutPin2, HIGH);
@@ -100,8 +100,8 @@ bool TOF2::init() {
         Serial.println("TOF2 Panic 2");
         return false;
     }
-    sensor_bottom.setDistanceMode(VL53L1X::Medium);
-    sensor_bottom.setMeasurementTimingBudget(45000);
+    sensor_bottom.setDistanceMode(VL53L1X::Short);
+    sensor_bottom.setMeasurementTimingBudget(30000);
     sensor_bottom.setAddress(address2);
     // Set SPAD size
     sensor_top.setROISize(4, 5);

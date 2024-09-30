@@ -45,6 +45,8 @@ class TOFVisualizer:
             elif distances[0] == 'T':
                 distances = distances[1:4]
                 self.tof_distances[10:] = [int(distance)/3 for distance in distances]
+            elif distances[0] == 'X':
+                print(dp)
 
     def visualize_distances(self):
         for i, (start_x, start_y) in enumerate(self.start_points):
@@ -83,7 +85,6 @@ class TOFVisualizer:
         while True:
             data = s.recv(1024)
             if data:
-                print(data)
                 self.parse_serial_input(data.decode('utf-8'))
                 self.root.update_idletasks()
                 self.root.update()

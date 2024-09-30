@@ -12,6 +12,7 @@ HOST = "127.0.0.1"
 PORT = 8880
 
 connected_clients = []
+RECONNECT_INTERVAL = 5  # Time in seconds between reconnection attempts
 
 async def find_device():
     return ADDRESS
@@ -48,7 +49,6 @@ async def read_bluetooth_data(client):
     buf = bytearray()
 
     def callback(sender, data):
-        #print(f"Received data from {sender}: {data}")
         buf.extend(data)
         if data[-1] == 10:  # Newline detected
             print(f"Broadcasting data: {buf}")
@@ -59,23 +59,48 @@ async def read_bluetooth_data(client):
     print("Notification started")
     await asyncio.Future()  # Keep the notification running
 
-async def server():
+async def connect_bluetooth():
     addr = await find_device()
     if not addr:
         print("Could not find the device.")
-        return
+        return None
 
-    async with BleakClient(addr) as client:
-        asyncio.create_task(read_bluetooth_data(client))
+    while True:
+        try:
+            print(f"Attempting to connect to {addr}...")
+            client = BleakClient(addr)
+            await client.connect()
+            print("Connected to Bluetooth device.")
+            return client
+        except Exception as e:
+            print(f"Failed to connect: {e}")
+            print(f"Reattempting connection in {RECONNECT_INTERVAL} seconds...")
+            await asyncio.sleep(RECONNECT_INTERVAL)
 
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.bind((HOST, PORT))
-            s.listen()
-            print(f"Server listening on {HOST}:{PORT}")
+async def manage_bluetooth_connection():
+    while True:
+        client = await connect_bluetooth()
 
-            while True:
-                client_socket, client_address = await asyncio.to_thread(s.accept)
-                asyncio.create_task(handle_client(client_socket, client_address))
+        if client:
+            try:
+                await read_bluetooth_data(client)
+            except Exception as e:
+                print(f"Bluetooth connection lost: {e}")
+            finally:
+                await client.disconnect()
+                print("Bluetooth disconnected. Retrying connection...")
+
+async def server():
+    asyncio.create_task(manage_bluetooth_connection())
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind((HOST, PORT))
+        s.listen()
+        print(f"Server listening on {HOST}:{PORT}")
+
+        while True:
+            client_socket, client_address = await asyncio.to_thread(s.accept)
+            asyncio.create_task(handle_client(client_socket, client_address))
 
 if __name__ == "__main__":
     asyncio.run(server())
