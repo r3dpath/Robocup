@@ -14,6 +14,7 @@
 #include <TaskScheduler.h>
 #include <Collection.h>
 #include "debug.h"
+#include "WieghtCount.h"
 
 //#define TOTAL_ROUND_TIME 2*60*1000
 #define TOTAL_ROUND_TIME -1
