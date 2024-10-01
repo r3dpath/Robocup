@@ -36,8 +36,6 @@ void movementController() {
     elapsedMicros time;
     #endif
 
-    int back_TOF = tof_b.read();   // Back
-
     #ifdef PROFILING
     Serial.print(time);
     Serial.println(" - Back");
@@ -148,6 +146,12 @@ void turn180() {
             return;
         }
     }
+}
+
+uint16_t getBackTOFreading()
+{
+    int back_TOF = tof_b.read();   // Back
+    return back_TOF;
 }
 
 void Stationary() {

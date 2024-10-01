@@ -74,6 +74,7 @@ void Robot_State_Machine() {
             collectionOn();
             SlowForward();
             state = weightDetection();
+            
 
             if ((millis() - lastTurnTime) > 3500) { // Collection time has passed, return to roaming
                 collectionOff();
