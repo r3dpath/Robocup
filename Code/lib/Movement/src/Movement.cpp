@@ -80,9 +80,9 @@ void movementController() {
     }
 
     if ((Left_TOF <= MOV_MIN_DISTANCE)) {
-        RightTurn();
+        SlowRight();
     } else if (Right_TOF <= MOV_MIN_DISTANCE) {
-        LeftTurn();
+        SlowLeft();
     } else if (front_TOF <= 250) {     // TODO: Need something more here to avoid ramps. Could be pretty tricky
         Reverse();
         int16_t heading;
@@ -121,9 +121,9 @@ bool TurnToHeading(uint16_t TargetHeading) // Returns true once rotated to align
     }
 
     if (Heading_Difference > 10) {
-        RightTurn();
+        SlowRight();
     } else if (Heading_Difference < -10) {
-        LeftTurn();
+        SlowLeft();
     } else {
         return true;
     }
@@ -141,9 +141,9 @@ void turn180() {
     elapsedMillis time = 0;
     while (time < 1000) {
         if (Heading_Difference > 5) {
-            RightTurn();
+            SlowRight();
         } else if (Heading_Difference < -5) {
-            LeftTurn();
+            SlowLeft();
         } else {
             return;
         }

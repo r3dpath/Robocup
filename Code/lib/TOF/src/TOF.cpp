@@ -120,7 +120,7 @@ void TOF2::tick() {
         top_status[iter] = sensor_top.ranging_data.range_status;
         bottom[iter] = sensor_bottom.read(false);
         bottom_status[iter] = sensor_bottom.ranging_data.range_status;
-    } else {
+    } else { 
         top[iter] = -1;
         top_status[iter] = -1;
         bottom[iter] = -1;

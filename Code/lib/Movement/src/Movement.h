@@ -7,10 +7,10 @@
 #include <debug.h>
 
 #define PPM_STOP 1500
-#define SPEED_SLOW 300
-#define SPEED_FAST 400
+#define SPEED_SLOW 330
+#define SPEED_FAST 380
 
-#define MOV_MIN_DISTANCE 250
+#define MOV_MIN_DISTANCE 150
 
 void initMovement();
 void movementController();

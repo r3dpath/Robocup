@@ -3,8 +3,8 @@
 #include "debug.h"
 
 #define AVG_DEADBAND 1.5
-#define ABS_DEADBAND 1.1
-#define WASHOUT_RANGE 300
+#define ABS_DEADBAND 1.2
+#define WASHOUT_RANGE 1
 
 /*
 TODO:
@@ -62,7 +62,7 @@ weight_info_t weightDetection() {
     Serial.print(tof_scan.top[0]); Serial.print(":"); Serial.print(tof_scan.top[1]); Serial.print(":"); Serial.print(tof_scan.top[2]); Serial.print(":"); Serial.print(tof_scan.top[3]); Serial.print(":"); Serial.print(tof_scan.top[4]); Serial.print(":");
     Serial.print(tof_scan.bottom[0]); Serial.print(":"); Serial.print(tof_scan.bottom[1]); Serial.print(":"); Serial.print(tof_scan.bottom[2]); Serial.print(":"); Serial.print(tof_scan.bottom[3]); Serial.print(":"); Serial.print(tof_scan.bottom[4]); Serial.print(":");
     Serial.print(state.direction); Serial.print(":"); Serial.println(state.distance);
-    #endif
+    #endif 
 
     return state;
 }

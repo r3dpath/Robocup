@@ -3,7 +3,7 @@
 
 #define DEBUG
 //#define PROFILING
-//#define DEBUG_IMU
+#define DEBUG_IMU
 
 #define Serial Serial2
 #define BAUD 921600

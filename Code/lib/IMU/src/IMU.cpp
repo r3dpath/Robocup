@@ -36,7 +36,7 @@ void UpdateIMU()
     Serial.print(" Pitch: ");
     Serial.print(myEulerData.p);
     Serial.print(" Heading: ");
-    Serial.println(myEulerData.h);
+    Serial.println(myEulerData.h/16);
     Serial.print("Calibration status: ");
     Serial.println(bno055_calib);
     #endif
