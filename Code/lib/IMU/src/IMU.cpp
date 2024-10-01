@@ -1,9 +1,9 @@
 #include "IMU.h"
 
-
 struct bno055_t myBNO;
 struct bno055_euler myEulerData;
 unsigned char bno055_calib;
+
 
 bool cal = true;
 
@@ -24,6 +24,7 @@ void initIMU()
         bno055_write_sic_matrix_seven(eeprom_read_word((uint16_t*)14));
         bno055_write_sic_matrix_eight(eeprom_read_word((uint16_t*)16));
     }
+
 }
 
 void UpdateIMU() 
@@ -47,6 +48,7 @@ void UpdateIMU()
     if ((myEulerData.p < -320) || (myEulerData.p > 320)) { // Over 20 degrees rolled either way
         SlowBackward();
     }
+
 }
 
 uint16_t getIMUHeading() {
