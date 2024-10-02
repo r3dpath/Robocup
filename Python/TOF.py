@@ -1,5 +1,6 @@
 import tkinter as tk
 import math
+import numpy as np
 import unittest
 import threading
 import socket
@@ -10,6 +11,12 @@ HOST = "127.0.0.1"  # The server's hostname or IP address
 PORT = 8880  # The port used by the server
 s.connect((HOST, PORT))
 
+def calcs(distances):
+    distances = [int(distance) for distance in distances]
+    diffs = np.array(distances[0:5]) - np.array(distances[5:10])
+    print(diffs)
+    print(f"Max diff: {max(diffs)}, greater than average by {(max(diffs)/np.mean(diffs)*100)-100:.2f}%, amounts to top average reduction of {max(diffs)/np.mean(distances[0:5])*100:.2f} ")
+
 class TOFVisualizer:
     def __init__(self, root, serial_port):
         self.root = root
@@ -17,10 +24,10 @@ class TOFVisualizer:
         self.canvas = tk.Canvas(root, width=600, height=900)
         self.canvas.pack()
 
-        self.tof_angles = [90+15, 90+7.5, 90, 90-7.5, 90-15, 90+16, 90+8.5, 90+1, 90-8.5, 90-16, 90+30, 90-30, 270]  # Default start angles for the TOF sensors
+        self.tof_angles = [90+15, 90+7.5, 90, 90-7.5, 90-15, 90+16, 90+8.5, 90+1, 90-8.5, 90-16, 90+30, 90, 90-30]  # Default start angles for the TOF sensors
         self.tof_distances = [0] * 13
 
-        self.start_points = [(300, 650), (300, 650), (300, 650), (300, 650), (300, 650), (300, 650), (300, 650), (300, 650), (300, 650), (300, 650), (280, 650), (320, 650), (300, 750)]  # Starting points for each TOF sensor
+        self.start_points = [(300, 650), (300, 650), (300, 650), (300, 650), (300, 650), (300, 650), (300, 650), (300, 650), (300, 650), (300, 650), (280, 650), (300, 650), (320, 650)]  # Starting points for each TOF sensor
         self.lines = [None] * 13
 
         self.draw_square()
@@ -41,12 +48,15 @@ class TOFVisualizer:
             if distances[0] == 'S':
                 distances = distances[1:11]
                 self.tof_distances[:10] = [int(distance)/3 for distance in distances]
+                calcs(distances)
                 self.visualize_distances()
+                #print(dp)
             elif distances[0] == 'T':
                 distances = distances[1:4]
+                distances[1] = 0 # Patch for ignoring centre
                 self.tof_distances[10:] = [int(distance)/3 for distance in distances]
-            elif distances[0] == 'X':
-                print(dp)
+                #print(dp)
+                
 
     def visualize_distances(self):
         for i, (start_x, start_y) in enumerate(self.start_points):
