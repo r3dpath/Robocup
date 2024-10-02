@@ -16,6 +16,7 @@
 #include "debug.h"
 #include <WeightCount.h>
 #include "Encoder.h"
+#include "Positioning.h"
 
 //#define TOTAL_ROUND_TIME 2*60*1000
 #define TOTAL_ROUND_TIME -1
@@ -61,10 +62,12 @@ Scheduler taskManager;
 Task tScan(TOF_SCAN_PERIOD, TASK_ONCE, tof_scan_restart);
 Task tStateMachine(TOF_SCAN_PERIOD*5, TASK_FOREVER, Robot_State_Machine);
 Task tIMU(100, TASK_FOREVER, UpdateIMU);
+Task tPos(50, TASK_FOREVER, positionTick);
 #else
 Task tScan(60, TASK_FOREVER, tof_scan_time);
 Task tStateMachine(300, TASK_FOREVER, rsm_time);
 Task tIMU(100, TASK_FOREVER, UpdateIMU_time);
+Task tPos(50, TASK_FOREVER, positionTick);
 #endif
 
 void tof_scan_restart() {
@@ -96,22 +99,22 @@ void initTask() {
   taskManager.addTask(tScan);
   taskManager.addTask(tStateMachine);
   taskManager.addTask(tIMU);
+  taskManager.addTask(tPos);
 
   // Enable the tasks
   tScan.enable();
   tStateMachine.enable();
   tIMU.enable();
+  tPos.enable();
 
   Serial.println("Tasks have been initialised \n");
 }
 
 void loop() {
   static elapsedMillis round_time;
-  //taskManager.execute();
+  taskManager.execute();
   if (round_time > TOTAL_ROUND_TIME) {
     Serial.print("!Round Over!");
     while (1) {}
   }
-  print_encodercount();
-  delay(500);
 }

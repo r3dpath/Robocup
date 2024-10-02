@@ -1,19 +1,9 @@
 #include "Encoder.h"
 #include "debug.h"
 
-
-enum PinAssignments {
-  encoder1PinA = 33,
-  encoder1PinB = 32,
-  
-  encoder2PinA = 31,
-  encoder2PinB = 30,
-};
-
-volatile unsigned int encoderPos1 = 0;
-unsigned int lastReportedPos1 = 1;
-volatile unsigned int encoderPos2 = 0;
-unsigned int lastReportedPos2 = 1;
+volatile int32_t encoderPos[2];
+int32_t lastReportedPos1 = 1;
+int32_t lastReportedPos2 = 1;
 
 boolean A_set1 = false;
 boolean B_set1 = false;
@@ -25,11 +15,11 @@ void doEncoder1A(){
   // Test transition
   A_set1 = digitalRead(encoder1PinA) == HIGH;
   // and adjust counter + if A leads B
-  encoderPos1 += (A_set1 != B_set1) ? +1 : -1;
+  encoderPos[0] += (A_set1 != B_set1) ? +1 : -1;
   
   B_set1 = digitalRead(encoder1PinB) == HIGH;
   // and adjust counter + if B follows A
-  encoderPos1 += (A_set1 == B_set1) ? +1 : -1;
+  encoderPos[0] += (A_set1 == B_set1) ? +1 : -1;
 }
 
 
@@ -38,11 +28,11 @@ void doEncoder2A(){
   // Test transition
   A_set2 = digitalRead(encoder2PinA) == HIGH;
   // and adjust counter + if A leads B
-  encoderPos2 -= (A_set2 != B_set2) ? +1 : -1;
+  encoderPos[1] -= (A_set2 != B_set2) ? +1 : -1;
   
   B_set2 = digitalRead(encoder2PinB) == HIGH;
   // and adjust counter + if B follows A
-  encoderPos2 -= (A_set2 == B_set2) ? +1 : -1;
+  encoderPos[1] -= (A_set2 == B_set2) ? +1 : -1;
 }
 
 void initEncoder()
@@ -61,17 +51,31 @@ void print_encodercount()
 { 
   //If there has been a change in value of either encoder then print the 
   //  encoder values to the serial port
-  if ((lastReportedPos1 != encoderPos1)||(lastReportedPos2 != encoderPos2)) 
+  if ((lastReportedPos1 != encoderPos[0])||(lastReportedPos2 != encoderPos[1])) 
   {
     Serial.print("Index:");
-    Serial.print(encoderPos1, DEC);
+    Serial.print(encoderPos[0], DEC);
     Serial.print(":");
-    Serial.print(encoderPos2, DEC);
+    Serial.print(encoderPos[1], DEC);
     Serial.println();
-    lastReportedPos1 = encoderPos1;
-    lastReportedPos2 = encoderPos2;
+    lastReportedPos1 = encoderPos[0];
+    lastReportedPos2 = encoderPos[1];
   }
 }
 
+int32_t* getEncoderCounts()
+{
+  return encoderPos;
+}
+
+// Average together both encoders to get the total change in encoder count between iterations
+int32_t getEncoderDiff()
+{
+  int32_t diff = (encoderPos[0] - lastReportedPos1) + (encoderPos[1] - lastReportedPos2);
+  diff /= 2;
+  lastReportedPos1 = encoderPos[0];
+  lastReportedPos2 = encoderPos[1];
+  return diff;
+}
 
 
