@@ -15,6 +15,7 @@
 #include <Collection.h>
 #include "debug.h"
 #include <WeightCount.h>
+#include "Encoder.h"
 
 //#define TOTAL_ROUND_TIME 2*60*1000
 #define TOTAL_ROUND_TIME -1
@@ -79,9 +80,11 @@ void setup() {
     initMovement();
     initIMU();
     initCollection();
+    initEncoder();
 
     // Initialize the task scheduler
     initTask();
+    
 }
 
 void initTask() {  
@@ -109,6 +112,6 @@ void loop() {
     Serial.print("!Round Over!");
     while (1) {}
   }
-
-  CheckWeightCount();
+  print_encodercount();
+  delay(500);
 }
