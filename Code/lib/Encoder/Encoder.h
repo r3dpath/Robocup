@@ -10,6 +10,9 @@ enum PinAssignments {
   
   encoder2PinA = 31,
   encoder2PinB = 30,
+
+  encoder3PinA = 0,
+  encoder3PinB = 1,
 };
 
 void initEncoder();

@@ -17,6 +17,7 @@ void transition(Robot_states newState) {
 
 void printCurrentState()
 {
+    #ifdef DEBUG
     Serial.print("Current state: ");
     switch (current_state) {
         case ROAMING: Serial.println("ROAMING"); break;
@@ -25,6 +26,7 @@ void printCurrentState()
         case RANDOM_WALK: Serial.println("RANDOM_WALK"); break;
         case PURSUE_WEIGHT: Serial.println("PURSUE_WEIGHT"); break;
     }
+    #endif
 }
 
 void Robot_State_Machine() {

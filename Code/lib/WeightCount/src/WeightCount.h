@@ -1,5 +1,5 @@
 #ifndef WEIGHTCOUNT_H
-#define SWEIGHTCOUNT_H
+#define WEIGHTCOUNT_H
 
 
 #include <Wire.h>

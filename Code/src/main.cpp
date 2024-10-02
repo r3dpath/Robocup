@@ -63,6 +63,7 @@ Task tScan(TOF_SCAN_PERIOD, TASK_ONCE, tof_scan_restart);
 Task tStateMachine(TOF_SCAN_PERIOD*5, TASK_FOREVER, Robot_State_Machine);
 Task tIMU(100, TASK_FOREVER, UpdateIMU);
 Task tPos(50, TASK_FOREVER, positionTick);
+Task tPrintPos(200, TASK_FOREVER, printPosition);
 #else
 Task tScan(60, TASK_FOREVER, tof_scan_time);
 Task tStateMachine(300, TASK_FOREVER, rsm_time);
@@ -100,12 +101,14 @@ void initTask() {
   taskManager.addTask(tStateMachine);
   taskManager.addTask(tIMU);
   taskManager.addTask(tPos);
+  taskManager.addTask(tPrintPos);
 
   // Enable the tasks
   tScan.enable();
   tStateMachine.enable();
   tIMU.enable();
   tPos.enable();
+  tPrintPos.enable();
 
   Serial.println("Tasks have been initialised \n");
 }

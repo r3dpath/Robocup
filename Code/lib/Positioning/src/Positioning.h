@@ -10,7 +10,6 @@ typedef struct {
     float y;
 } position_t;
 
-position_t robotPosition;
 
 void positionTick();
 void printPosition();
