@@ -58,4 +58,36 @@ private:
     VL53L1X sensor_bottom;
 };
 
+// TOF Triangular Configuration with 3 Sensors
+class TOF3 {
+public:
+    TOF3(uint8_t xshutPinTop, uint8_t addressTop, uint8_t xshutPinBottom1, uint8_t addressBottom1, uint8_t xshutPinBottom2, uint8_t addressBottom2, SX1509* io);
+    void disable();
+    bool init();
+    void tick();
+    int16_t getDifference(); // Returns the difference between top and averaged bottom readings
+    uint16_t getFDistance(); // Get distance from the front center sensor for navigation
+    int16_t top[5];
+    int16_t bottom1[5];
+    int16_t bottom2[5];
+    int16_t differences[5]; // Store differences between top and averaged bottom readings
+    uint8_t top_status[5];
+    uint8_t bottom1_status[5];
+    uint8_t bottom2_status[5];
+
+private:
+    VL53L1X sensor_top;
+    VL53L1X sensor_bottom1;
+    VL53L1X sensor_bottom2;
+    uint16_t f_distance;
+    SX1509* io;
+    uint8_t xshutPinTop;
+    uint8_t addressTop;
+    uint8_t xshutPinBottom1;
+    uint8_t addressBottom1;
+    uint8_t xshutPinBottom2;
+    uint8_t addressBottom2;
+};
+
+
 #endif // __TOF_H__

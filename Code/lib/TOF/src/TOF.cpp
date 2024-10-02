@@ -147,3 +147,120 @@ void TOF2::tick() {
     sensor_top.readSingle(false);
     sensor_bottom.readSingle(false);
 }
+
+// Constructor for triangular configuration
+TOF3::TOF3(uint8_t xshutPinTop, uint8_t addressTop, uint8_t xshutPinBottom1, uint8_t addressBottom1, uint8_t xshutPinBottom2, uint8_t addressBottom2, SX1509* io)
+    : xshutPinTop(xshutPinTop), addressTop(addressTop), 
+    xshutPinBottom1(xshutPinBottom1), addressBottom1(addressBottom1), 
+    xshutPinBottom2(xshutPinBottom2), addressBottom2(addressBottom2), io(io) {}
+
+// Disable the sensors
+void TOF3::disable() {
+    io->pinMode(xshutPinTop, OUTPUT);
+    io->digitalWrite(xshutPinTop, LOW);
+    io->pinMode(xshutPinBottom1, OUTPUT);
+    io->digitalWrite(xshutPinBottom1, LOW);
+    io->pinMode(xshutPinBottom2, OUTPUT);
+    io->digitalWrite(xshutPinBottom2, LOW);
+    delay(10);
+}
+
+// Initialize the sensors
+bool TOF3::init() {
+    // Enable top sensor
+    io->digitalWrite(xshutPinTop, HIGH);
+    delay(10);
+    sensor_top.setTimeout(500);
+    if (!sensor_top.init()) {
+        Serial.println("TOF3 Panic 1");
+        return false;
+    }
+    sensor_top.setDistanceMode(TOF_SCAN_RANGE);
+    sensor_top.setMeasurementTimingBudget(TOF_SCAN_WINDOW);
+    sensor_top.setAddress(addressTop);
+    // Enable bottom sensor 1
+    io->digitalWrite(xshutPinBottom1, HIGH);
+    delay(10);
+    sensor_bottom1.setTimeout(500);
+    if (!sensor_bottom1.init()) {
+        Serial.println("TOF2 Panic 2");
+        return false;
+    }
+    sensor_bottom1.setDistanceMode(TOF_SCAN_RANGE);
+    sensor_bottom1.setMeasurementTimingBudget(TOF_SCAN_WINDOW);
+    sensor_bottom1.setAddress(addressBottom2);
+
+    // Enable bottom sensor 1
+    io->digitalWrite(xshutPinBottom2, HIGH);
+    delay(10);
+    sensor_bottom2.setTimeout(500);
+    if (!sensor_bottom2.init()) {
+        Serial.println("TOF2 Panic 2");
+        return false;
+    }
+    sensor_bottom2.setDistanceMode(TOF_SCAN_RANGE);
+    sensor_bottom2.setMeasurementTimingBudget(TOF_SCAN_WINDOW);
+    sensor_bottom2.setAddress(addressBottom2);
+
+    // Set SPAD size
+    sensor_top.setROISize(4, 5);
+    sensor_bottom1.setROISize(4, 5);
+    sensor_bottom2.setROISize(4, 5);
+    return true;
+}
+
+
+
+// Function to process sensor readings (non-blocking)
+void TOF3::tick() {
+    static const uint16_t spad_locations[5] = {246, 222, 198, 174, 150}; 
+    static uint8_t iter = 0;
+
+    // Read all sensors at the current SPAD location
+    if (sensor_top.read() && sensor_bottom1.read() && sensor_bottom2.read()) {
+        top[iter] = sensor_top.read(false);
+        bottom1[iter] = sensor_bottom1.read(false);
+        bottom2[iter] = sensor_bottom2.read(false);
+
+        // Calculate the difference between the top sensor and the average of the bottom sensors
+        int16_t bottom_avg = (bottom1[iter] + bottom2[iter]) / 2;
+        differences[iter] = top[iter] - bottom_avg;
+
+        // Store the center distance for navigation
+        if (iter == 2) {
+            f_distance = top[iter];
+        }
+    } else {
+        top[iter] = -1;
+        bottom1[iter] = -1;
+        bottom2[iter] = -1;
+    }
+
+    // Increment SPAD
+    iter++;
+    if (iter == 5) {
+        iter = 0;
+    }
+
+    // Set the next SPAD location and initiate read (non-blocking)
+    sensor_top.setROICenter(spad_locations[iter]);
+    sensor_bottom1.setROICenter(spad_locations[iter]);
+    sensor_bottom2.setROICenter(spad_locations[iter]);
+    sensor_top.readSingle(false);
+    sensor_bottom1.readSingle(false);
+    sensor_bottom2.readSingle(false);
+}
+
+// // Calculate the average difference between the top and bottom sensors
+// int16_t TOF3::getDifference() {
+//     int16_t sum = 0;
+//     for (uint8_t i = 0; i < 5; i++) {
+//         sum += differences[i];
+//     }
+//     return sum / 5; // Average difference across all SPAD locations
+// }
+
+// // Get front center distance for navigation
+// uint16_t TOF3::getFDistance() {
+//     return f_distance;
+// }
