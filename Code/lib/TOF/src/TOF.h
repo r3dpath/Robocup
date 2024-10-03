@@ -74,12 +74,12 @@ public:
     uint8_t top_status[5];
     uint8_t bottom1_status[5];
     uint8_t bottom2_status[5];
+    uint16_t f_distance;
 
 private:
     VL53L1X sensor_top;
     VL53L1X sensor_bottom1;
     VL53L1X sensor_bottom2;
-    uint16_t f_distance;
     SX1509* io;
     uint8_t xshutPinTop;
     uint8_t addressTop;

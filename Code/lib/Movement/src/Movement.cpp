@@ -6,8 +6,8 @@ const byte SX1509_ADDRESS = 0x3F;
 // TOF sensor objects
 TOF tof_l(L0, 2, 0x30, &io); // Left TOF
 TOF tof_r(L0, 0, 0x31, &io); // Right TOF
-TOF tof_b(L1, 1, 0x32, &io); // Back TOF
-TOF2 tof_scan(4, 0x35, 3, 0x36, &io); // Both front facing TOF's
+//TOF tof_b(L1, 1, 0x32, &io); // Back TOF
+TOF3 tof_scan(4, 0x35, 1, 0x32, 3, 0x36, &io); // Both front facing TOF's
 
 Servo motorLeft, motorRight;
 
@@ -21,11 +21,11 @@ void initMovement() {
     Wire.begin();
     Wire.setClock(400000); // use 400 kHz I2C
 
-    tof_b.disable();
+    //tof_b.disable();
     tof_l.disable();
     tof_r.disable();
     tof_scan.disable();
-    tof_b.init();
+    //tof_b.init();
     tof_l.init();
     tof_r.init();
     tof_scan.init();
@@ -148,11 +148,11 @@ void turn180() {
     }
 }
 
-uint16_t getBackTOFreading()
-{
-    int back_TOF = tof_b.read();   // Back
-    return back_TOF;
-}
+// uint16_t getBackTOFreading()
+// {
+//     int back_TOF = tof_b.read();   // Back
+//     return back_TOF;
+// }
 
 void Stationary() {
     motorLeft.writeMicroseconds(PPM_STOP);

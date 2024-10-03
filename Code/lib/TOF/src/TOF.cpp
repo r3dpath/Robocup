@@ -217,10 +217,13 @@ void TOF3::tick() {
     static uint8_t iter = 0;
 
     // Read all sensors at the current SPAD location
-    if (sensor_top.read() && sensor_bottom1.read() && sensor_bottom2.read()) {
+    if (sensor_top.dataReady() && sensor_bottom1.dataReady() && sensor_bottom2.dataReady()) {
         top[iter] = sensor_top.read(false);
+        top_status[iter] = sensor_top.ranging_data.range_status;
         bottom1[iter] = sensor_bottom1.read(false);
+        bottom1_status[iter] = sensor_bottom1.ranging_data.range_status;
         bottom2[iter] = sensor_bottom2.read(false);
+        bottom2_status[iter] = sensor_bottom2.ranging_data.range_status;
 
         // Calculate the difference between the top sensor and the average of the bottom sensors
         int16_t bottom_avg = (bottom1[iter] + bottom2[iter]) / 2;
@@ -251,16 +254,16 @@ void TOF3::tick() {
     sensor_bottom2.readSingle(false);
 }
 
-// // Calculate the average difference between the top and bottom sensors
-// int16_t TOF3::getDifference() {
-//     int16_t sum = 0;
-//     for (uint8_t i = 0; i < 5; i++) {
-//         sum += differences[i];
-//     }
-//     return sum / 5; // Average difference across all SPAD locations
-// }
+// Calculate the average difference between the top and bottom sensors
+int16_t TOF3::getDifference() {
+    int16_t sum = 0;
+    for (uint8_t i = 0; i < 5; i++) {
+        sum += differences[i];
+    }
+    return sum / 5; // Average difference across all SPAD locations
+}
 
-// // Get front center distance for navigation
-// uint16_t TOF3::getFDistance() {
-//     return f_distance;
-// }
+// Get front center distance for navigation
+uint16_t TOF3::getFDistance() {
+    return f_distance;
+}

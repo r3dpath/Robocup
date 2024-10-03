@@ -19,7 +19,6 @@ weight_info_t weightDetection() {
     uint8_t max_idx = 0;
     int16_t sum = 0;
     int16_t bottom_avg = 0;
-
     // Calculate differences and average from the triangular setup
     for (int i = 0; i < 5; i++) {
         // Calculate the average of the two bottom sensors for each index
@@ -39,7 +38,7 @@ weight_info_t weightDetection() {
     }
 
     int16_t average = sum / 5;
-
+    
     if (state.certainty < 3) {
         if ((max > abs(average) * AVG_DEADBAND || (tof_scan.bottom1[max_idx] < WASHOUT_RANGE && tof_scan.bottom2[max_idx] < WASHOUT_RANGE)) && 
             tof_scan.top[max_idx] > (bottom_avg * ABS_DEADBAND)) {
@@ -67,19 +66,21 @@ weight_info_t weightDetection() {
         }
     }
 
-    #ifdef DEBUG
-    Serial.print("S:");
+    // #ifdef DEBUG
+    Serial.print("Top:");
     Serial.print(tof_scan.top[0]); Serial.print(":"); Serial.print(tof_scan.top[1]); Serial.print(":");
     Serial.print(tof_scan.top[2]); Serial.print(":"); Serial.print(tof_scan.top[3]); Serial.print(":");
-    Serial.print(tof_scan.top[4]); Serial.print(":");
+    Serial.print(tof_scan.top[4]); Serial.println(":");
+    Serial.print("Botom 1:");
     Serial.print(tof_scan.bottom1[0]); Serial.print(":"); Serial.print(tof_scan.bottom1[1]); Serial.print(":");
     Serial.print(tof_scan.bottom1[2]); Serial.print(":"); Serial.print(tof_scan.bottom1[3]); Serial.print(":");
-    Serial.print(tof_scan.bottom1[4]); Serial.print(":");
+    Serial.print(tof_scan.bottom1[4]); Serial.println(":");
+    Serial.print("Botom 2:");
     Serial.print(tof_scan.bottom2[0]); Serial.print(":"); Serial.print(tof_scan.bottom2[1]); Serial.print(":");
     Serial.print(tof_scan.bottom2[2]); Serial.print(":"); Serial.print(tof_scan.bottom2[3]); Serial.print(":");
-    Serial.print(tof_scan.bottom2[4]); Serial.print(":");
+    Serial.print(tof_scan.bottom2[4]); Serial.println(":");
     Serial.print(state.direction); Serial.print(":"); Serial.println(state.distance);
-    #endif 
+    // #endif 
 
     return state;
 }
