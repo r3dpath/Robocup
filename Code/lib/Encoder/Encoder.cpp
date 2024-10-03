@@ -69,7 +69,8 @@ void print_encodercount()
 { 
   //If there has been a change in value of either encoder then print the 
   //  encoder values to the serial port
-  if ((lastReportedPos1 != encoderPos[0])||(lastReportedPos2 != encoderPos[1])) 
+  Serial.println(encoderPos[2]);
+  if ((lastReportedPos1 != encoderPos[0])||(lastReportedPos2 != encoderPos[1])||(lastReportedPos3 != encoderPos[2])) 
   {
     Serial.print("Index:");
     Serial.print(encoderPos[0], DEC);
