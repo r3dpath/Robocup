@@ -17,8 +17,8 @@ void positionTick()
 
 void printPosition()
 {
-    Serial.print("P:");
-    Serial.print(robotPosition.x);
-    Serial.print(":");
-    Serial.println(robotPosition.y);
+    // Serial.print("P:");
+    // Serial.print(robotPosition.x);
+    // Serial.print(":");
+    // Serial.println(robotPosition.y);
 }
