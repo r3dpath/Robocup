@@ -52,6 +52,11 @@ void UpdateIMU()
 }
 
 uint16_t getIMUHeading() {
+    static elapsedMillis time;
+    if (time > 50) {
+        time = 0;
+        bno055_read_euler_hrp(&myEulerData);
+    }
     uint16_t Heading =  myEulerData.h / 16;
     return Heading;
 }

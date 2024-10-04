@@ -4,7 +4,7 @@
 
 const byte SX1509_ADDRESS = 0x3F;
 
- SX1509 io;
+SX1509 io;
 // TOF sensor objects
 TOF tof_l(L0, 2, 0x30, &io); // Left TOF
 TOF tof_r(L0, 0, 0x31, &io); // Right TOF
@@ -15,8 +15,6 @@ TOF2 tof_scan_right(4, 0x35, 1, 0x32, &io);
 
 void init_TOF()
 {   
-   
-
     io.begin(SX1509_ADDRESS);
 
     Wire.begin();

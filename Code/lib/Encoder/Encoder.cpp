@@ -47,8 +47,11 @@ void initEncoder()
   pinMode(encoder2PinA, INPUT); 
   pinMode(encoder2PinB, INPUT);
 
+  // uncomment to enable wheel encoders.
+  /*
   attachInterrupt(digitalPinToInterrupt(encoder1PinA), doEncoder1A, CHANGE);  //Set up an interrupt for each encoder
   attachInterrupt(digitalPinToInterrupt(encoder2PinA), doEncoder2A, CHANGE);
+  */
 
   magEncoder.begin();
 }

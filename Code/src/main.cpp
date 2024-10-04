@@ -1,4 +1,4 @@
-#include <Wire.h>
+#include <i2c_driver_wire.h>
 #include <VL53L0X.h>
 #include <VL53L1X.h>
 #include <SparkFunSX1509.h>
@@ -78,8 +78,7 @@ Scheduler taskManager;
 //Task tScan(35, TASK_ONCE, []() { tof_scan.tick(); });
 Task tScan(TOF_SCAN_PERIOD, TASK_ONCE, tof_scan_restart);
 Task tStateMachine(TOF_SCAN_PERIOD*5, TASK_FOREVER, Robot_State_Machine);
-Task tIMU(100, TASK_FOREVER, UpdateIMU);
-Task tPos(50, TASK_FOREVER, positionTick);
+Task tPos(100, TASK_FOREVER, positionTick);
 Task tPrintPos(200, TASK_FOREVER, printPosition);
 Task tTickEncoder(15, TASK_FOREVER, tickEncoder);
 #else
@@ -122,7 +121,6 @@ void initTask() {
   // Add tasks to the scheduler
   taskManager.addTask(tScan);
   taskManager.addTask(tStateMachine);
-  taskManager.addTask(tIMU);
   taskManager.addTask(tPos);
   taskManager.addTask(tPrintPos);
   taskManager.addTask(tTickEncoder);
@@ -130,7 +128,6 @@ void initTask() {
   // Enable the tasks
   tScan.enable();
   tStateMachine.enable();
-  tIMU.enable();
   tPos.enable();
   #ifdef DEBUG_POS
   tPrintPos.enable();
