@@ -1,7 +1,7 @@
 #ifndef ENCODER_H
 #define ENCODER_H
 
-#include <i2c_driver_wire.h>
+#include <Wire.h>
 #include <SparkFunSX1509.h>
 
 enum PinAssignments {

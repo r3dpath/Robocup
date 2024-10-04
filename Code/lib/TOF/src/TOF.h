@@ -1,7 +1,7 @@
 #ifndef __TOF_H__
 #define __TOF_H__
 
-#include <i2c_driver_wire.h>
+#include <Wire.h>
 #include <VL53L0X.h>
 #include <VL53L1X.h>
 #include <SparkFunSX1509.h>
