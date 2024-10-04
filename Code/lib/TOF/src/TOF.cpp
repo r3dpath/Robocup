@@ -17,9 +17,6 @@ void init_TOF()
 {   
     io.begin(SX1509_ADDRESS);
 
-    Wire.begin();
-    Wire.setClock(400000); // use 400 kHz I2C
-
     //tof_b.disable();
     tof_l.disable();
     tof_r.disable();

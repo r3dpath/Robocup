@@ -10,7 +10,6 @@ bool cal = true;
 void initIMU()
 {
     // Initialize IMU
-    Wire1.begin();
     BNO_Init(&myBNO); // Initialize BNO055
     bno055_set_operation_mode(OPERATION_MODE_NDOF);
     if (cal == true) {
@@ -41,14 +40,6 @@ void UpdateIMU()
     Serial.print("Calibration status: ");
     Serial.println(bno055_calib);
     #endif
-    if (myEulerData.r < -320) { // When over 20 degrees inclined
-        Reverse();
-        
-    }
-    if ((myEulerData.p < -320) || (myEulerData.p > 320)) { // Over 20 degrees rolled either way
-        SlowBackward();
-    }
-
 }
 
 uint16_t getIMUHeading() {

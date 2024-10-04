@@ -79,14 +79,18 @@ Scheduler taskManager;
 Task tScan(TOF_SCAN_PERIOD, TASK_ONCE, tof_scan_restart);
 Task tStateMachine(TOF_SCAN_PERIOD*5, TASK_FOREVER, Robot_State_Machine);
 Task tPos(100, TASK_FOREVER, positionTick);
+#ifdef DEBUG_POS
 Task tPrintPos(200, TASK_FOREVER, printPosition);
+#endif
 Task tTickEncoder(15, TASK_FOREVER, tickEncoder);
 #else
 Task tScan(60, TASK_FOREVER, tof_scan_time);
 Task tStateMachine(300, TASK_FOREVER, rsm_time);
 Task tIMU(100, TASK_FOREVER, UpdateIMU_time);
 Task tPos(50, TASK_FOREVER, positionTick_time);
-//Task tPrintPos(200, TASK_FOREVER, printPosition);
+#ifdef DEBUG_POS
+Task tPrintPos(200, TASK_FOREVER, printPosition);
+#endif
 Task tTickEncoder(20, TASK_FOREVER, tickEncoder_time);
 #endif
 
@@ -99,6 +103,10 @@ void tof_scan_restart() {
 void setup() {
   
     Serial.begin(BAUD);
+    Wire.begin();
+    Wire1.begin();
+    Wire.setClock(400000UL);
+    Wire1.setClock(400000UL);
 
     // Initialize TOF controller (includes IMU)
     init_TOF();
@@ -122,7 +130,9 @@ void initTask() {
   taskManager.addTask(tScan);
   taskManager.addTask(tStateMachine);
   taskManager.addTask(tPos);
+  #ifdef DEBUG_POS
   taskManager.addTask(tPrintPos);
+  #endif
   taskManager.addTask(tTickEncoder);
 
   // Enable the tasks
