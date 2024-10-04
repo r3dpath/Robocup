@@ -7,7 +7,7 @@
 #include <debug.h>
 
 #define PPM_STOP 1500
-#define SPEED_SLOW 330
+#define SPEED_SLOW 250
 #define SPEED_FAST 380
 
 #define MOV_MIN_DISTANCE 150

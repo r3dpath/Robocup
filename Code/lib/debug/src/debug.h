@@ -7,6 +7,6 @@
 #define DEBUG_POS
 
 #define Serial Serial2 
-#define BAUD 921600 //115200 
+#define BAUD 921600  //115200  
 
 #endif

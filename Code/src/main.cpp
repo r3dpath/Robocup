@@ -30,7 +30,8 @@ TODO:
 
 void initTask();
 void tof_scan_restart();
-extern TOF2 tof_scan;
+extern TOF2 tof_scan_left;
+extern TOF2 tof_scan_right;
 
 void tof_scan_time() {
   elapsedMicros time;
@@ -72,7 +73,8 @@ Task tPos(50, TASK_FOREVER, positionTick);
 #endif
 
 void tof_scan_restart() {
-  tof_scan.tick();
+  tof_scan_left.tick();
+  tof_scan_right.tick();
   tScan.restartDelayed(TOF_SCAN_PERIOD);
 }
 
@@ -81,10 +83,12 @@ void setup() {
     Serial.begin(BAUD);
 
     // Initialize TOF controller (includes IMU)
+    init_TOF();
     initMovement();
     initIMU();
     initCollection();
     initEncoder();
+    
 
     // Initialize the task scheduler
     initTask();

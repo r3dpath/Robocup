@@ -17,6 +17,8 @@ enum TOFType {
     L1
 };
 
+void init_TOF();
+
 class TOF {
 public:
     TOF(TOFType type, uint8_t xshutPin, uint8_t address, SX1509* io);

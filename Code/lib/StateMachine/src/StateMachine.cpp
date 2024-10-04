@@ -81,7 +81,7 @@ void Robot_State_Machine() {
             if ((millis() - lastTurnTime) > 3500) { // Collection time has passed, return to roaming
                 collectionOff();
                 turn180();
-                CheckWeightCount(); // This updates the weight count
+                //CheckWeightCount(); // This updates the weight count
 
                 if (getWeightCount() >= MAX_WEIGHT_COUNT) { // Directly check with updated count
                     transition(RETURNING_BASE);

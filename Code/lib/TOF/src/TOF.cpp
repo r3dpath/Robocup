@@ -2,6 +2,37 @@
 #include <Arduino.h>
 #include "debug.h"
 
+const byte SX1509_ADDRESS = 0x3F;
+
+ SX1509 io;
+// TOF sensor objects
+TOF tof_l(L0, 2, 0x30, &io); // Left TOF
+TOF tof_r(L0, 0, 0x31, &io); // Right TOF
+//TOF tof_b(L1, 1, 0x32, &io); // Back TOF
+TOF2 tof_scan_left(5, 0x36, 3, 0x34, &io); // Both front facing TOF's
+TOF2 tof_scan_right(4, 0x35, 1, 0x32, &io);
+
+
+void init_TOF()
+{   
+   
+
+    io.begin(SX1509_ADDRESS);
+
+    Wire.begin();
+    Wire.setClock(400000); // use 400 kHz I2C
+
+    //tof_b.disable();
+    tof_l.disable();
+    tof_r.disable();
+    tof_scan_left.disable();
+    tof_scan_right.disable();
+    //tof_b.init();
+    tof_l.init();
+    tof_r.init();
+    tof_scan_left.init();
+    tof_scan_right.init();
+}
 // Single TOF Sensor
 
 TOF::TOF(TOFType type, uint8_t xshutPin, uint8_t address, SX1509* io)
@@ -111,8 +142,9 @@ bool TOF2::init() {
 
 // Scans through the 5 SPAD locations and records the difference between the top and bottom sensors. Non-blocking.
 void TOF2::tick() {
-    static const uint16_t spad_locations[5] = {246, 222, 198, 174, 150}; // {150, 174, 198, 222, 246};
+    static const uint16_t spad_locations[5] = {150, 174, 198, 222, 246}; //{246, 222, 198, 174, 150};
     static uint8_t iter = 0;
+    static uint8_t spad_iter = 1;
     
     // Non-blocking read, will give zero if no good
     if (sensor_top.dataReady() && sensor_bottom.dataReady()) {
@@ -141,9 +173,16 @@ void TOF2::tick() {
         iter = 0;
     }
 
+    spad_iter++;
+    if (spad_iter == 5) {
+        spad_iter = 0;
+    }
+
     // Set the next SPAD location and initiate read (non-blocking)
-    sensor_top.setROICenter(spad_locations[iter]);
-    sensor_bottom.setROICenter(spad_locations[iter]);
+    
+    sensor_top.setROICenter(spad_locations[spad_iter]);
+    sensor_bottom.setROICenter(spad_locations[spad_iter]);
     sensor_top.readSingle(false);
     sensor_bottom.readSingle(false);
 }
+
