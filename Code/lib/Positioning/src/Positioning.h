@@ -6,12 +6,12 @@
 #include <math.h>
 
 typedef enum {
-    LEFT,
-    RIGHT
+    BASE_LEFT,
+    BASE_RIGHT
 } base_side_t;
 
 #define INITIAL_ANGLE 90
-#define INITIAL_SIDE RIGHT
+#define INITIAL_SIDE BASE_RIGHT
 
 
 typedef struct {

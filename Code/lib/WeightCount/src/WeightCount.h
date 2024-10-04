@@ -2,7 +2,7 @@
 #define WEIGHTCOUNT_H
 
 
-#include <Wire.h>
+#include <i2c_driver_wire.h>
 #include <Movement.h>
 
 void CheckWeightCount();

@@ -34,7 +34,7 @@
 extern "C" {
 #include "BNO055.h"
 }
-#include <Wire.h>
+#include <i2c_driver_wire.h>
 #include "Arduino.h"
 
 /*****************************************************************************

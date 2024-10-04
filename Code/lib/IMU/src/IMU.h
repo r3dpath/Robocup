@@ -1,7 +1,7 @@
 #ifndef IMU_H
 #define IMU_H
 
-#include <Wire.h>
+#include <i2c_driver_wire.h>
 #include <BNO055_support.h>
 #include <debug.h>
 #include <Movement.h>

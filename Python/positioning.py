@@ -20,9 +20,9 @@ class CoordinatePlotter:
         self.canvas_plot.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 
         # Define the dimensions of the box (in meters) and scaling factor (1000 mm = 1m)
-        self.box_width_mm = 240  # 2.4 meters = 2400 mm
-        self.box_height_mm = 490  # 4.9 meters = 4900 mm
-        self.origin_offset_mm = 30  # 300 mm from each wall
+        self.box_width_mm = 2.4  # 2.4 meters = 2400 mm
+        self.box_height_mm = 4.9  # 4.9 meters = 4900 mm
+        self.origin_offset_mm = 0.3  # 300 mm from each wall
 
         # Setup the plot for a 2.4x4.9m area with a 300mm offset
         self.ax.set_xlim(0, self.box_width_mm)
@@ -54,10 +54,11 @@ class CoordinatePlotter:
         self.x_vals.append(x+self.origin_offset_mm)
         self.y_vals.append(y+self.origin_offset_mm)
 
+
         # Optionally limit to the last 50 points for better clarity
         if len(self.x_vals) > 50:
-            self.x_vals = self.x_vals[-50:]
-            self.y_vals = self.y_vals[-50:]
+            self.x_vals.pop(0)
+            self.y_vals.pop(0)
 
         self.update_plot()
 
@@ -71,8 +72,8 @@ class CoordinatePlotter:
                     y = float(y_str)
 
                     # Only plot the point if it's within the boundaries
-                    if 0 <= x <= self.box_width_mm and 0 <= y <= self.box_height_mm:
-                        self.plot_point(x, y)
+                    #if 0 <= x <= self.box_width_mm and 0 <= y <= self.box_height_mm:
+                    self.plot_point(x, y)
 
                 except ValueError:
                     print("Invalid data format. Expected 'P:x:y'.")
