@@ -56,6 +56,36 @@ uint16_t getIMUHeading() {
     return Heading;
 }
 
+void adjustHeading(int detected_angle) {
+    int current_heading = getIMUHeading();  // Get current IMU heading
+    int target_heading = current_heading + detected_angle;
+
+    // Normalize target heading to stay within 0-360 degrees
+    if (target_heading < 0) {
+        target_heading += 360;
+    } else if (target_heading >= 360) {
+        target_heading -= 360;
+    }
+
+    // Continuously adjust until the current heading matches the target heading
+    while (current_heading != target_heading) {
+        current_heading = getIMUHeading();  // Update current heading
+
+        if (detected_angle < 0) {
+            // Turn left
+            LeftTurn();
+        } else if (detected_angle > 0) {
+            // Turn right
+            RightTurn();
+        }
+
+        // Optionally include a small delay to avoid rapid polling
+        delay(10);
+    }
+
+    // Once heading is matched, move forward
+    Forward();
+}
 
 void calibrateIMU()
 {

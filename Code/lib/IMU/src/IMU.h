@@ -13,6 +13,7 @@ extern unsigned long lastTime;
 void initIMU();
 void UpdateIMU();
 uint16_t getIMUHeading();
+void adjustHeading(int detected_angle);
 
 
 #endif

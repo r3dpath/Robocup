@@ -1,6 +1,7 @@
 #include "WeightDetection.h"
 #include "Movement.h"
 #include "debug.h"
+#include "IMU.h"
 
 #define AVG_DEADBAND 1.5
 #define ABS_DEADBAND 1.2
@@ -17,83 +18,129 @@ Should remain in collection state when really close
 extern TOF2 tof_scan_left;
 extern TOF2 tof_scan_right;
 
+
+// Constants for angular offsets
+#define ANGLE_LEFT_CLOSE -10
+#define ANGLE_LEFT_FAR -20
+#define ANGLE_RIGHT_CLOSE 10
+#define ANGLE_RIGHT_FAR 20
+#define ANGLE_CENTER 0
+
+extern TOF2 tof_scan_left;
+extern TOF2 tof_scan_right;
+
 weight_info_t weightDetection() {
     static weight_info_t state;
-    int16_t max_left = 0;
-    int16_t max_right = 0;
-    uint8_t max_idx_left = 0;
-    uint8_t max_idx_right = 0;
-    int16_t sum_left = 0;
-    int16_t sum_right = 0;
-    
+    int16_t max_left = 0, max_right = 0;
+    uint8_t max_idx_left = 0, max_idx_right = 0;
+    int16_t sum_left = 0, sum_right = 0;
+
+    // Collect TOF data for both left and right sensors
     for (int i = 0; i < 5; i++) {
         sum_left += tof_scan_left.differences[i];
         sum_right += tof_scan_right.differences[i];
 
+        // Find max TOF difference on the left
         if (tof_scan_left.differences[i] > max_left) {
             max_left = tof_scan_left.differences[i];
             max_idx_left = i;
         }
+
+        // Find max TOF difference on the right
         if (tof_scan_right.differences[i] > max_right) {
             max_right = tof_scan_right.differences[i];
             max_idx_right = i;
         }
-        
     }
 
-    int16_t average_left = sum_left/5;
-    int16_t average_right = sum_right/5;
+    // Calculate averages for each side
+    int16_t average_left = sum_left / 5;
+    int16_t average_right = sum_right / 5;
 
+    // Determine the direction based on TOF data
     if (state.certainty < 3) {
-        if ((max_left > abs(average_left)*AVG_DEADBAND || tof_scan_left.bottom[max_idx_left] < WASHOUT_RANGE)  && tof_scan_left.top[max_idx_left] > tof_scan_left.bottom[max_idx_left] * ABS_DEADBAND) {
+        // If left TOF detects a weight
+        if ((max_left > abs(average_left) * AVG_DEADBAND || tof_scan_left.bottom[max_idx_left] < WASHOUT_RANGE) &&
+            tof_scan_left.top[max_idx_left] > tof_scan_left.bottom[max_idx_left] * ABS_DEADBAND) {
+            
             state.certainty += 1;
-            state.direction = (weight_direction_t)max_idx_left;
             state.distance = tof_scan_left.bottom[max_idx_left];
+            
+            // Assign direction based on SPAD index
+            if (max_idx_left == 0) state.direction = FAR_LEFT;
+            else if (max_idx_left == 1) state.direction = LEFT;
+            else state.direction = CENTER;
+
+        // If right TOF detects a weight
+        } else if ((max_right > abs(average_right) * AVG_DEADBAND || tof_scan_right.bottom[max_idx_right] < WASHOUT_RANGE) &&
+                   tof_scan_right.top[max_idx_right] > tof_scan_right.bottom[max_idx_right] * ABS_DEADBAND) {
+
+            state.certainty += 1;
+            state.distance = tof_scan_right.bottom[max_idx_right];
+
+            // Assign direction based on SPAD index
+            if (max_idx_right == 0) state.direction = FAR_RIGHT;
+            else if (max_idx_right == 1) state.direction = RIGHT;
+            else state.direction = CENTER;
+
         } else {
             state.certainty = 0;
             state.direction = UNDEFINED;
             state.distance = -1;
         }
+
     } else {
-        if ((max_left > abs(average_left)*AVG_DEADBAND || tof_scan_left.bottom[max_idx_left] < WASHOUT_RANGE)  && tof_scan_left.top[max_idx_left] > tof_scan_left.bottom[max_idx_left] * ABS_DEADBAND) {
-            if (tof_scan_left.bottom[max_idx_left] < WASHOUT_RANGE) {
-                state.direction = CENTER;
-            } else {
-                state.direction = (weight_direction_t)max_idx_left;
-            }
+        // Similar logic when certainty >= 3 (more confident in detection)
+        if ((max_left > abs(average_left) * AVG_DEADBAND || tof_scan_left.bottom[max_idx_left] < WASHOUT_RANGE) &&
+            tof_scan_left.top[max_idx_left] > tof_scan_left.bottom[max_idx_left] * ABS_DEADBAND) {
+            state.direction = (max_idx_left == 0) ? FAR_LEFT : (max_idx_left == 1) ? LEFT : CENTER;
             state.distance = tof_scan_left.bottom[max_idx_left];
-        } else {
-            state.certainty = 0;
-            state.direction = UNDEFINED;
-            state.distance = -1;
-        }
-    }
-
-
-    if (state.certainty < 3) {
-        if ((max_right > abs(average_right)*AVG_DEADBAND || tof_scan_right.bottom[max_idx_right] < WASHOUT_RANGE)  && tof_scan_right.top[max_idx_right] > tof_scan_right.bottom[max_idx_right] * ABS_DEADBAND) {
-            state.certainty += 1;
-            state.direction = (weight_direction_t)max_idx_right;
+        } else if ((max_right > abs(average_right) * AVG_DEADBAND || tof_scan_right.bottom[max_idx_right] < WASHOUT_RANGE) &&
+                   tof_scan_right.top[max_idx_right] > tof_scan_right.bottom[max_idx_right] * ABS_DEADBAND) {
+            state.direction = (max_idx_right == 0) ? FAR_RIGHT : (max_idx_right == 1) ? RIGHT : CENTER;
             state.distance = tof_scan_right.bottom[max_idx_right];
         } else {
             state.certainty = 0;
             state.direction = UNDEFINED;
             state.distance = -1;
         }
-    } else {
-        if ((max_right > abs(average_right)*AVG_DEADBAND || tof_scan_right.bottom[max_idx_right] < WASHOUT_RANGE)  && tof_scan_right.top[max_idx_right] > tof_scan_right.bottom[max_idx_right] * ABS_DEADBAND) {
-            if (tof_scan_right.bottom[max_idx_right] < WASHOUT_RANGE) {
-                state.direction = CENTER;
-            } else {
-                state.direction = (weight_direction_t)max_idx_right;
-            }
-            state.distance = tof_scan_right.bottom[max_idx_right];
-        } else {
-            state.certainty = 0;
-            state.direction = UNDEFINED;
-            state.distance = -1;
-        }
     }
+
+    // Adjust heading based on detected direction and IMU data
+    int16_t heading_adjustment = 0;
+    switch (state.direction) {
+        case FAR_LEFT:
+            heading_adjustment = ANGLE_LEFT_FAR;
+            break;
+        case LEFT:
+            heading_adjustment = ANGLE_LEFT_CLOSE;
+            break;
+        case FAR_RIGHT:
+            heading_adjustment = ANGLE_RIGHT_FAR;
+            break;
+        case RIGHT:
+            heading_adjustment = ANGLE_RIGHT_CLOSE;
+            break;
+        case CENTER:
+            heading_adjustment = ANGLE_CENTER;
+            break;
+        default:
+            break;
+    }
+
+    // Use IMU heading to correct the robot's direction
+    adjustHeading(heading_adjustment);
+
+    #ifdef DEBUG
+    Serial.print("Direction: ");
+    Serial.print(state.direction); 
+    Serial.print(" Distance: ");
+    Serial.println(state.distance);
+    #endif 
+
+    return state;
+
+
 
     #ifdef DEBUG
     Serial.print("S:");
