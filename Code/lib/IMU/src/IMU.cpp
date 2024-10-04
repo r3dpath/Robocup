@@ -83,9 +83,6 @@ void adjustHeading(int detected_angle) {
             // Turn right
             RightTurn();
         }
-
-        // Optionally include a small delay to avoid rapid polling
-        delay(10);
     }
 
     // Once heading is matched, move forward
