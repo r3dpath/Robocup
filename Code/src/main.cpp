@@ -55,7 +55,23 @@ void UpdateIMU_time() {
   UpdateIMU();
   Serial.print(time);
   Serial.println(" - IMU Task");
-}  
+}
+
+void positionTick_time() {
+  elapsedMicros time;
+  time = 0;
+  positionTick();
+  Serial.print(time);
+  Serial.println(" - Pos Tick Task");
+}
+
+void tickEncoder_time() {
+  elapsedMicros time;
+  time = 0;
+  tickEncoder();
+  Serial.print(time);
+  Serial.println(" - Encoder Tick Task");
+}
 
 Scheduler taskManager;
 #ifndef PROFILING
@@ -65,11 +81,14 @@ Task tStateMachine(TOF_SCAN_PERIOD*5, TASK_FOREVER, Robot_State_Machine);
 Task tIMU(100, TASK_FOREVER, UpdateIMU);
 Task tPos(50, TASK_FOREVER, positionTick);
 Task tPrintPos(200, TASK_FOREVER, printPosition);
+Task tTickEncoder(15, TASK_FOREVER, tickEncoder);
 #else
 Task tScan(60, TASK_FOREVER, tof_scan_time);
 Task tStateMachine(300, TASK_FOREVER, rsm_time);
 Task tIMU(100, TASK_FOREVER, UpdateIMU_time);
-Task tPos(50, TASK_FOREVER, positionTick);
+Task tPos(50, TASK_FOREVER, positionTick_time);
+//Task tPrintPos(200, TASK_FOREVER, printPosition);
+Task tTickEncoder(20, TASK_FOREVER, tickEncoder_time);
 #endif
 
 void tof_scan_restart() {
@@ -106,13 +125,17 @@ void initTask() {
   taskManager.addTask(tIMU);
   taskManager.addTask(tPos);
   taskManager.addTask(tPrintPos);
+  taskManager.addTask(tTickEncoder);
 
   // Enable the tasks
   tScan.enable();
   tStateMachine.enable();
   tIMU.enable();
   tPos.enable();
+  #ifdef DEBUG_POS
   tPrintPos.enable();
+  #endif
+  tTickEncoder.enable();
 
   Serial.println("Tasks have been initialised \n");
 }

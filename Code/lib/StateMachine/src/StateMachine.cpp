@@ -38,7 +38,7 @@ void Robot_State_Machine() {
             if (state.certainty > 1) {
                 transition(PURSUE_WEIGHT);
             } else {
-                movementController();
+                //movementController();
                 if (millis() - lastTurnTime > (unsigned long)random(8000, 12000)) {
                     transition(RANDOM_WALK);
                 }   

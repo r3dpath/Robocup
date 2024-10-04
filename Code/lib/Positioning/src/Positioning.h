@@ -5,6 +5,15 @@
 #include <IMU.h>
 #include <math.h>
 
+typedef enum {
+    LEFT,
+    RIGHT
+} base_side_t;
+
+#define INITIAL_ANGLE 90
+#define INITIAL_SIDE RIGHT
+
+
 typedef struct {
     float x;
     float y;
