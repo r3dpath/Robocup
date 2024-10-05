@@ -8,9 +8,11 @@ SX1509 io;
 // TOF sensor objects
 TOF tof_l(L0, 2, 0x30, &io); // Left TOF
 TOF tof_r(L0, 0, 0x31, &io); // Right TOF
+TOF tof_count(L0, 6, 0x37, &io);  //TOF for wieght count
 //TOF tof_b(L1, 1, 0x32, &io); // Back TOF
 TOF2 tof_scan_left(5, 0x36, 3, 0x34, &io); // Both front facing TOF's
 TOF2 tof_scan_right(4, 0x35, 1, 0x32, &io);
+
 
 
 void init_TOF()
@@ -20,11 +22,14 @@ void init_TOF()
     //tof_b.disable();
     tof_l.disable();
     tof_r.disable();
+    tof_count.disable();
     tof_scan_left.disable();
     tof_scan_right.disable();
+    
     //tof_b.init();
     tof_l.init();
     tof_r.init();
+    tof_count.init();
     tof_scan_left.init();
     tof_scan_right.init();
 }

@@ -6,6 +6,7 @@
 #define AVG_DEADBAND 1.5
 #define ABS_DEADBAND 1.2
 #define WASHOUT_RANGE 1
+#define TOF_SENSORS_COUNT 5
 
 /*
 TODO:
@@ -37,7 +38,7 @@ weight_info_t weightDetection() {
     int16_t detection_percentage = 0;
 
     // Collect TOF data for both left and right sensors
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < TOF_SENSORS_COUNT; i++) {
         sum_left += tof_scan_left.differences[i];
         sum_right += tof_scan_right.differences[i];
 
@@ -62,16 +63,11 @@ weight_info_t weightDetection() {
 
     max_diff = max(max_left, max_right);
     //Calculate averages for each side
-    int16_t average_left = sum_left / 5;
-    int16_t average_right = sum_right / 5;
-    int16_t average_sum_top_distances = sum_top_distances / 5;
+    int16_t average_left = sum_left / TOF_SENSORS_COUNT;
+    int16_t average_right = sum_right / TOF_SENSORS_COUNT;
+    int16_t average_sum_top_distances = sum_top_distances / TOF_SENSORS_COUNT;
 
-    if (average_sum_top_distances > 0) {
-
-        detection_percentage =  (max_diff * 100) / average_sum_top_distances;
-    } else {
-        detection_percentage = 0;
-    }
+    detection_percentage = (average_sum_top_distances > 0) ? (max_diff * 100) / average_sum_top_distances : 0; // detection percentage
 
     // Serial.print("Max Diff: "); Serial.println(max_diff);
     // Serial.print("Avg Top Distances: "); Serial.println(average_sum_top_distances);
@@ -102,7 +98,11 @@ weight_info_t weightDetection() {
             else if ((max_idx_left == 4) || (max_idx_right == 0)) state.direction = CENTER;
 
         } else {
-            state.certainty = 0;
+            if (state.certainty > 0) {
+                state.certainty -= 1; // Gradual decrease if no detection is made
+            } else {
+                state.certainty = 0;
+            }
             state.direction = UNDEFINED;
             state.distance = -1;
         }
@@ -125,7 +125,11 @@ weight_info_t weightDetection() {
             } else if ((max_idx_left == 4) || (max_idx_right == 0)) state.direction = CENTER;
             state.distance = tof_scan_right.bottom[max_idx_right];
         } else {
-            state.certainty = 0;
+            if (state.certainty > 0) {
+                state.certainty -= 1; // Gradual decrease if no detection is made
+            } else {
+                state.certainty = 0;
+            }
             state.direction = UNDEFINED;
             state.distance = -1;
         }

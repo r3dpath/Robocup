@@ -123,11 +123,6 @@ void turn180() {
     }
 }
 
-// uint16_t getBackTOFreading()
-// {
-//     int back_TOF = tof_b.read();   // Back
-//     return back_TOF;
-// }
 
 void Stationary() {
     motorLeft.writeMicroseconds(PPM_STOP);
