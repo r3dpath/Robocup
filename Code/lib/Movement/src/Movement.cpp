@@ -35,6 +35,15 @@ void movementController()
         heading_diff += 360;
     }
 
+    #ifdef DEBUG_MOVEMENT
+    Serial.print("Heading: ");
+    Serial.print(heading);
+    Serial.print(" SetHeading: ");
+    Serial.print(set_heading);
+    Serial.print(" HeadingDiff: ");
+    Serial.println(heading_diff);
+    #endif
+
     // Implement PI control to achieve the desired heading and speed
 
     // Really crappy bodge to overcome stall
@@ -55,6 +64,13 @@ void movementController()
     // Calculate the motor speeds
     int16_t left_speed = set_speed * MOVEMENT_P + set_speed * lspeed + MOVEMENT_HEADING_MULT * heading_diff;
     int16_t right_speed = set_speed  * MOVEMENT_P + set_speed * rspeed - MOVEMENT_HEADING_MULT * heading_diff;
+
+    #ifdef DEBUG_MOVEMENT
+    Serial.print("LeftActualSpeed: ");
+    Serial.print(left_speed);
+    Serial.print(" RightActualSpeed: ");
+    Serial.println(right_speed);
+    #endif
 
 
     // Bound speeds
@@ -77,9 +93,15 @@ void movementController()
     }
 
     // Set the motor speeds. Left should be negative just bacause of the motor orientation.
+    #ifdef DEBUG_MOVEMENT
+    Serial.print("LeftSetSpeed: ");
+    Serial.print(left_speed);
+    Serial.print(" RightSetSpeed: ");
+    Serial.println(right_speed);
+    #endif
+
     motorLeft.writeMicroseconds(PPM_STOP - left_speed);
     motorRight.writeMicroseconds(PPM_STOP + right_speed);
-
 }
 
 void setMovementHeading(int16_t heading)

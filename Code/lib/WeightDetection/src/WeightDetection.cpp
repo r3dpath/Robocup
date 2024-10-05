@@ -15,10 +15,6 @@ Should remain in collection state when really close
 */
 
 
-extern TOF2 tof_scan_left;
-extern TOF2 tof_scan_right;
-
-
 // Constants for angular offsets
 #define ANGLE_LEFT_CLOSE -10
 #define ANGLE_LEFT_FAR -20

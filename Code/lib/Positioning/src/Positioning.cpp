@@ -1,5 +1,7 @@
 #include "Positioning.h"
 
+bool POS_OOB = false;
+
 #if START_BASE == BASE_LEFT
     position_t homePosition = {300, 300};
 #else
@@ -35,8 +37,6 @@ void setPosition(position_t pos)
 {
     robotPosition = pos;
 }
-
-
 
 
 void printPosition()

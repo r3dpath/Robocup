@@ -16,7 +16,7 @@
 #define MOV_MIN_DISTANCE 150
 
 #define MOVEMENT_P 50
-#define MOVEMENT_I 1
+#define MOVEMENT_I 0
 #define MOVEMENT_HEADING_MULT 5
 
 void initMovement();

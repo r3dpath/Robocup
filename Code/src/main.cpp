@@ -1,27 +1,17 @@
-#include <Wire.h>
-#include <VL53L0X.h>
-#include <VL53L1X.h>
-#include <SparkFunSX1509.h>
-#include <Servo.h>
 #include <Arduino.h>
-#include <QuadEncoder.h>
-#include "BNO055_support.h"
-#include <TOF.h>
-#include <Movement.h>
-#include <WeightDetection.h>
-#include <StateMachine.h>
-#include <IMU.h>
 #include <TaskScheduler.h>
-#include <Collection.h>
 #include "debug.h"
-#include <WeightCount.h>
+#include "Collection.h" // Get rid of this once fsm
+//#include <WeightCount.h>
+#include "Navigator.h"
+#include "Movement.h"
 #include "Encoder.h"
-#include "Positioning.h"
+#include "TOF.h"
 
 
 
 //#define TOTAL_ROUND_TIME 2*60*1000
-#define TOTAL_ROUND_TIME -1
+#define TOTAL_ROUND_TIME 100000000UL
 elapsedMillis round_time = 0;
 /*
 
@@ -31,10 +21,11 @@ TODO:
 
 */
 
-void initTask();
-void tof_scan_restart();
 extern TOF2 tof_scan_left;
 extern TOF2 tof_scan_right;
+
+void initTask();
+void tof_scan_restart();
 
 void tof_scan_time() {
   elapsedMicros time;
@@ -44,12 +35,12 @@ void tof_scan_time() {
   Serial.println(" - TOF Scan Tick Task");
 }
 
-void rsm_time() {
+void nsm_time() {
   elapsedMicros time;
   time = 0;
-  Robot_State_Machine();
+  navigatorFSM();
   Serial.print(time);
-  Serial.println(" - State Machine Task");
+  Serial.println(" - Nav FSM Task");
 }
 
 void UpdateIMU_time() {
@@ -72,15 +63,15 @@ Scheduler taskManager;
 #ifndef PROFILING
 //Task tScan(35, TASK_ONCE, []() { tof_scan.tick(); });
 Task tScan(TOF_SCAN_PERIOD, TASK_ONCE, tof_scan_restart);
-Task tStateMachine(TOF_SCAN_PERIOD*5, TASK_FOREVER, Robot_State_Machine);
-Task tPos(100, TASK_FOREVER, positionTick);
+Task tNav(200, TASK_FOREVER, navigatorFSM);
+Task tPos(50, TASK_FOREVER, positionTick);
+Task tMove(50, TASK_FOREVER, movementController);
 #ifdef DEBUG_POS
 Task tPrintPos(200, TASK_FOREVER, printPosition);
 #endif
 #else
-Task tScan(60, TASK_FOREVER, tof_scan_time);
-Task tStateMachine(300, TASK_FOREVER, rsm_time);
-Task tIMU(100, TASK_FOREVER, UpdateIMU_time);
+Task tScan(TOF_SCAN_PERIOD, TASK_ONCE, tof_scan_time);
+Task tNav(100, TASK_FOREVER, nsm_time);
 Task tPos(50, TASK_FOREVER, positionTick_time);
 #ifdef DEBUG_POS
 Task tPrintPos(200, TASK_FOREVER, print_encodercount);
@@ -107,6 +98,7 @@ void setup() {
     initIMU();
     initCollection();
     initEncoder();
+    initNavigator();
     
 
     // Initialize the task scheduler
@@ -121,16 +113,18 @@ void initTask() {
  
   // Add tasks to the scheduler
   taskManager.addTask(tScan);
-  taskManager.addTask(tStateMachine);
+  taskManager.addTask(tNav);
   taskManager.addTask(tPos);
+  taskManager.addTask(tMove);
   #ifdef DEBUG_POS
   taskManager.addTask(tPrintPos);
   #endif
 
   // Enable the tasks
   tScan.enable();
-  tStateMachine.enable();
+  tNav.enable();
   tPos.enable();
+  tMove.enable();
   #ifdef DEBUG_POS
   tPrintPos.enable();
   #endif

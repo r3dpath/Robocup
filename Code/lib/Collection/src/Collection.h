@@ -2,6 +2,7 @@
 #define COLLECTION_H
 
 #include <PulsePosition.h>
+#include <debug.h>
 
 #define PIN_STEPA 2
 #define PIN_DIRA 3

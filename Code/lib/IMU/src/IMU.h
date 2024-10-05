@@ -4,7 +4,6 @@
 #include <Wire.h>
 #include <BNO055_support.h>
 #include <debug.h>
-#include <Movement.h>
 
 extern struct bno055_t myBNO;
 extern struct bno055_euler myEulerData;

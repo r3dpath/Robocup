@@ -3,6 +3,7 @@
 
 #include <TOF.h>
 #include <Positioning.h>
+#include <Movement.h>
 
 #define NAV_AVOID_DIST_MAX 300
 #define NAV_CLOSE_ENOUGH_GOOD_ENOUGH 300
@@ -18,7 +19,7 @@ typedef enum {
     NAVIGATOR_AVOIDING,
     NAVIGATOR_COLLECTING,
     NAVIGATOR_TERMINAL_GUIDANCE,
-    NAVIGATOR_SUCK
+    NAVIGATOR_STUCK
 } navigator_state_t;
 
 typedef enum {
@@ -36,7 +37,7 @@ typedef struct {
     uint8_t certainty;
 } weight_info_t;
 
-
+void initNavigator();
 void navigatorFSM();
 void setTargetPosition(position_t target);
 position_t getTargetPosition();

@@ -4,6 +4,7 @@
 #include <IMU.h>
 #include <math.h>
 #include "debug.h"
+#include "Encoder.h"
 
 typedef enum {
     BASE_LEFT,
@@ -15,7 +16,7 @@ typedef struct {
     float y;
 } position_t;
 
-bool POS_OOB = false;
+extern bool POS_OOB;
 
 #define START_BASE BASE_LEFT
 #define START_ANGLE 0
