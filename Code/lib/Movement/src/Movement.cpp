@@ -2,184 +2,124 @@
 
 Servo motorLeft, motorRight;
 
-extern TOF tof_l;
-extern TOF tof_r;
-extern TOF2 tof_scan_left;
+// Heading from 0 to 360
+int16_t set_heading = 0;
+// Speed from -10 to 10
+int8_t set_speed = 0;
+
+int16_t l_integral = 0;
+int16_t r_integral = 0;
 
 void initMovement() {
     // Setup servo objects
-    motorLeft.attach(28);
-    motorRight.attach(29);
+    motorLeft.attach(PIN_LEFT_MOTOR);
+    motorRight.attach(PIN_RIGHT_MOTOR);
 }
 
-void movementController() {
-    #ifdef PROFILING
-    elapsedMicros time;
-    #endif
-
-    uint16_t front_TOF = tof_scan_left.f_distance;  // Front
-
-    #ifdef PROFILING
-    Serial.print(time);
-    Serial.println(" - Front");
-    time = 0;
-    #endif
-
-    int Left_TOF = tof_l.read();   // Left side
-
-    #ifdef PROFILING
-    Serial.print(time);
-    Serial.println(" - Left");
-    time = 0;
-    #endif
-
-    int Right_TOF = tof_r.read();  // Right side
-
-    #ifdef PROFILING
-    Serial.print(time);
-    Serial.println(" - Right");
-    time = 0;
-    #endif
-
-
-    #ifdef DEBUG
-    Serial.print("T:");
-    Serial.print(Left_TOF);Serial.print(":");Serial.print(front_TOF);Serial.print(":");Serial.println(Right_TOF);
-    #endif
-
-    if (((Left_TOF <= 350) && (Right_TOF <= 350)) && (front_TOF <= 400)) { 
-        Reverse();
-        //delay(1000); // BAD! Get rid of this
-    }
-
-    if ((Left_TOF <= MOV_MIN_DISTANCE)) {
-        SlowRight();
-    } else if (Right_TOF <= MOV_MIN_DISTANCE) {
-        SlowLeft();
-    } else if (front_TOF <= 250) {     // TODO: Need something more here to avoid ramps. Could be pretty tricky
-        Reverse();
-        int16_t heading;
-        if (Left_TOF < Right_TOF) {
-            uint16_t CurrentHeading = getIMUHeading();
-            heading = CurrentHeading + 90;
-            if (heading > 360) {
-                heading -= 360;
-            }
-        } else {
-            uint16_t CurrentHeading = getIMUHeading();
-            heading = CurrentHeading - 90;
-            if (heading < 0) {
-                heading += 360;
-            }
-        }
-        elapsedMillis time = 0;
-        while (!TurnToHeading(heading) && time<500) { // Seems like a shitty bodge too
-            delay(1);
-        }
-    } else {
-        Forward();
-    }
-}
-
-bool TurnToHeading(uint16_t TargetHeading) // Returns true once rotated to align with heading
+void movementController() 
 {
-    uint16_t CurrentHeading = getIMUHeading();
+    // Get current heading
+    int16_t heading = getIMUHeading();
+    // Get current speed
+    float lspeed = getLeftEncoderSpeed();
+    float rspeed = getRightEncoderSpeed();
+    // Calculate difference between current and desired heading
+    int16_t heading_diff = set_heading - heading;
+    // Calculate difference between current and desired speed
+    // int8_t speed_diff = set_speed - speed;
 
-    int16_t Heading_Difference = TargetHeading - CurrentHeading;
-
-    if (Heading_Difference > 180) {
-        Heading_Difference -= 360;
-    } else if (Heading_Difference < -180) {
-        Heading_Difference += 360;
+    // If more than 180 degrees, subtract 360
+    if (heading_diff > 180) {
+        heading_diff -= 360;
+    } else if (heading_diff < -180) {
+        heading_diff += 360;
     }
 
-    if (Heading_Difference > 10) {
-        SlowRight();
-    } else if (Heading_Difference < -10) {
-        SlowLeft();
-    } else {
-        return true;
+    // Implement PI control to achieve the desired heading and speed
+
+    // Really crappy bodge to overcome stall
+    if (lspeed == 0 && set_speed != 0)
+    {
+        l_integral += 1;
+    } else if (lspeed != 0) {
+        l_integral = 0;
     }
-    return false;
-}
 
-void turn180() {
-    uint16_t CurrentHeading = getIMUHeading();
-    int16_t Heading_Difference = CurrentHeading - 180;
-    if (Heading_Difference > 180) {
-        Heading_Difference -= 360;
-    } else if (Heading_Difference < -180) {
-        Heading_Difference += 360;
+    if (rspeed == 0 && set_speed != 0)
+    {
+        r_integral += 1;
+    } else if (rspeed != 0) {
+        r_integral = 0;
     }
-    elapsedMillis time = 0;
-    while (time < 1000) {
-        if (Heading_Difference > 5) {
-            SlowRight();
-        } else if (Heading_Difference < -5) {
-            SlowLeft();
-        } else {
-            return;
-        }
+
+    // Calculate the motor speeds
+    int16_t left_speed = set_speed * MOVEMENT_P + set_speed * lspeed + MOVEMENT_HEADING_MULT * heading_diff;
+    int16_t right_speed = set_speed  * MOVEMENT_P + set_speed * rspeed - MOVEMENT_HEADING_MULT * heading_diff;
+
+
+    // Bound speeds
+    if (left_speed > SPEED_MAX)
+    {
+        left_speed = SPEED_MAX;
+    }
+    else if (left_speed < -SPEED_MAX)
+    {
+        left_speed = -SPEED_MAX;
+    }
+
+    if (right_speed > SPEED_MAX)
+    {
+        right_speed = SPEED_MAX;
+    }
+    else if (right_speed < -SPEED_MAX)
+    {
+        right_speed = -SPEED_MAX;
+    }
+
+    // Set the motor speeds. Left should be negative just bacause of the motor orientation.
+    motorLeft.writeMicroseconds(PPM_STOP - left_speed);
+    motorRight.writeMicroseconds(PPM_STOP + right_speed);
+
+}
+
+void setMovementHeading(int16_t heading)
+{
+    set_heading = heading;
+}
+
+void incrementMovementHeading(int16_t heading)
+{
+    set_heading += heading;
+    if (set_heading > 360)
+    {
+        set_heading -= 360;
+    }
+    else if (set_heading < 0)
+    {
+        set_heading += 360;
     }
 }
 
-// uint16_t getBackTOFreading()
-// {
-//     int back_TOF = tof_b.read();   // Back
-//     return back_TOF;
-// }
-
-void Stationary() {
-    motorLeft.writeMicroseconds(PPM_STOP);
-    motorRight.writeMicroseconds(PPM_STOP);
-}
-void Forward() {
-    motorLeft.writeMicroseconds(PPM_STOP-SPEED_FAST);
-    motorRight.writeMicroseconds(PPM_STOP+SPEED_FAST);
+int16_t getMovementHeading()
+{
+    return set_heading;
 }
 
-void Reverse() {
-    motorLeft.writeMicroseconds(PPM_STOP+SPEED_FAST);
-    motorRight.writeMicroseconds(PPM_STOP-SPEED_FAST);
+void setMovementSpeed(int8_t speed)
+{
+    if (speed > 10)
+    {
+        speed = 10;
+    }
+    else if (speed < -10)
+    {
+        speed = -10;
+    }
+    set_speed = speed;
 }
 
-void RightTurn() {
-    motorLeft.writeMicroseconds(PPM_STOP-SPEED_FAST);
-    motorRight.writeMicroseconds(PPM_STOP-SPEED_FAST);
-}
-
-void LeftTurn() {
-    motorLeft.writeMicroseconds(PPM_STOP+SPEED_FAST);
-    motorRight.writeMicroseconds(PPM_STOP+SPEED_FAST);
-}
-
-void SlowBackward() {
-    motorLeft.writeMicroseconds(PPM_STOP+SPEED_SLOW);
-    motorRight.writeMicroseconds(PPM_STOP-SPEED_SLOW);
-}
-
-void SlowForward() {
-    motorLeft.writeMicroseconds(PPM_STOP-SPEED_SLOW);
-    motorRight.writeMicroseconds(PPM_STOP+SPEED_SLOW);
-}
-
-void SlowLeft() {
-    motorLeft.writeMicroseconds(PPM_STOP+SPEED_SLOW);
-    motorRight.writeMicroseconds(PPM_STOP+SPEED_SLOW);
-}
-
-void SlowRight() {
-    motorLeft.writeMicroseconds(PPM_STOP-SPEED_SLOW);
-    motorRight.writeMicroseconds(PPM_STOP-SPEED_SLOW);
-}
-
-void ForwardLeft() {
-    motorLeft.writeMicroseconds(PPM_STOP+SPEED_SLOW);
-    motorRight.writeMicroseconds(PPM_STOP+SPEED_SLOW-50);
-}
-
-void ForwardRight() {
-    motorLeft.writeMicroseconds(PPM_STOP-SPEED_SLOW+50);
-    motorRight.writeMicroseconds(PPM_STOP-SPEED_SLOW);
+int8_t getMovementSpeed()
+{
+    return set_speed;
 }
 

@@ -17,7 +17,7 @@ enum TOFType {
     L1
 };
 
-void init_TOF();
+void initTOF();
 
 class TOF {
 public:

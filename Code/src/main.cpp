@@ -101,7 +101,7 @@ void setup() {
     Wire1.setClock(400000UL);
 
     // Initialize TOF controller (includes IMU)
-    init_TOF();
+    initTOF();
     initMovement();
     initIMU();
     initCollection();

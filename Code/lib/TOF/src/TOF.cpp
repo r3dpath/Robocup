@@ -13,7 +13,7 @@ TOF2 tof_scan_left(5, 0x36, 3, 0x34, &io); // Both front facing TOF's
 TOF2 tof_scan_right(4, 0x35, 1, 0x32, &io);
 
 
-void init_TOF()
+void initTOF()
 {   
     io.begin(SX1509_ADDRESS);
 
