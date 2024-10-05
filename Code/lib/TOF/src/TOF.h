@@ -1,16 +1,27 @@
 #ifndef __TOF_H__
 #define __TOF_H__
 
+const byte SX1509_ADDRESS = 0x3F;
+SX1509 io;
+
 #include <Wire.h>
 #include <VL53L0X.h>
 #include <VL53L1X.h>
 #include <SparkFunSX1509.h>
+#include <debug.h>
 
 #define TOF_SCAN_HEIGHT 4
 #define TOF_CONSTANT_OFFSET 0
 #define TOF_SCAN_PERIOD 45 // ms
 #define TOF_SCAN_WINDOW 40 * 1000 // us
 #define TOF_SCAN_RANGE VL53L1X::Long
+
+// TOF sensor objects
+TOF tof_l(L0, 2, 0x30, &io); // Left TOF
+TOF tof_r(L0, 0, 0x31, &io); // Right TOF
+//TOF tof_b(L1, 1, 0x32, &io); // Back TOF
+TOF2 tof_scan_left(5, 0x36, 3, 0x34, &io); // Both front facing TOF's
+TOF2 tof_scan_right(4, 0x35, 1, 0x32, &io);
 
 enum TOFType {
     L0,

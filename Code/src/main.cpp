@@ -22,6 +22,7 @@
 
 //#define TOTAL_ROUND_TIME 2*60*1000
 #define TOTAL_ROUND_TIME -1
+elapsedMillis round_time = 0;
 /*
 
 TODO:
@@ -138,7 +139,6 @@ void initTask() {
 }
 
 void loop() {
-  static elapsedMillis round_time;
   taskManager.execute();
   if (round_time > TOTAL_ROUND_TIME) {
     Serial.print("!Round Over!");

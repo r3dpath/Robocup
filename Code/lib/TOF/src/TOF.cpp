@@ -1,16 +1,4 @@
 #include "TOF.h"
-#include <Arduino.h>
-#include "debug.h"
-
-const byte SX1509_ADDRESS = 0x3F;
-
-SX1509 io;
-// TOF sensor objects
-TOF tof_l(L0, 2, 0x30, &io); // Left TOF
-TOF tof_r(L0, 0, 0x31, &io); // Right TOF
-//TOF tof_b(L1, 1, 0x32, &io); // Back TOF
-TOF2 tof_scan_left(5, 0x36, 3, 0x34, &io); // Both front facing TOF's
-TOF2 tof_scan_right(4, 0x35, 1, 0x32, &io);
 
 
 void initTOF()
