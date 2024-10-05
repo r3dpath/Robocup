@@ -14,11 +14,6 @@ Should remain in collection state when really close
 
 */
 
-
-extern TOF2 tof_scan_left;
-extern TOF2 tof_scan_right;
-
-
 // Constants for angular offsets
 #define ANGLE_LEFT_CLOSE -10
 #define ANGLE_LEFT_FAR -20
@@ -31,12 +26,19 @@ extern TOF2 tof_scan_right;
 
 weight_info_t weightDetection() {
     static weight_info_t state;
-    int16_t max_left = 0, max_right = 0;
-    uint8_t max_idx_left = 0, max_idx_right = 0;
-    int16_t sum_left = 0, sum_right = 0;
+    int16_t max_left = 0;
+    int16_t max_right = 0;
+    uint8_t max_idx_left = 0; 
+    uint8_t max_idx_right = 0;
+    int16_t sum_left = 0;
+    int16_t sum_right = 0;
+    uint16_t max_diff = 0;
+    uint16_t sum_top_distances = 0;
+    int16_t detection_percentage = 0;
 
     // Collect TOF data for both left and right sensors
     for (int i = 0; i < 5; i++) {
+        Serial.println(tof_scan_left.differences[i]);
         sum_left += tof_scan_left.differences[i];
         sum_right += tof_scan_right.differences[i];
 
@@ -50,18 +52,33 @@ weight_info_t weightDetection() {
         if (tof_scan_right.differences[i] > max_right) {
             max_right = tof_scan_right.differences[i];
             max_idx_right = i;
+           
         }
+
+        sum_top_distances += (tof_scan_left.top[i] + tof_scan_right.top[i]);
     }
 
-    // Calculate averages for each side
+    max_diff = max(max_left, max_right);
+    //Calculate averages for each side
     int16_t average_left = sum_left / 5;
     int16_t average_right = sum_right / 5;
+    int16_t average_sum_top_distances = sum_top_distances / 5;
 
-    // Determine the direction based on TOF data
+    if (average_sum_top_distances > 0) {
+
+        detection_percentage =  (max_diff * 100) / average_sum_top_distances;
+    } else {
+        detection_percentage = 0;
+    }
+
+    // Serial.print("Max Diff: "); Serial.println(max_diff);
+    // Serial.print("Avg Top Distances: "); Serial.println(average_sum_top_distances);
+    // Serial.print("Detection Percentage: "); Serial.println(detection_percentage);
+
+   // Determine the direction based on TOF data
     if (state.certainty < 3) {
         // If left TOF detects a weight
-        if ((max_left > abs(average_left) * AVG_DEADBAND || tof_scan_left.bottom[max_idx_left] < WASHOUT_RANGE) &&
-            tof_scan_left.top[max_idx_left] > tof_scan_left.bottom[max_idx_left] * ABS_DEADBAND) {
+        if (max_left > abs(average_left)  && tof_scan_left.top[max_idx_left] > tof_scan_left.bottom[max_idx_left] && detection_percentage > 15) { //detection percentage greater than 15%
             
             state.certainty += 1;
             state.distance = tof_scan_left.bottom[max_idx_left];
@@ -72,8 +89,7 @@ weight_info_t weightDetection() {
             else state.direction = CENTER;
 
         // If right TOF detects a weight
-        } else if ((max_right > abs(average_right) * AVG_DEADBAND || tof_scan_right.bottom[max_idx_right] < WASHOUT_RANGE) &&
-                   tof_scan_right.top[max_idx_right] > tof_scan_right.bottom[max_idx_right] * ABS_DEADBAND) {
+        } else if ((max_right > abs(average_right) && tof_scan_right.top[max_idx_right] > tof_scan_right.bottom[max_idx_right]) && detection_percentage > 15) {
 
             state.certainty += 1;
             state.distance = tof_scan_right.bottom[max_idx_right];
@@ -90,14 +106,26 @@ weight_info_t weightDetection() {
         }
 
     } else {
-        // Similar logic when certainty >= 3 (more confident in detection)
-        if ((max_left > abs(average_left) * AVG_DEADBAND || tof_scan_left.bottom[max_idx_left] < WASHOUT_RANGE) &&
-            tof_scan_left.top[max_idx_left] > tof_scan_left.bottom[max_idx_left] * ABS_DEADBAND) {
-            state.direction = (max_idx_left == 0) ? FAR_LEFT : (max_idx_left == 1) ? LEFT : CENTER;
-            state.distance = tof_scan_left.bottom[max_idx_left];
-        } else if ((max_right > abs(average_right) * AVG_DEADBAND || tof_scan_right.bottom[max_idx_right] < WASHOUT_RANGE) &&
-                   tof_scan_right.top[max_idx_right] > tof_scan_right.bottom[max_idx_right] * ABS_DEADBAND) {
-            state.direction = (max_idx_right == 0) ? FAR_RIGHT : (max_idx_right == 1) ? RIGHT : CENTER;
+        //Similar logic when certainty >= 3 (more confident in detection)
+        if ((max_left > abs(average_left)) &&
+        (tof_scan_left.top[max_idx_left] > tof_scan_left.bottom[max_idx_left])) {
+        if (max_idx_left == 0) {
+            state.direction = FAR_LEFT;
+        } else if (max_idx_left == 1) {
+            state.direction = LEFT;
+        } else {
+            state.direction = CENTER;
+        }
+        state.distance = tof_scan_left.bottom[max_idx_left];
+        } else if ((max_right > abs(average_right)) &&
+                (tof_scan_right.top[max_idx_right] > tof_scan_right.bottom[max_idx_right])) {
+            if (max_idx_right == 0) {
+                state.direction = FAR_RIGHT;
+            } else if (max_idx_right == 1) {
+                state.direction = RIGHT;
+            } else {
+                state.direction = CENTER;
+            }
             state.distance = tof_scan_right.bottom[max_idx_right];
         } else {
             state.certainty = 0;
@@ -137,10 +165,6 @@ weight_info_t weightDetection() {
     Serial.print(" Distance: ");
     Serial.println(state.distance);
     #endif 
-
-    return state;
-
-
 
     #ifdef DEBUG
     Serial.print("S:");
