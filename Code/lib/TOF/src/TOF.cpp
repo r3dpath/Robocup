@@ -137,7 +137,7 @@ bool TOF2::init() {
 
 // Scans through the 5 SPAD locations and records the difference between the top and bottom sensors. Non-blocking.
 void TOF2::tick() {
-    static const uint16_t spad_locations[5] = {150, 174, 198, 222, 246}; //{246, 222, 198, 174, 150};
+    static const uint16_t spad_locations[5] = {246, 222, 198, 174, 150}; //{246, 222, 198, 174, 150};
     static uint8_t iter = 0;
     static uint8_t spad_iter = 1;
     

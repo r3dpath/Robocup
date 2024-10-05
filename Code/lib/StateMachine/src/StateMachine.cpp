@@ -35,14 +35,14 @@ void Robot_State_Machine() {
     switch (current_state) {
         case ROAMING: {
             state = weightDetection();
-            if (state.certainty > 1) {
-                transition(PURSUE_WEIGHT);
-            } else {
-                //movementController();
-                if (millis() - lastTurnTime > (unsigned long)random(8000, 12000)) {
-                    transition(RANDOM_WALK);
-                }   
-            }
+            // if (state.certainty > 3) {
+            //     transition(PURSUE_WEIGHT);
+            // } else {
+            //     //movementController();
+            //     if (millis() - lastTurnTime > (unsigned long)random(8000, 12000)) {
+            //         transition(RANDOM_WALK);
+            //     }   
+            // }
             break;
         }
 
@@ -75,7 +75,7 @@ void Robot_State_Machine() {
         case COLLECT_WEIGHT: {
             collectionOn();
             SlowForward();
-            state = weightDetection();
+            //state = weightDetection();
             
 
             if ((millis() - lastTurnTime) > 3500) { // Collection time has passed, return to roaming
