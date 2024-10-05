@@ -7,7 +7,7 @@ position_t robotPosition;
 
 void positionTick()
 {
-    int32_t encChange = getEncoderDiff();
+    int32_t encChange = getPosEncoderDiff();
     uint16_t imuAngle = getIMUHeading();
 
     robotPosition.x += (float)encChange/50000*cos((float)imuAngle*PI/180);

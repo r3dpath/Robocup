@@ -1,7 +1,5 @@
 #include "Movement.h"
 
-
-
 Servo motorLeft, motorRight;
 
 extern TOF tof_l;
@@ -17,12 +15,6 @@ void initMovement() {
 void movementController() {
     #ifdef PROFILING
     elapsedMicros time;
-    #endif
-
-    #ifdef PROFILING
-    Serial.print(time);
-    Serial.println(" - Back");
-    time = 0;
     #endif
 
     uint16_t front_TOF = tof_scan_left.f_distance;  // Front
@@ -57,7 +49,7 @@ void movementController() {
 
     if (((Left_TOF <= 350) && (Right_TOF <= 350)) && (front_TOF <= 400)) { 
         Reverse();
-        delay(1000); // BAD! Get rid of this
+        //delay(1000); // BAD! Get rid of this
     }
 
     if ((Left_TOF <= MOV_MIN_DISTANCE)) {

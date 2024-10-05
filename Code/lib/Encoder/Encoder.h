@@ -2,21 +2,28 @@
 #define ENCODER_H
 
 #include <Wire.h>
-#include <SparkFunSX1509.h>
+#include <AS5600.h>
+#include <IntervalTimer.h>
+#include "debug.h"
+
+#define POS_ENCODER_TICK_FREQ 15000
 
 enum PinAssignments {
-  encoder1PinA = 33,
-  encoder1PinB = 32,
+  encoderLeftA = 33,
+  encoderLeftB = 32,
   
-  encoder2PinA = 31,
-  encoder2PinB = 30,
+  encoderRightA = 31,
+  encoderRightB = 30,
 };
 
 
 void initEncoder();
-void print_encodercount();
-int32_t getEncoderCounts();
-void tickEncoder();
-int32_t getEncoderDiff();
+void printEncoderCount();
+int32_t getPosEncoderCount();
+float getLeftEncoderSpeed();
+float getRightEncoderSpeed();
+int32_t getPosEncoderDiff();
+void printEncoderCount();
+
 
 #endif

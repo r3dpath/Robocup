@@ -31,14 +31,14 @@ void printCurrentState()
 
 void Robot_State_Machine() {
     weight_info_t state;
-
+    
     switch (current_state) {
         case ROAMING: {
             state = weightDetection();
             if (state.certainty > 1) {
                 transition(PURSUE_WEIGHT);
             } else {
-                movementController();
+                //movementController();
                 if (millis() - lastTurnTime > (unsigned long)random(8000, 12000)) {
                     transition(RANDOM_WALK);
                 }   

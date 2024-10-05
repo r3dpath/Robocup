@@ -1,10 +1,11 @@
 #ifndef MOVEMENT_H
 #define MOVEMENT_H
 
-#include <TOF.h>
 #include <Servo.h>
 #include <IMU.h>
+#include <Encoder.h>
 #include <debug.h>
+#include <TOF.h>
 
 #define PPM_STOP 1500
 #define SPEED_SLOW 250

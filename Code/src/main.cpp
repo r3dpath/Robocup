@@ -18,6 +18,8 @@
 #include "Encoder.h"
 #include "Positioning.h"
 
+
+
 //#define TOTAL_ROUND_TIME 2*60*1000
 #define TOTAL_ROUND_TIME -1
 /*
@@ -65,14 +67,6 @@ void positionTick_time() {
   Serial.println(" - Pos Tick Task");
 }
 
-void tickEncoder_time() {
-  elapsedMicros time;
-  time = 0;
-  tickEncoder();
-  Serial.print(time);
-  Serial.println(" - Encoder Tick Task");
-}
-
 Scheduler taskManager;
 #ifndef PROFILING
 //Task tScan(35, TASK_ONCE, []() { tof_scan.tick(); });
@@ -82,16 +76,14 @@ Task tPos(100, TASK_FOREVER, positionTick);
 #ifdef DEBUG_POS
 Task tPrintPos(200, TASK_FOREVER, printPosition);
 #endif
-Task tTickEncoder(15, TASK_FOREVER, tickEncoder);
 #else
 Task tScan(60, TASK_FOREVER, tof_scan_time);
 Task tStateMachine(300, TASK_FOREVER, rsm_time);
 Task tIMU(100, TASK_FOREVER, UpdateIMU_time);
 Task tPos(50, TASK_FOREVER, positionTick_time);
 #ifdef DEBUG_POS
-Task tPrintPos(200, TASK_FOREVER, printPosition);
+Task tPrintPos(200, TASK_FOREVER, print_encodercount);
 #endif
-Task tTickEncoder(20, TASK_FOREVER, tickEncoder_time);
 #endif
 
 void tof_scan_restart() {
@@ -133,7 +125,6 @@ void initTask() {
   #ifdef DEBUG_POS
   taskManager.addTask(tPrintPos);
   #endif
-  taskManager.addTask(tTickEncoder);
 
   // Enable the tasks
   tScan.enable();
@@ -142,7 +133,6 @@ void initTask() {
   #ifdef DEBUG_POS
   tPrintPos.enable();
   #endif
-  tTickEncoder.enable();
 
   Serial.println("Tasks have been initialised \n");
 }
