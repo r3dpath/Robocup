@@ -13,10 +13,10 @@ position_t robotPosition = {homePosition.x, homePosition.y};
 void positionTick()
 {
     int32_t encChange = getPosEncoderDiff();
-    uint16_t imuAngle = getIMUHeading();
+    uint16_t imuAngle = getBodyHeading();
 
-    robotPosition.x += (float)encChange/50*cos((float)imuAngle*PI/180);
-    robotPosition.y += (float)encChange/50*sin((float)imuAngle*PI/180);
+    robotPosition.x += (float)encChange/50*sin((float)imuAngle*PI/180);
+    robotPosition.y += (float)encChange/50*cos((float)imuAngle*PI/180);
 
     // If the robot leaves the bounds of the arena, hold it at the edge.
     if (robotPosition.x > ARENA_WIDTH) {

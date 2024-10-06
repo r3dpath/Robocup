@@ -87,6 +87,7 @@ void tof_scan_restart() {
 void setup() {
   
     Serial.begin(BAUD);
+    delay(10000);
     Wire.begin();
     Wire1.begin();
     Wire.setClock(400000UL);

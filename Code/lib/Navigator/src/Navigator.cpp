@@ -31,7 +31,7 @@ void turnToPosition(position_t target);
 void turnToWeight(weight_info_t weight);
 void obstacleDetection();
 void popTarget();
-position_t getTarget();
+position_t getNewTarget();
 position_t relToAbsPos(position_t target);
 int16_t angleToTarget();
 
@@ -45,7 +45,12 @@ void initNavigator() {
     addTarget({1000, 1000}, false);
     addTarget({2000, 2000}, false);
     */
-    addTarget((position_t){current_position.x, current_position.y + 2000});
+    addTarget((position_t){current_position.x, current_position.y});
+    addTarget((position_t){current_position.x+3000, current_position.y});
+    addTarget((position_t){current_position.x+3000, current_position.y + 3000});
+    addTarget((position_t){current_position.x, current_position.y + 3000});
+    
+    
 }
 
 void navigatorFSM() {
@@ -134,9 +139,10 @@ void pickPoint_s() {
     #endif
 
     if (target_pointer != 0) {
-        if (current_target.x != targets[target_pointer].x && current_target.y != targets[target_pointer].y) {
-            Serial.println("Setting new target");
-            current_target = getTarget();
+        if (current_target.x != targets[target_pointer-1].x && current_target.y != targets[target_pointer-1].y) {
+            Serial.print("Setting new target");
+            Serial.println(target_pointer); 
+            current_target = getNewTarget();
         } else {
             // If the robot has reached the target, pop it off the stack
             popTarget();
@@ -156,6 +162,8 @@ void pickPoint_s() {
 void moving_s() {
     static elapsedMillis last_move = 0;
     uint16_t dist = distanceToTarget();
+    Serial.print("Distance: ");
+    Serial.println(dist);
     if (dist < NAV_CLOSE_ENOUGH_GOOD_ENOUGH) {
         navigator_state = NAVIGATOR_PICK_POINT;
         last_move = 0;
@@ -169,7 +177,7 @@ void moving_s() {
 // Avoids an obstacle
 void avoiding_s() {
     position_t current_position = getPosition();
-    int16_t angle = getIMUHeading();
+    int16_t angle = getBodyHeading();
     uint16_t l_dist = tof_l.read();
     uint16_t r_dist = tof_r.read();
     uint16_t f_dist = tof_scan_right.f_distance;
@@ -267,7 +275,7 @@ void popTarget() {
     }
 }
 
-position_t getTarget() {
+position_t getNewTarget() {
     return targets[target_pointer-1];
 }
 
@@ -283,14 +291,14 @@ void turnToPosition(position_t target) {
     position_t current = getPosition();
     float dx = target.x - current.x;
     float dy = target.y - current.y;
-    float angle = atan2(dy, dx);
+    float angle = atan2(dy, dx) * 180 / PI;
     setMovementHeading(angle);
 }
 
 // Turns to a relative position
 position_t relToAbsPos(position_t target) {
     position_t currentPos = getPosition();
-    int16_t angle = getIMUHeading();
+    int16_t angle = getBodyHeading();
     float dx = target.x * cos(angle) - target.y * sin(angle);
     float dy = target.x * sin(angle) + target.y * cos(angle);
 
@@ -299,7 +307,7 @@ position_t relToAbsPos(position_t target) {
 
 // Turns to a weight
 void turnToWeight(weight_info_t weight) {
-    int16_t angle = getIMUHeading() + weight.direction;
+    int16_t angle = getBodyHeading() + weight.direction;
     setMovementHeading(angle);
 }
 

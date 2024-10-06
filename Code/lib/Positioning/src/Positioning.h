@@ -5,6 +5,7 @@
 #include <math.h>
 #include "debug.h"
 #include "Encoder.h"
+#include <Movement.h>
 
 typedef enum {
     BASE_LEFT,
@@ -19,7 +20,7 @@ typedef struct {
 extern bool POS_OOB;
 
 #define START_BASE BASE_LEFT
-#define START_ANGLE 0
+
 
 #define ARENA_WIDTH 2900
 #define ARENA_LENGTH 4900

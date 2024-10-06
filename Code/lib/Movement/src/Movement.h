@@ -19,6 +19,8 @@
 #define MOVEMENT_I 0
 #define MOVEMENT_HEADING_MULT 8
 
+#define START_ANGLE 0
+
 void initMovement();
 void movementController();
 void setMovementHeading(int16_t heading);
@@ -26,5 +28,6 @@ void incrementMovementHeading(int16_t heading);
 int16_t getMovementHeading();
 void setMovementSpeed(int8_t speed);
 int8_t getMovementSpeed();
+int16_t getBodyHeading();
 
 #endif
