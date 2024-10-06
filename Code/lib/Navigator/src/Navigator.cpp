@@ -8,7 +8,7 @@ extern TOF2 tof_scan_right;
 navigator_state_t navigator_state = NAVIGATOR_PICK_POINT;
 
 position_t targets[10];
-position_t current_target = {0, 0};
+position_t current_target = {-1, -1};
 uint8_t target_pointer = 0;
 
 uint8_t no_move_count = 0;
@@ -90,6 +90,13 @@ void navigatorFSM() {
     
     last_position = current_position;
 
+    #ifdef DEBUG_NAV
+    Serial.print("SetPoint: ");
+    Serial.print(current_target.x);
+    Serial.print(", ");
+    Serial.println(current_target.y);
+    #endif
+
     #ifdef DEBUG
     Serial.print("NAV: ");
     switch (navigator_state) {
@@ -119,20 +126,26 @@ void pickPoint_s() {
     position_t current_position = getPosition();
     static uint16_t iter = 0;
 
-    if (current_target.x != targets[target_pointer].x && current_target.y != targets[target_pointer].y) {
-        current_target = getTarget();
-    } else {
-        // If the robot has reached the target, pop it off the stack
-        popTarget();
-    }
+    #ifdef DEBUG_NAV
+    Serial.print("Pick point: ");
+    Serial.print(iter);
+    Serial.print(":");
+    Serial.println(target_pointer);
+    #endif
 
     if (target_pointer != 0) {
-        current_target = getTarget();
+        if (current_target.x != targets[target_pointer].x && current_target.y != targets[target_pointer].y) {
+            Serial.println("Setting new target");
+            current_target = getTarget();
+        } else {
+            // If the robot has reached the target, pop it off the stack
+            popTarget();
+        }
     } else {
-        // TODO: Pick a new point here
-        return;
+        // If there are no more targets, return to the start
+        current_target = {0, 0};
     }
-    // TODO: Continue filling out, grid search. Also have a before avoid point, to revert to
+
 
     iter += 1;
     navigator_state = NAVIGATOR_MOVING;
@@ -235,6 +248,12 @@ void stuck_s() {
 }
 
 void addTarget(position_t target) {
+    #ifdef DEBUG_NAV
+    Serial.print("Adding target: ");
+    Serial.print(target.x);
+    Serial.print(", ");
+    Serial.println(target.y);
+    #endif
     if (target_pointer >= 10) {
         return;
     }
@@ -249,7 +268,7 @@ void popTarget() {
 }
 
 position_t getTarget() {
-    return targets[target_pointer];
+    return targets[target_pointer-1];
 }
 
 void setWeightDetected(weight_info_t weight) {

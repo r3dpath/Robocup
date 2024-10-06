@@ -71,15 +71,22 @@ int32_t getPosEncoderCount() {
 // Returns the speed in encoder counts per second, averaged since the last time the function was called.
 float getLeftEncoderSpeed() {
   static elapsedMillis timesince = 0;
-  float diff = leftEncoderPos - lastLeftPos;
-  return diff/(timesince/1000);
+  float diff = (float)(leftEncoderPos - lastLeftPos)/((float)timesince/1000.0);
+  timesince = 0;
+  lastLeftPos = leftEncoderPos;
+  return diff;
 }
+
+
+// Max speed seems to be around 6000 counts per second.
 
 // Returns the speed in encoder counts per second, averaged since the last time the function was called.
 float getRightEncoderSpeed() {
   static elapsedMillis timesince = 0;
-  float diff = leftEncoderPos - lastLeftPos;
-  return diff/(timesince/1000);
+  float diff = (float)(rightEncoderPos - lastRightPos)/((float)timesince/1000.0);
+  timesince = 0;
+  lastRightPos = rightEncoderPos;
+  return diff;
 }
 
 // Get the difference in encoder count since the last call.

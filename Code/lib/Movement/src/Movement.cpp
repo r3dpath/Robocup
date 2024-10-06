@@ -23,10 +23,15 @@ void movementController()
     // Get current speed
     float lspeed = getLeftEncoderSpeed();
     float rspeed = getRightEncoderSpeed();
+    #ifdef DEBUG_MOVEMENT
+    Serial.print("LeftActualSpeed: ");
+    Serial.print(lspeed);
+    Serial.print(" RightActualSpeed: ");
+    Serial.println(rspeed);
+    #endif
     // Calculate difference between current and desired heading
     int16_t heading_diff = set_heading - heading;
     // Calculate difference between current and desired speed
-    // int8_t speed_diff = set_speed - speed;
 
     // If more than 180 degrees, subtract 360
     if (heading_diff > 180) {
@@ -44,64 +49,58 @@ void movementController()
     Serial.println(heading_diff);
     #endif
 
-    // Implement PI control to achieve the desired heading and speed
+    int16_t left_set_speed = set_speed * MOVEMENT_P + MOVEMENT_HEADING_MULT * heading_diff;
+    int16_t right_set_speed = set_speed * MOVEMENT_P - MOVEMENT_HEADING_MULT * heading_diff;
 
     // Really crappy bodge to overcome stall
     if (lspeed == 0 && set_speed != 0)
     {
-        l_integral += 1;
-    } else if (lspeed != 0) {
-        l_integral = 0;
-    }
+        left_set_speed *= 2;
+    } 
 
     if (rspeed == 0 && set_speed != 0)
     {
-        r_integral += 1;
-    } else if (rspeed != 0) {
-        r_integral = 0;
+        right_set_speed *= 2;
     }
 
-    // Calculate the motor speeds
-    int16_t left_speed = set_speed * MOVEMENT_P + set_speed * lspeed + MOVEMENT_HEADING_MULT * heading_diff;
-    int16_t right_speed = set_speed  * MOVEMENT_P + set_speed * rspeed - MOVEMENT_HEADING_MULT * heading_diff;
+    //Using 6000 counts per second as max speed
 
     #ifdef DEBUG_MOVEMENT
-    Serial.print("LeftActualSpeed: ");
-    Serial.print(left_speed);
-    Serial.print(" RightActualSpeed: ");
-    Serial.println(right_speed);
+    Serial.print("SetSpeedLeft: ");
+    Serial.print(left_set_speed);
+    Serial.print(" SetSpeedRight: ");
+    Serial.println(right_set_speed);
     #endif
 
-
     // Bound speeds
-    if (left_speed > SPEED_MAX)
+    if (left_set_speed > SPEED_MAX)
     {
-        left_speed = SPEED_MAX;
+        left_set_speed = SPEED_MAX;
     }
-    else if (left_speed < -SPEED_MAX)
+    else if (left_set_speed < -SPEED_MAX)
     {
-        left_speed = -SPEED_MAX;
+        left_set_speed = -SPEED_MAX;
     }
 
-    if (right_speed > SPEED_MAX)
+    if (right_set_speed > SPEED_MAX)
     {
-        right_speed = SPEED_MAX;
+        right_set_speed = SPEED_MAX;
     }
-    else if (right_speed < -SPEED_MAX)
+    else if (right_set_speed < -SPEED_MAX)
     {
-        right_speed = -SPEED_MAX;
+        right_set_speed = -SPEED_MAX;
     }
 
     // Set the motor speeds. Left should be negative just bacause of the motor orientation.
     #ifdef DEBUG_MOVEMENT
-    Serial.print("LeftSetSpeed: ");
-    Serial.print(left_speed);
-    Serial.print(" RightSetSpeed: ");
-    Serial.println(right_speed);
+    Serial.print("LeftCommandedSpeed: ");
+    Serial.print(left_set_speed);
+    Serial.print(" RightCommandedSpeed: ");
+    Serial.println(right_set_speed);
     #endif
 
-    motorLeft.writeMicroseconds(PPM_STOP - left_speed);
-    motorRight.writeMicroseconds(PPM_STOP + right_speed);
+    motorLeft.writeMicroseconds(PPM_STOP - left_set_speed);
+    motorRight.writeMicroseconds(PPM_STOP + right_set_speed);
 }
 
 void setMovementHeading(int16_t heading)

@@ -17,7 +17,7 @@
 
 #define MOVEMENT_P 50
 #define MOVEMENT_I 0
-#define MOVEMENT_HEADING_MULT 5
+#define MOVEMENT_HEADING_MULT 8
 
 void initMovement();
 void movementController();

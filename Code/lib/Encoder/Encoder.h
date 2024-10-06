@@ -9,11 +9,11 @@
 #define POS_ENCODER_TICK_FREQ 15000
 
 enum PinAssignments {
-  encoderLeftA = 33,
-  encoderLeftB = 32,
+  encoderLeftA = 30,
+  encoderLeftB = 31,
   
-  encoderRightA = 31,
-  encoderRightB = 30,
+  encoderRightA = 32,
+  encoderRightB = 33,
 };
 
 
