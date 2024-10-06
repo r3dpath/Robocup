@@ -28,6 +28,10 @@ TODO:
 
 
 */
+
+const int solenoidPin = 26;  //*************
+
+
 IRSensor IRSensor(0xB0);
 
 void initTask();
@@ -78,10 +82,31 @@ void tof_scan_restart() {
   tScan.restartDelayed(TOF_SCAN_PERIOD);
 }
 
+//*****************
+
+void openSolenoid() {
+  digitalWrite(solenoidPin, HIGH); // Activate solenoid
+  Serial.println("Solenoid opened.");
+}
+
+// Function to close the solenoid
+void closeSolenoid() {
+  digitalWrite(solenoidPin, LOW); // Deactivate solenoid
+  Serial.println("Solenoid closed.");
+}
+int chur = 0;
+//********************
+
+
 void setup() {
   
     Serial.begin(BAUD);
     Serial.println("Serial Begin");
+
+    //*******************
+    pinMode(solenoidPin, OUTPUT);
+    closeSolenoid(); // Ensure solenoid is closed at start
+    //****************
 
     // Initialize TOF controller (includes IMU)
     initMovement();
@@ -125,7 +150,18 @@ void loop() {
     while (1) {}
   }
 
-  Serial.println(IRSensor.getPos());
+  //Serial.println(IRSensor.getPos());
+
+  while (chur < 15) {
+    openSolenoid();
+    delay(5000);
+    closeSolenoid();
+    delay(5000);
+    chur++;    
+  }
+
+
+
 
 }
 
