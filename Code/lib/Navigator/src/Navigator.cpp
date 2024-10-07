@@ -11,7 +11,6 @@ map_point_t targets[LEN_MAP_POINTS];
 position_t current_target = {-1, -1};
 uint8_t target_pointer = 0;
 
-uint8_t no_move_count = 0;
 weight_info_t weight_detected = {UNDEFINED, -1, 0};
 
 extern elapsedMillis round_time;
@@ -37,6 +36,7 @@ map_point_t getNewTarget();
 position_t relToAbsPos(position_t target);
 int16_t angleToTarget();
 uint16_t distanceBetweenPoints(position_t* positions);
+void setTarget(position_t candidate);
 
 uint16_t distanceToTarget();
 
@@ -52,7 +52,7 @@ void initNavigator() {
     addPoint((map_point_t){1300, 300, 0});
     addPoint((map_point_t){1300, 1300, 0});
     addPoint((map_point_t){300, 1300, 0});
-    addPoint((map_point_t){300, 300, 1});
+    addPoint((map_point_t){300, 300, 0});
     addPoint((map_point_t){1300, 300, 0});
     addPoint((map_point_t){1300, 1300, 0});
     addPoint((map_point_t){300, 1300, 0});
@@ -61,7 +61,7 @@ void initNavigator() {
 }
 
 void navigatorFSM() {
-    static elapsedMillis round_time = 0;
+    static uint8_t no_move_count = 0;
     position_t current_position = getPosition();
     switch (navigator_state) {
         case NAVIGATOR_PICK_POINT:
@@ -75,6 +75,7 @@ void navigatorFSM() {
             navigator_state = NAVIGATOR_MOVING;
             break;
         case NAVIGATOR_COLLECTING:
+            setMovementSpeed(NAV_WEIGHT_DET_SPEED);
             collecting_s();
             break;
         case NAVIGATOR_TERMINAL_GUIDANCE:
@@ -88,7 +89,8 @@ void navigatorFSM() {
     position_t things[2];
     things[0] = current_position;
     things[1] = last_position;
-    if (distanceBetweenPoints(things) < 10) {
+    uint16_t dist = distanceBetweenPoints(things);
+    if (dist < 30) {
         no_move_count += 1;
     } else {
         no_move_count = 0;
@@ -132,6 +134,9 @@ void navigatorFSM() {
     Serial.print(":");
     Serial.println(current_target.y);
     #endif
+
+    weight_info_t check = checkWeight();
+    setWeight(check);
 }
 
 void pickPoint_s() {
@@ -150,7 +155,7 @@ void pickPoint_s() {
             Serial.print("Setting new target: ");
             Serial.print(target_pointer);
             map_point_t map = getNewTarget();  
-            current_target = {map.x, map.y};
+            setTarget({map.x, map.y});
             Serial.print(" : ");
             Serial.print(current_target.x);
             Serial.print(", ");
@@ -164,7 +169,7 @@ void pickPoint_s() {
                 Serial.print("Setting new target: ");
                 Serial.print(target_pointer);   
                 map_point_t map = getNewTarget();  
-                current_target = {map.x, map.y};
+                setTarget({map.x, map.y});
                 Serial.print(" : ");
                 Serial.print(current_target.x);
                 Serial.print(", ");
@@ -204,12 +209,6 @@ void moving_s() {
         setMovementSpeed(NAV_DEFAULT_SPEED);
     }
 
-    weight_info_t check = checkWeight();
-    if (check.certainty >= NAV_WEIGHT_CERTAINTY_THRESHOLD) {
-        setWeightDetected(check);
-        return;
-    }
-
     obstacleDetection();
 }
 
@@ -228,29 +227,29 @@ void avoiding_s() {
     #if START_BASE == BASE_LEFT
         if (r_dist > NAV_AVOID_DIST_MAX) { // If clear to the right
             if (f_dist > NAV_AVOID_DIST_MAX * 2) { // If clear in front
-                current_target = relToAbsPos({300+NAV_CLOSE_ENOUGH_GOOD_ENOUGH, 300}); // Slight right turn
+                setTarget(relToAbsPos({300+NAV_CLOSE_ENOUGH_GOOD_ENOUGH, 300})); // Slight right turn
             } else {
-                current_target = relToAbsPos({300+NAV_CLOSE_ENOUGH_GOOD_ENOUGH, 0}); // Hard right turn
+                setTarget(relToAbsPos({300+NAV_CLOSE_ENOUGH_GOOD_ENOUGH, 0})); // Hard right turn
             }
         } else { // Must be blocked to the right so same thing but with should go back a bit too
             if (f_dist > NAV_AVOID_DIST_MAX * 2) { // If clear in front
-                current_target = relToAbsPos({-300-NAV_CLOSE_ENOUGH_GOOD_ENOUGH, 300}); // Slight left turn
+                setTarget(relToAbsPos({-300-NAV_CLOSE_ENOUGH_GOOD_ENOUGH, 300})); // Slight left turn
             } else {
-                current_target = relToAbsPos({-300-NAV_CLOSE_ENOUGH_GOOD_ENOUGH, -150-NAV_CLOSE_ENOUGH_GOOD_ENOUGH}); // Hard left with some reverse
+                setTarget(relToAbsPos({-300-NAV_CLOSE_ENOUGH_GOOD_ENOUGH, -150-NAV_CLOSE_ENOUGH_GOOD_ENOUGH})); // Hard left with some reverse
             }
         }
     #else // Same but flipped
         if (l_dist > NAV_AVOID_DIST_MAX) { // If clear to the left
             if (f_dist > NAV_AVOID_DIST_MAX) { // If clear in front
-                current_target = relToAbsPos({-100-NAV_CLOSE_ENOUGH_GOOD_ENOUGH, 300}); // Slight left turn
+                setTarget(relToAbsPos({-100-NAV_CLOSE_ENOUGH_GOOD_ENOUGH, 300}); // Slight left turn
             } else {
-                current_target = relToAbsPos({-300-NAV_CLOSE_ENOUGH_GOOD_ENOUGH, 0}); // Hard left turn
+                setTarget(relToAbsPos({-300-NAV_CLOSE_ENOUGH_GOOD_ENOUGH, 0}); // Hard left turn
             }
         } else { // Must be blocked to the left so same thing but with should go back a bit too
             if (f_dist > NAV_AVOID_DIST_MAX) { // If clear in front
-                current_target = relToAbsPos({100+NAV_CLOSE_ENOUGH_GOOD_ENOUGH, 300}); // Slight right turn
+                setTarget(relToAbsPos({100+NAV_CLOSE_ENOUGH_GOOD_ENOUGH, 300}); // Slight right turn
             } else {
-                current_target = relToAbsPos({300+NAV_CLOSE_ENOUGH_GOOD_ENOUGH, -300-NAV_CLOSE_ENOUGH_GOOD_ENOUGH}); // Hard right with some reverse
+                setTarget(relToAbsPos({300+NAV_CLOSE_ENOUGH_GOOD_ENOUGH, -300-NAV_CLOSE_ENOUGH_GOOD_ENOUGH}); // Hard right with some reverse
             }
         }
     #endif
@@ -259,17 +258,8 @@ void avoiding_s() {
 }
 
 void collecting_s() {
-    weight_info_t check = checkWeight();
-    if (check.certainty == 0) {
-        collectionOff();
-        navigator_state == NAVIGATOR_PICK_POINT;
-        return;
-    } else {
-        setWeightDetected(check);
-    }
-    setMovementSpeed(NAV_WEIGHT_DET_SPEED);
     turnToPosition(current_target);
-    if (distanceToTarget < NAV_WEIGHT_ENGAGE_DIST) {
+    if (distanceToTarget() < NAV_WEIGHT_ENGAGE_DIST) {
         terminalGuide_time = 0;
         navigator_state = NAVIGATOR_TERMINAL_GUIDANCE;
         terminalGuidance_s();
@@ -279,13 +269,47 @@ void collecting_s() {
 void terminalGuidance_s() {
     collectionOn();
     Serial.println("TERMINAL_NAV");
-    if (terminalGuide_time < 1) {
-        position_t centering = {-60, 300}; // Try to allow for the offset 
-        turnToPosition(centering);
-    }
+    // if (terminalGuide_time < 1) {
+    //     position_t centering = {-60, 300}; // Try to allow for the offset 
+    //     turnToPosition(relToAbsPos(centering));
+    // }
     if (terminalGuide_time > 6000) {
         collectionOff();
         navigator_state = NAVIGATOR_PICK_POINT;
+    }
+}
+
+//If uncertainty is high, navigator state switches to  collecting
+void setWeight(weight_info_t weight) {
+    weight_detected = weight;
+
+    switch (navigator_state) {
+        case NAVIGATOR_MOVING:              // If moving or picking a new point update the current target
+        case NAVIGATOR_PICK_POINT:
+        {
+            if (weight.certainty == 0) {
+                return;
+            }
+            position_t relative = {weight.distance*sin((int8_t)weight.direction), weight.distance*cos((int8_t)weight.direction)};
+            setTarget(relToAbsPos(relative));
+            #ifdef DEBUG_NAV
+            Serial.print("Adding weight at position: ");
+            Serial.print(current_target.x);
+            Serial.print(":");
+            Serial.println(current_target.y);
+            #endif
+            navigator_state = NAVIGATOR_COLLECTING;
+            break;
+        }
+        case NAVIGATOR_COLLECTING:
+            if (weight.certainty == 0) {
+                collectionOff();
+                navigator_state = NAVIGATOR_PICK_POINT;
+            }
+            break;
+        default:
+            break;
+            
     }
 }
 
@@ -324,13 +348,6 @@ void popTarget() {
 
 map_point_t getNewTarget() {
     return targets[target_pointer-1];
-}
-
-//If uncertainty is high, navigator state switches to  collecting
-void setWeightDetected(weight_info_t weight) {
-        weight_detected = weight;
-        current_target = {weight.distance*sin((int8_t)weight.direction), weight.distance*cos((int8_t)weight.direction)};
-        navigator_state = NAVIGATOR_COLLECTING;
 }
 
 // Turns to an absolute position
@@ -399,4 +416,25 @@ int16_t angleToTarget() {
     float dx = current_target.x - current.x;
     float dy = current_target.y - current.y;
     return atan2(dx, dy) * 180 / PI;
+}
+
+void setTarget(position_t candidate) {
+    position_t actual;
+    if (candidate.x < 0 + ARENA_BUFFER) {
+        actual.x = 0 + ARENA_BUFFER;
+    } else if (candidate.x > ARENA_WIDTH - ARENA_BUFFER) {
+        actual.x = ARENA_WIDTH - ARENA_BUFFER;
+    } else {
+        actual.x = candidate.x;
+    }
+
+    if (candidate.y < 0 + ARENA_BUFFER) {
+        actual.y = 0 + ARENA_BUFFER;
+    } else if (candidate.y > ARENA_LENGTH - ARENA_BUFFER) {
+        actual.y = ARENA_LENGTH - ARENA_BUFFER;
+    } else {
+        actual.y = candidate.y;
+    }
+
+    current_target = actual;
 }

@@ -20,11 +20,19 @@ void positionTick()
     robotPosition.y += (float)encChange/50*cos((float)imuAngle*PI/180);
 
     // If the robot leaves the bounds of the arena, hold it at the edge.
-    if (robotPosition.x > ARENA_WIDTH) {
-        robotPosition.x = ARENA_WIDTH;
+    if (robotPosition.x > ARENA_WIDTH-ARENA_BUFFER) {
+        robotPosition.x = ARENA_WIDTH-ARENA_BUFFER;
         POS_OOB = true;
-    } else if (robotPosition.x < 0) {
-        robotPosition.x = 0;
+    } else if (robotPosition.x < 0+ARENA_BUFFER) {
+        robotPosition.x = 0+ARENA_BUFFER;
+        POS_OOB = true;
+    }
+
+    if (robotPosition.y > ARENA_LENGTH-ARENA_BUFFER) {
+        robotPosition.y = ARENA_LENGTH-ARENA_BUFFER;
+        POS_OOB = true;
+    } else if (robotPosition.y < 0+ARENA_BUFFER) {
+        robotPosition.y = 0+ARENA_BUFFER;
         POS_OOB = true;
     }
 }

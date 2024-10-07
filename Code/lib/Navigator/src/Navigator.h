@@ -9,7 +9,7 @@
 
 #define NAV_AVOID_DIST_MAX 180
 #define NAV_CLOSE_ENOUGH_GOOD_ENOUGH 100
-#define NAV_DEFAULT_SPEED 7
+#define NAV_DEFAULT_SPEED 8
 
 #define NAV_WEIGHT_DET_SPEED 5
 #define NAV_WEIGHT_CERTAINTY_THRESHOLD 1
@@ -37,6 +37,6 @@ void initNavigator();
 void navigatorFSM();
 void setTargetPosition(position_t target);
 map_point_t getTargetPosition();
-void setWeightDetected(weight_info_t weight);
+void setWeight(weight_info_t weight);
 
 #endif

@@ -24,6 +24,7 @@ extern bool POS_OOB;
 
 #define ARENA_WIDTH 2900
 #define ARENA_LENGTH 4900
+#define ARENA_BUFFER 150
 
 void positionTick();
 position_t getPosition();

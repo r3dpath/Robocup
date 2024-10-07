@@ -60,12 +60,29 @@ void positionTick_time() {
   Serial.println(" - Pos Tick Task");
 }
 
+void movementController_time() {
+  elapsedMicros time;
+  time = 0;
+  movementController();
+  Serial.print(time);
+  Serial.println(" - Movement Task");
+}
+
+
+void weightTask_time() {
+  elapsedMicros time;
+  time = 0;
+  weightTask();
+  Serial.print(time);
+  Serial.println(" - Weight Task");
+}
+
 Scheduler taskManager;
 #ifndef PROFILING
 //Task tScan(35, TASK_ONCE, []() { tof_scan.tick(); });
 Task tScan(TOF_SCAN_PERIOD, TASK_ONCE, tof_scan_restart);
 Task tNav(200, TASK_FOREVER, navigatorFSM);
-Task tPos(50, TASK_FOREVER, positionTick);
+Task tPos(15, TASK_FOREVER, positionTick);
 Task tMove(50, TASK_FOREVER, movementController);
 Task tWeightDetect(TOF_SCAN_PERIOD * 5, TASK_FOREVER, weightTask);
 #ifdef DEBUG_POS
@@ -73,10 +90,12 @@ Task tPrintPos(200, TASK_FOREVER, printPosition);
 #endif
 #else
 Task tScan(TOF_SCAN_PERIOD, TASK_ONCE, tof_scan_time);
-Task tNav(100, TASK_FOREVER, nsm_time);
-Task tPos(50, TASK_FOREVER, positionTick_time);
+Task tNav(200, TASK_FOREVER, nsm_time);
+Task tPos(15, TASK_FOREVER, positionTick_time);
+Task tMove(50, TASK_FOREVER, movementController_time);
+Task tWeightDetect(TOF_SCAN_PERIOD * 5, TASK_FOREVER, weightTask_time);
 #ifdef DEBUG_POS
-Task tPrintPos(200, TASK_FOREVER, print_encodercount);
+Task tPrintPos(200, TASK_FOREVER, printPosition);
 #endif
 #endif
 

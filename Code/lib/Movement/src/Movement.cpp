@@ -56,12 +56,12 @@ void movementController()
     int16_t right_set_speed = set_speed * MOVEMENT_P - MOVEMENT_HEADING_MULT * heading_diff;
 
     // Really crappy bodge to overcome stall
-    if (lspeed == 0 && set_speed != 0)
+    if (abs(lspeed) < 200 && set_speed != 0)
     {
         left_set_speed *= 2;
     } 
 
-    if (rspeed == 0 && set_speed != 0)
+    if (abs(rspeed) < 200 && set_speed != 0)
     {
         right_set_speed *= 2;
     }
