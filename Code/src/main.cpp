@@ -138,10 +138,9 @@ void initTask() {
 }
 
 void loop() {
-  CheckWeightCount();
   delay(1000);
   static elapsedMillis round_time;
-  // taskManager.execute();
+  taskManager.execute();
   if (round_time > TOTAL_ROUND_TIME) {
     Serial.print("!Round Over!");
     while (1) {}

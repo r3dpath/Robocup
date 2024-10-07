@@ -37,7 +37,7 @@ weight_info_t weightDetection() {
     uint16_t sum_top_distances = 0;
     int16_t detection_percentage = 0;
 
-    const int MIN_VALID_DIFF = 20;  // Minimum difference to consider a weight (filter small noise)
+    const int MIN_VALID_DIFF = 200;  // Minimum difference to consider a weight (filter small noise)
     const int CONFIRMATION_THRESHOLD = 3;  // Number of consistent reads needed to confirm a weight
     const int MAX_ALLOWED_NOISE = 5; // Allowable noise threshold to reduce random detection
 
@@ -72,12 +72,14 @@ weight_info_t weightDetection() {
 
     detection_percentage = (average_sum_top_distances > 0) ? (max_diff * 100) / average_sum_top_distances : 0; // detection percentage
 
+    // Serial.print("Diff left: ");
+    // Serial.println(tof_scan_left.differences[max_idx_left]);
+    // Serial.print("Diff right: ");
+    // Serial.println(tof_scan_right.differences[max_idx_right]);
    // Detect weight based on top-bottom sensor differences
    if (state.certainty < 3) {
         // If left TOF detects a weight with significant difference
-        if ((tof_scan_left.top[max_idx_left] > tof_scan_left.bottom[max_idx_left]) && 
-            (tof_scan_left.top[max_idx_left] - tof_scan_left.bottom[max_idx_left]) > MIN_VALID_DIFF &&
-            abs(average_left - tof_scan_left.differences[max_idx_left]) < MAX_ALLOWED_NOISE) {
+        if ((tof_scan_left.differences[max_idx_left]) > MIN_VALID_DIFF) {
             
             consistent_detections++;
             if (consistent_detections >= CONFIRMATION_THRESHOLD) {
@@ -94,9 +96,7 @@ weight_info_t weightDetection() {
             }
         
         // If right TOF detects a weight with significant difference
-        } else if ((tof_scan_right.top[max_idx_right] > tof_scan_right.bottom[max_idx_right]) && 
-                   (tof_scan_right.top[max_idx_right] - tof_scan_right.bottom[max_idx_right]) > MIN_VALID_DIFF &&
-                   abs(average_right - tof_scan_right.differences[max_idx_right]) < MAX_ALLOWED_NOISE) {
+        } else if ((tof_scan_right.differences[max_idx_right]) > MIN_VALID_DIFF) {
             
             consistent_detections++;
             if (consistent_detections >= CONFIRMATION_THRESHOLD) {
@@ -115,70 +115,37 @@ weight_info_t weightDetection() {
         // If no valid detection is made, reduce certainty
         } else {
             consistent_detections = 0;  // Reset detection count
-            if (state.certainty > 0) {
-                state.certainty -= 1;
-            } else {
-                state.certainty = 0;
-            }
+            state.certainty = 0;
             state.direction = UNDEFINED;
             state.distance = -1;
         }
-    } else {
-        // Similar logic when certainty >= 3 (more confident in detection)
-        if ((tof_scan_left.top[max_idx_left] > tof_scan_left.bottom[max_idx_left]) && 
-            (tof_scan_left.top[max_idx_left] - tof_scan_left.bottom[max_idx_left]) > MIN_VALID_DIFF) {
-            if (max_idx_left == 0 || max_idx_left == 1) {
-                state.direction = FAR_LEFT;
-            } else if (max_idx_left == 2 || max_idx_left == 3) {
-                state.direction = LEFT;
-            } else if (max_idx_left == 4 || max_idx_right == 0) 
-                state.direction = CENTER;
-            state.distance = tof_scan_left.bottom[max_idx_left];
-        } else if ((tof_scan_right.top[max_idx_right] > tof_scan_right.bottom[max_idx_right]) && 
-                   (tof_scan_right.top[max_idx_right] - tof_scan_right.bottom[max_idx_right]) > MIN_VALID_DIFF) {
-            if (max_idx_right == 4 || max_idx_right == 3) {
-                state.direction = FAR_RIGHT;
-            } else if (max_idx_right == 2 || max_idx_right == 1) {
-                state.direction = RIGHT;
-            } else if (max_idx_left == 4 || max_idx_right == 0) 
-                state.direction = CENTER;
-            state.distance = tof_scan_right.bottom[max_idx_right];
-        } else {
-            consistent_detections = 0;  // Reset detection count
-            if (state.certainty > 0) {
-                state.certainty -= 1;
-            } else {
-                state.certainty = 0;
-            }
-            state.direction = UNDEFINED;
-            state.distance = -1;
-        }
+    
     }
 
     // Adjust heading based on detected direction and IMU data
-    int16_t heading_adjustment = 0;
-    switch (state.direction) {
-        case FAR_LEFT:
-            heading_adjustment = ANGLE_LEFT_FAR;
-            break;
-        case LEFT:
-            heading_adjustment = ANGLE_LEFT_CLOSE;
-            break;
-        case FAR_RIGHT:
-            heading_adjustment = ANGLE_RIGHT_FAR;
-            break;
-        case RIGHT:
-            heading_adjustment = ANGLE_RIGHT_CLOSE;
-            break;
-        case CENTER:
-            heading_adjustment = ANGLE_CENTER;
-            break;
-        default:
-            break;
-    }
+    // int16_t heading_adjustment = 0;
+    // switch (state.direction) {
+    //     case FAR_LEFT:
+    //         heading_adjustment = ANGLE_LEFT_FAR;
+    //         break;
+    //     case LEFT:
+    //         heading_adjustment = ANGLE_LEFT_CLOSE;
+    //         break;
+    //     case FAR_RIGHT:
+    //         heading_adjustment = ANGLE_RIGHT_FAR;
+    //         break;
+    //     case RIGHT:
+    //         heading_adjustment = ANGLE_RIGHT_CLOSE;
+    //         break;
+    //     case CENTER:
+    //         heading_adjustment = ANGLE_CENTER;
+    //         break;
+    //     default:
+    //         break;
+    // }
 
-    Serial.print("Adjustment angle: "); Serial.println(heading_adjustment);
-    Serial.print("Current weight Location: ");
+    //Serial.print("Adjustment angle: "); Serial.println(heading_adjustment);
+    //Serial.print("Current weight Location: ");
     switch (state.direction) {
         case FAR_LEFT: Serial.println("FAR LEFT"); break;
         case LEFT: Serial.println("LEFT"); break;
