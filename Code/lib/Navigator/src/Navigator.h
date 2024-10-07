@@ -4,14 +4,19 @@
 #include <TOF.h>
 #include <Positioning.h>
 #include <Movement.h>
+#include <WeightDetection.h>
+#include <Collection.h>
 
 #define NAV_AVOID_DIST_MAX 180
 #define NAV_CLOSE_ENOUGH_GOOD_ENOUGH 100
 #define NAV_DEFAULT_SPEED 7
 
 #define NAV_WEIGHT_DET_SPEED 5
-#define NAV_WEIGHT_CERTAINTY_THRESHOLD 3
+#define NAV_WEIGHT_CERTAINTY_THRESHOLD 1
 #define NAV_WEIGHT_ENGAGE_DIST 300
+
+#define LEN_MAP_POINTS 50
+
 
 typedef enum {
     NAVIGATOR_PICK_POINT,
@@ -22,25 +27,16 @@ typedef enum {
     NAVIGATOR_STUCK
 } navigator_state_t;
 
-typedef enum {
-    FAR_LEFT = -20,
-    LEFT = -10,
-    CENTER = 0,
-    RIGHT = 10,
-    FAR_RIGHT = 20,
-    UNDEFINED = -1
-} weight_direction_t;
-
 typedef struct {
-    weight_direction_t direction;
-    uint16_t distance;
-    uint8_t certainty;
-} weight_info_t;
+    float x;
+    float y;
+    bool isWeight;
+} map_point_t;
 
 void initNavigator();
 void navigatorFSM();
 void setTargetPosition(position_t target);
-position_t getTargetPosition();
+map_point_t getTargetPosition();
 void setWeightDetected(weight_info_t weight);
 
 #endif

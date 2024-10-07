@@ -7,7 +7,7 @@ extern TOF2 tof_scan_right;
 
 navigator_state_t navigator_state = NAVIGATOR_PICK_POINT;
 
-position_t targets[10];
+map_point_t targets[LEN_MAP_POINTS];
 position_t current_target = {-1, -1};
 uint8_t target_pointer = 0;
 
@@ -28,12 +28,12 @@ void terminalGuidance_s();
 void stuck_s();
 void avoiding_s();
 void collecting_s();
-void addTarget(position_t target);
+void addPoint(map_point_t target);
 void turnToPosition(position_t target);
 void turnToWeight(weight_info_t weight);
 void obstacleDetection();
 void popTarget();
-position_t getNewTarget();
+map_point_t getNewTarget();
 position_t relToAbsPos(position_t target);
 int16_t angleToTarget();
 
@@ -47,15 +47,15 @@ void initNavigator() {
     addTarget({1000, 1000}, false);
     addTarget({2000, 2000}, false);
     */
-    addTarget((position_t){2580, 284});
-    addTarget((position_t){2518, 3677});
-    addTarget((position_t){430, 3531});
-    addTarget((position_t){471, 4520});
-    addTarget((position_t){440, 3750});
-    addTarget((position_t){2520, 3680});
-    addTarget((position_t){2520, 1550});
-    addTarget((position_t){500, 1570});
-    
+    addPoint((map_point_t){2128.20, 334.40, 0});
+    addPoint((map_point_t){228.31, 2810.66, 0});
+    addPoint((map_point_t){2117.33, 4427.41, 0});
+    addPoint((map_point_t){312.57, 4435.70, 0});
+    addPoint((map_point_t){288.11, 2293.85, 0});
+    addPoint((map_point_t){2185.28, 2296.62, 0});
+    addPoint((map_point_t){2160.82, 1033.62, 0});
+    addPoint((map_point_t){309.85, 1069.54, 0});
+        
     
 }
 
@@ -149,8 +149,9 @@ void pickPoint_s() {
     if (target_pointer != 0) {
         if (current_target.x != targets[target_pointer-1].x && current_target.y != targets[target_pointer-1].y) {
             Serial.print("Setting new target: ");
-            Serial.print(target_pointer);   
-            current_target = getNewTarget();
+            Serial.print(target_pointer);
+            map_point_t map = getNewTarget();  
+            current_target = {map.x, map.y};
             Serial.print(" : ");
             Serial.print(current_target.x);
             Serial.print(", ");
@@ -163,7 +164,8 @@ void pickPoint_s() {
             if (target_pointer != 0) {
                 Serial.print("Setting new target: ");
                 Serial.print(target_pointer);   
-                current_target = getNewTarget();
+                map_point_t map = getNewTarget();  
+                current_target = {map.x, map.y};
                 Serial.print(" : ");
                 Serial.print(current_target.x);
                 Serial.print(", ");
@@ -196,6 +198,12 @@ void moving_s() {
     } else {
         setMovementSpeed(NAV_DEFAULT_SPEED);
     }
+
+    // weight_info_t check = checkWeight();
+    // if (check.certainty >= NAV_WEIGHT_CERTAINTY_THRESHOLD) {
+    //     setWeightDetected(check);
+    // }
+
     obstacleDetection();
 }
 
@@ -255,11 +263,13 @@ void collecting_s() {
 }
 
 void terminalGuidance_s() {
+    collectionOn();
     if (terminalGuide_time < 1) {
         position_t centering = {-60, 300}; // Try to allow for the offset 
         turnToPosition(centering);
     }
-    if (terminalGuide_time > 1000) {
+    if (terminalGuide_time > 2000) {
+        collectionOff();
         navigator_state = NAVIGATOR_MOVING;
     }
 }
@@ -277,14 +287,14 @@ void stuck_s() {
     }
 }
 
-void addTarget(position_t target) {
+void addPoint(map_point_t target) {
     #ifdef DEBUG_NAV
     Serial.print("Adding target: ");
     Serial.print(target.x);
     Serial.print(", ");
     Serial.println(target.y);
     #endif
-    if (target_pointer >= 10) {
+    if (target_pointer >= LEN_MAP_POINTS) {
         return;
     }
     targets[target_pointer] = target;
@@ -297,14 +307,14 @@ void popTarget() {
     }
 }
 
-position_t getNewTarget() {
+map_point_t getNewTarget() {
     return targets[target_pointer-1];
 }
 
 //If uncertainty is high, navigator state switches to  collecting
 void setWeightDetected(weight_info_t weight) {
-    weight_detected = weight;
     if (weight.certainty >= NAV_WEIGHT_CERTAINTY_THRESHOLD) {
+        weight_detected = weight;
         navigator_state = NAVIGATOR_COLLECTING;
     }
 }

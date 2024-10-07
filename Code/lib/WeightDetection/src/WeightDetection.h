@@ -4,11 +4,11 @@
 #include <TOF.h>
 
 typedef enum {
-    FAR_LEFT = 0,
-    LEFT = 1,
-    CENTER = 2,
-    RIGHT = 3,
-    FAR_RIGHT = 4,
+    FAR_LEFT = -20,
+    LEFT = -10,
+    CENTER = 0,
+    RIGHT = 10,
+    FAR_RIGHT = 20,
     UNDEFINED = -1
 } weight_direction_t;
 
