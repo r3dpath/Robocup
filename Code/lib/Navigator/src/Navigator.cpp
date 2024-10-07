@@ -36,6 +36,7 @@ void popTarget();
 map_point_t getNewTarget();
 position_t relToAbsPos(position_t target);
 int16_t angleToTarget();
+uint16_t distanceBetweenPoints(position_t* positions);
 
 uint16_t distanceToTarget();
 
@@ -51,7 +52,7 @@ void initNavigator() {
     addPoint((map_point_t){1300, 300, 0});
     addPoint((map_point_t){1300, 1300, 0});
     addPoint((map_point_t){300, 1300, 0});
-    addPoint((map_point_t){300, 300, 0});
+    addPoint((map_point_t){300, 300, 1});
     addPoint((map_point_t){1300, 300, 0});
     addPoint((map_point_t){1300, 1300, 0});
     addPoint((map_point_t){300, 1300, 0});
@@ -84,21 +85,19 @@ void navigatorFSM() {
             break;
     }
 
-    // Check if the robot is stuck
-    if (navigator_state != NAVIGATOR_STUCK) {
-        if (last_position.x == current_position.x && last_position.y == current_position.y) {
-            no_move_count++;
-        } else {
-            no_move_count = 0;
-        }
-        if (no_move_count > 10) {
-            stuck_time = 0;
-            navigator_state = NAVIGATOR_STUCK;
-        }
+    position_t things[2];
+    things[0] = current_position;
+    things[1] = last_position;
+    if (distanceBetweenPoints(things) < 10) {
+        no_move_count += 1;
     } else {
-        if (last_position.x == current_position.x && last_position.y == current_position.y) {
-            navigator_state = NAVIGATOR_MOVING;
-        }
+        no_move_count = 0;
+    }
+    if (no_move_count > 10) {
+        stuck_time = 0;
+        navigator_state = NAVIGATOR_STUCK;
+    } else if (navigator_state == NAVIGATOR_STUCK) {
+        navigator_state == NAVIGATOR_MOVING;
     }
     
     last_position = current_position;
@@ -185,8 +184,6 @@ void pickPoint_s() {
 void moving_s() {
     static elapsedMillis last_move = 0;
     uint16_t dist = distanceToTarget();
-    Serial.print("Distance: ");
-    Serial.println(dist);
     if (dist < NAV_CLOSE_ENOUGH_GOOD_ENOUGH) {
         navigator_state = NAVIGATOR_PICK_POINT;
         last_move = 0;
@@ -194,6 +191,14 @@ void moving_s() {
     }
     turnToPosition(current_target);
     if (dist < 3 * NAV_CLOSE_ENOUGH_GOOD_ENOUGH) {
+        if (target_pointer > 0) {
+            if (targets[target_pointer-1].isWeight) {
+                navigator_state = NAVIGATOR_TERMINAL_GUIDANCE;
+                terminalGuide_time = 0;
+                terminalGuidance_s();
+                return;
+            }
+        }
         setMovementSpeed(NAV_DEFAULT_SPEED-2);
     } else {
         setMovementSpeed(NAV_DEFAULT_SPEED);
@@ -202,6 +207,7 @@ void moving_s() {
     weight_info_t check = checkWeight();
     if (check.certainty >= NAV_WEIGHT_CERTAINTY_THRESHOLD) {
         setWeightDetected(check);
+        return;
     }
 
     obstacleDetection();
@@ -253,9 +259,17 @@ void avoiding_s() {
 }
 
 void collecting_s() {
-    turnToWeight(weight_detected);
+    weight_info_t check = checkWeight();
+    if (check.certainty == 0) {
+        collectionOff();
+        navigator_state == NAVIGATOR_PICK_POINT;
+        return;
+    } else {
+        setWeightDetected(check);
+    }
     setMovementSpeed(NAV_WEIGHT_DET_SPEED);
-    if (weight_detected.distance < NAV_WEIGHT_ENGAGE_DIST) {
+    turnToPosition(current_target);
+    if (distanceToTarget < NAV_WEIGHT_ENGAGE_DIST) {
         terminalGuide_time = 0;
         navigator_state = NAVIGATOR_TERMINAL_GUIDANCE;
         terminalGuidance_s();
@@ -264,13 +278,14 @@ void collecting_s() {
 
 void terminalGuidance_s() {
     collectionOn();
+    Serial.println("TERMINAL_NAV");
     if (terminalGuide_time < 1) {
         position_t centering = {-60, 300}; // Try to allow for the offset 
         turnToPosition(centering);
     }
-    if (terminalGuide_time > 2000) {
+    if (terminalGuide_time > 6000) {
         collectionOff();
-        navigator_state = NAVIGATOR_MOVING;
+        navigator_state = NAVIGATOR_PICK_POINT;
     }
 }
 
@@ -313,10 +328,9 @@ map_point_t getNewTarget() {
 
 //If uncertainty is high, navigator state switches to  collecting
 void setWeightDetected(weight_info_t weight) {
-    if (weight.certainty >= NAV_WEIGHT_CERTAINTY_THRESHOLD) {
         weight_detected = weight;
+        current_target = {weight.distance*sin((int8_t)weight.direction), weight.distance*cos((int8_t)weight.direction)};
         navigator_state = NAVIGATOR_COLLECTING;
-    }
 }
 
 // Turns to an absolute position
@@ -370,6 +384,13 @@ uint16_t distanceToTarget() {
     position_t current = getPosition();
     float dx = current_target.x - current.x;
     float dy = current_target.y - current.y;
+    return sqrt(dx*dx + dy*dy);
+}
+
+uint16_t distanceBetweenPoints(position_t* positions)
+{
+    float dx = positions[0].x - positions[1].x;
+    float dy = positions[0].x - positions[1].y;
     return sqrt(dx*dx + dy*dy);
 }
 
