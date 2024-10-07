@@ -3,24 +3,8 @@
 #include "debug.h"
 #include "IMU.h"
 
-#define AVG_DEADBAND 1.5
-#define ABS_DEADBAND 1.2
-#define WASHOUT_RANGE 1
 #define TOF_SENSORS_COUNT 5
 
-/*
-TODO:
-Should remain in collection state when really close
-
-
-*/
-
-// Constants for angular offsets
-#define ANGLE_LEFT_CLOSE -10
-#define ANGLE_LEFT_FAR -20
-#define ANGLE_RIGHT_CLOSE 10
-#define ANGLE_RIGHT_FAR 20
-#define ANGLE_CENTER 0
 
 extern TOF2 tof_scan_left;
 extern TOF2 tof_scan_right;
@@ -87,39 +71,40 @@ weight_info_t weightDetection() {
     // Detect weight based on top-bottom sensor differences
     if (tof_scan_left.differences[max_idx_left] > tof_scan_right.differences[max_idx_right]) {
         // If left TOF detects a weight
-        if ((tof_scan_left.differences[max_idx_left] > MIN_VALID_DIFF) && 
-            (tof_scan_left.top[max_idx_left] > tof_scan_left.bottom[max_idx_left] * 1.15)) { 
+        if ((tof_scan_left.differences[max_idx_left] > MIN_VALID_DIFF) && (tof_scan_left.top[max_idx_left] > tof_scan_left.bottom[max_idx_left] * 1.15)) { 
             consistent_detections++;
             if (consistent_detections >= CONFIRMATION_THRESHOLD) {
                 state.certainty += 1;
                 state.distance = tof_scan_left.bottom[max_idx_left];
-                
+                consistent_detections = 0; //Resets after confirmation
                 // Assign direction based on SPAD index
-                if (max_idx_left == 0 || max_idx_left == 1) 
+                if (max_idx_left <= 1) 
                     state.direction = FAR_LEFT;
-                else if (max_idx_left == 2 || max_idx_left == 3) 
+                else if (max_idx_left <= 3) 
                     state.direction = LEFT;
-                else if (max_idx_left == 4 || max_idx_left == 0) 
+                else if (max_idx_left == 4) 
                     state.direction = CENTER;
-            }
+            } 
         }
-    } else if ((tof_scan_right.differences[max_idx_right] > MIN_VALID_DIFF) && 
-               (tof_scan_right.top[max_idx_right] > tof_scan_right.bottom[max_idx_right] * 1.15)) {
+    } else  if (tof_scan_right.differences[max_idx_right] > tof_scan_left.differences[max_idx_left]) {
         // If right TOF detects a weight
+        if ((tof_scan_right.differences[max_idx_right] > MIN_VALID_DIFF) &&  (tof_scan_right.top[max_idx_right] > tof_scan_right.bottom[max_idx_right] * 1.15)) {
         consistent_detections++;
         if (consistent_detections >= CONFIRMATION_THRESHOLD) {
             state.certainty += 1;
             state.distance = tof_scan_right.bottom[max_idx_right];
-
+            consistent_detections = 0; //Resets after confirmation
             // Assign direction based on SPAD index
-            if (max_idx_right == 4 || max_idx_right == 3) 
+            if (max_idx_right >= 3) 
                 state.direction = FAR_RIGHT;
-            else if (max_idx_right == 2 || max_idx_right == 1) 
+            else if (max_idx_right >= 1) 
                 state.direction = RIGHT;
-            else if (max_idx_left == 4 || max_idx_right == 0) 
+            else if (max_idx_right == 0) 
                 state.direction = CENTER;
-        }
-    } else {
+        } 
+    }
+    }
+     else {
 
         state.certainty = 0;
         state.direction = UNDEFINED;
