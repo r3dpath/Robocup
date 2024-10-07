@@ -5,11 +5,11 @@
 #include <Positioning.h>
 #include <Movement.h>
 
-#define NAV_AVOID_DIST_MAX 300
+#define NAV_AVOID_DIST_MAX 180
 #define NAV_CLOSE_ENOUGH_GOOD_ENOUGH 100
-#define NAV_DEFAULT_SPEED 5
+#define NAV_DEFAULT_SPEED 7
 
-#define NAV_WEIGHT_DET_SPEED 3
+#define NAV_WEIGHT_DET_SPEED 5
 #define NAV_WEIGHT_CERTAINTY_THRESHOLD 3
 #define NAV_WEIGHT_ENGAGE_DIST 300
 

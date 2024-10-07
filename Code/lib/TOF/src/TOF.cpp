@@ -1,14 +1,19 @@
 #include "TOF.h"
+#include <Arduino.h>
+#include "debug.h"
 
 const byte SX1509_ADDRESS = 0x3F;
-SX1509 io;
 
+SX1509 io;
 // TOF sensor objects
 TOF tof_l(L0, 2, 0x30, &io); // Left TOF
 TOF tof_r(L0, 0, 0x31, &io); // Right TOF
+TOF tof_count(L0, 6, 0x37, &io);  //TOF for wieght count
 //TOF tof_b(L1, 1, 0x32, &io); // Back TOF
 TOF2 tof_scan_left(5, 0x36, 3, 0x34, &io); // Both front facing TOF's
 TOF2 tof_scan_right(4, 0x35, 1, 0x32, &io);
+
+
 
 void initTOF()
 {   
@@ -17,11 +22,14 @@ void initTOF()
     //tof_b.disable();
     tof_l.disable();
     tof_r.disable();
+    tof_count.disable();
     tof_scan_left.disable();
     tof_scan_right.disable();
+    
     //tof_b.init();
     tof_l.init();
     tof_r.init();
+    tof_count.init();
     tof_scan_left.init();
     tof_scan_right.init();
 }
@@ -134,7 +142,7 @@ bool TOF2::init() {
 
 // Scans through the 5 SPAD locations and records the difference between the top and bottom sensors. Non-blocking.
 void TOF2::tick() {
-    static const uint16_t spad_locations[5] = {150, 174, 198, 222, 246}; //{246, 222, 198, 174, 150};
+    static const uint16_t spad_locations[5] = {246, 222, 198, 174, 150}; //{246, 222, 198, 174, 150};
     static uint8_t iter = 0;
     static uint8_t spad_iter = 1;
     
@@ -177,4 +185,3 @@ void TOF2::tick() {
     sensor_top.readSingle(false);
     sensor_bottom.readSingle(false);
 }
-

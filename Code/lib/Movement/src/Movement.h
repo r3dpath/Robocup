@@ -17,7 +17,7 @@
 
 #define MOVEMENT_P 50
 #define MOVEMENT_I 0
-#define MOVEMENT_HEADING_MULT 8
+#define MOVEMENT_HEADING_MULT 30
 
 #define START_ANGLE 0
 

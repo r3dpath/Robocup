@@ -4,7 +4,6 @@
 #include <Wire.h>
 #include <VL53L0X.h>
 #include <VL53L1X.h>
-#include <debug.h>
 #include <SparkFunSX1509.h>
 
 #define TOF_SCAN_HEIGHT 4

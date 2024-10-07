@@ -15,8 +15,10 @@ uint8_t no_move_count = 0;
 weight_info_t weight_detected = {UNDEFINED, -1, 0};
 
 extern elapsedMillis round_time;
+extern position_t homePosition;
 elapsedMillis terminalGuide_time = 0;
 elapsedMillis stuck_time = 0;
+elapsedMillis avoid_time = 0;
 
 position_t last_position = {0, 0};
 
@@ -45,15 +47,20 @@ void initNavigator() {
     addTarget({1000, 1000}, false);
     addTarget({2000, 2000}, false);
     */
-    addTarget((position_t){current_position.x, current_position.y});
-    addTarget((position_t){current_position.x+3000, current_position.y});
-    addTarget((position_t){current_position.x+3000, current_position.y + 3000});
-    addTarget((position_t){current_position.x, current_position.y + 3000});
+    addTarget((position_t){2580, 284});
+    addTarget((position_t){2518, 3677});
+    addTarget((position_t){430, 3531});
+    addTarget((position_t){471, 4520});
+    addTarget((position_t){440, 3750});
+    addTarget((position_t){2520, 3680});
+    addTarget((position_t){2520, 1550});
+    addTarget((position_t){500, 1570});
     
     
 }
 
 void navigatorFSM() {
+    static elapsedMillis round_time = 0;
     position_t current_position = getPosition();
     switch (navigator_state) {
         case NAVIGATOR_PICK_POINT:
@@ -63,7 +70,8 @@ void navigatorFSM() {
             moving_s();
             break;
         case NAVIGATOR_AVOIDING:
-            avoiding_s();
+            //avoiding_s();
+            navigator_state = NAVIGATOR_MOVING;
             break;
         case NAVIGATOR_COLLECTING:
             collecting_s();
@@ -95,13 +103,6 @@ void navigatorFSM() {
     
     last_position = current_position;
 
-    #ifdef DEBUG_NAV
-    Serial.print("SetPoint: ");
-    Serial.print(current_target.x);
-    Serial.print(", ");
-    Serial.println(current_target.y);
-    #endif
-
     #ifdef DEBUG
     Serial.print("NAV: ");
     switch (navigator_state) {
@@ -125,6 +126,13 @@ void navigatorFSM() {
             break;
     }
     #endif
+
+    #ifdef DEBUG_NAV
+    Serial.print("T:");
+    Serial.print(current_target.x);
+    Serial.print(":");
+    Serial.println(current_target.y);
+    #endif
 }
 
 void pickPoint_s() {
@@ -140,21 +148,34 @@ void pickPoint_s() {
 
     if (target_pointer != 0) {
         if (current_target.x != targets[target_pointer-1].x && current_target.y != targets[target_pointer-1].y) {
-            Serial.print("Setting new target");
-            Serial.println(target_pointer); 
+            Serial.print("Setting new target: ");
+            Serial.print(target_pointer);   
             current_target = getNewTarget();
+            Serial.print(" : ");
+            Serial.print(current_target.x);
+            Serial.print(", ");
+            Serial.println(current_target.y);
+            iter += 1;
+            navigator_state = NAVIGATOR_MOVING;
         } else {
             // If the robot has reached the target, pop it off the stack
             popTarget();
+            if (target_pointer != 0) {
+                Serial.print("Setting new target: ");
+                Serial.print(target_pointer);   
+                current_target = getNewTarget();
+                Serial.print(" : ");
+                Serial.print(current_target.x);
+                Serial.print(", ");
+                Serial.println(current_target.y);
+                iter += 1;
+                navigator_state = NAVIGATOR_MOVING;
+            }
         }
     } else {
-        // If there are no more targets, return to the start
-        current_target = {0, 0};
+            setMovementSpeed(0);
+            exit(0);
     }
-
-
-    iter += 1;
-    navigator_state = NAVIGATOR_MOVING;
     // Could stop and do a scanning turn at each point maybe?
 }
 
@@ -170,12 +191,17 @@ void moving_s() {
         return;
     }
     turnToPosition(current_target);
-    setMovementSpeed(NAV_DEFAULT_SPEED);
+    if (dist < 3 * NAV_CLOSE_ENOUGH_GOOD_ENOUGH) {
+        setMovementSpeed(NAV_DEFAULT_SPEED-2);
+    } else {
+        setMovementSpeed(NAV_DEFAULT_SPEED);
+    }
     obstacleDetection();
 }
 
 // Avoids an obstacle
 void avoiding_s() {
+    avoid_time = 0;
     position_t current_position = getPosition();
     int16_t angle = getBodyHeading();
     uint16_t l_dist = tof_l.read();
@@ -186,23 +212,20 @@ void avoiding_s() {
     // If the robot has started in the left base it should turn right and move a bit before trying to get back to the original point. Opposite if it starts in the right base.
     // As this state will be constantly entered from the moving state while avoiding obstacles, it should only avoid while the target is roughly infront of the robot.
     #if START_BASE == BASE_LEFT
-    if (abs(angle - angleToTarget()) < 10) {
         if (r_dist > NAV_AVOID_DIST_MAX) { // If clear to the right
-            if (f_dist > NAV_AVOID_DIST_MAX) { // If clear in front
-                current_target = relToAbsPos({100+NAV_CLOSE_ENOUGH_GOOD_ENOUGH, 300}); // Slight right turn
+            if (f_dist > NAV_AVOID_DIST_MAX * 2) { // If clear in front
+                current_target = relToAbsPos({300+NAV_CLOSE_ENOUGH_GOOD_ENOUGH, 300}); // Slight right turn
             } else {
                 current_target = relToAbsPos({300+NAV_CLOSE_ENOUGH_GOOD_ENOUGH, 0}); // Hard right turn
             }
         } else { // Must be blocked to the right so same thing but with should go back a bit too
-            if (f_dist > NAV_AVOID_DIST_MAX) { // If clear in front
-                current_target = relToAbsPos({-100-NAV_CLOSE_ENOUGH_GOOD_ENOUGH, 300}); // Slight left turn
+            if (f_dist > NAV_AVOID_DIST_MAX * 2) { // If clear in front
+                current_target = relToAbsPos({-300-NAV_CLOSE_ENOUGH_GOOD_ENOUGH, 300}); // Slight left turn
             } else {
-                current_target = relToAbsPos({-300-NAV_CLOSE_ENOUGH_GOOD_ENOUGH, -300-NAV_CLOSE_ENOUGH_GOOD_ENOUGH}); // Hard left with some reverse
+                current_target = relToAbsPos({-300-NAV_CLOSE_ENOUGH_GOOD_ENOUGH, -150-NAV_CLOSE_ENOUGH_GOOD_ENOUGH}); // Hard left with some reverse
             }
         }
-    }
     #else // Same but flipped
-    if (abs(angle - angleToTarget()) < 10) {
         if (l_dist > NAV_AVOID_DIST_MAX) { // If clear to the left
             if (f_dist > NAV_AVOID_DIST_MAX) { // If clear in front
                 current_target = relToAbsPos({-100-NAV_CLOSE_ENOUGH_GOOD_ENOUGH, 300}); // Slight left turn
@@ -216,7 +239,6 @@ void avoiding_s() {
                 current_target = relToAbsPos({300+NAV_CLOSE_ENOUGH_GOOD_ENOUGH, -300-NAV_CLOSE_ENOUGH_GOOD_ENOUGH}); // Hard right with some reverse
             }
         }
-    }
     #endif
     turnToPosition(current_target);
     navigator_state = NAVIGATOR_MOVING;
@@ -279,6 +301,7 @@ position_t getNewTarget() {
     return targets[target_pointer-1];
 }
 
+//If uncertainty is high, navigator state switches to  collecting
 void setWeightDetected(weight_info_t weight) {
     weight_detected = weight;
     if (weight.certainty >= NAV_WEIGHT_CERTAINTY_THRESHOLD) {
@@ -291,7 +314,7 @@ void turnToPosition(position_t target) {
     position_t current = getPosition();
     float dx = target.x - current.x;
     float dy = target.y - current.y;
-    float angle = atan2(dy, dx) * 180 / PI;
+    float angle = atan2(dx, dy) * 180 / PI;
     setMovementHeading(angle);
 }
 
@@ -312,9 +335,21 @@ void turnToWeight(weight_info_t weight) {
 }
 
 void obstacleDetection() {
+    if (avoid_time < 1000) {
+        return;
+    }
     uint16_t l_dist = tof_l.read();
     uint16_t r_dist = tof_r.read();
-    uint16_t f_dist = tof_scan_right.f_distance;
+    uint16_t f_dist = tof_scan_left.top[4];
+
+    #ifdef DEBUG_TOF
+    Serial.print("S:");
+    Serial.print(tof_scan_left.top[0]); Serial.print(":"); Serial.print(tof_scan_left.top[1]); Serial.print(":"); Serial.print(tof_scan_left.top[2]); Serial.print(":"); Serial.print(tof_scan_left.top[3]); Serial.print(":"); Serial.print(tof_scan_left.top[4]); Serial.print(":");
+    Serial.print(tof_scan_left.bottom[0]); Serial.print(":"); Serial.print(tof_scan_left.bottom[1]); Serial.print(":"); Serial.print(tof_scan_left.bottom[2]); Serial.print(":"); Serial.print(tof_scan_left.bottom[3]); Serial.print(":"); Serial.print(tof_scan_left.bottom[4]); Serial.print(":");
+    Serial.print(tof_scan_right.top[0]); Serial.print(":"); Serial.print(tof_scan_right.top[1]); Serial.print(":"); Serial.print(tof_scan_right.top[2]); Serial.print(":"); Serial.print(tof_scan_right.top[3]); Serial.print(":"); Serial.print(tof_scan_right.top[4]); Serial.print(":");
+    Serial.print(tof_scan_right.bottom[0]); Serial.print(":"); Serial.print(tof_scan_right.bottom[1]); Serial.print(":"); Serial.print(tof_scan_right.bottom[2]); Serial.print(":"); Serial.print(tof_scan_right.bottom[3]); Serial.print(":"); Serial.print(tof_scan_right.bottom[4]); Serial.print(":");
+    Serial.print(l_dist); Serial.print(":"); Serial.println(r_dist);
+    #endif 
 
     if (l_dist < NAV_AVOID_DIST_MAX || r_dist < NAV_AVOID_DIST_MAX || f_dist < NAV_AVOID_DIST_MAX) {
         navigator_state = NAVIGATOR_AVOIDING;
@@ -332,5 +367,5 @@ int16_t angleToTarget() {
     position_t current = getPosition();
     float dx = current_target.x - current.x;
     float dy = current_target.y - current.y;
-    return atan2(dy, dx) * 180 / PI;
+    return atan2(dx, dy) * 180 / PI;
 }

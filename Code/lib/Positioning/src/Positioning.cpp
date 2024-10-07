@@ -10,6 +10,7 @@ bool POS_OOB = false;
 
 position_t robotPosition = {homePosition.x, homePosition.y};
 
+
 void positionTick()
 {
     int32_t encChange = getPosEncoderDiff();

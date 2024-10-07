@@ -7,6 +7,7 @@
 #include "Movement.h"
 #include "Encoder.h"
 #include "TOF.h"
+//#include "WeightDetection.h"
 
 
 
@@ -66,6 +67,7 @@ Task tScan(TOF_SCAN_PERIOD, TASK_ONCE, tof_scan_restart);
 Task tNav(200, TASK_FOREVER, navigatorFSM);
 Task tPos(50, TASK_FOREVER, positionTick);
 Task tMove(50, TASK_FOREVER, movementController);
+//Task tWeightDetect(TOF_SCAN_PERIOD * 5, TASK_FOREVER, weightTask);
 #ifdef DEBUG_POS
 Task tPrintPos(200, TASK_FOREVER, printPosition);
 #endif
@@ -87,7 +89,6 @@ void tof_scan_restart() {
 void setup() {
   
     Serial.begin(BAUD);
-    delay(10000);
     Wire.begin();
     Wire1.begin();
     Wire.setClock(400000UL);
@@ -117,6 +118,7 @@ void initTask() {
   taskManager.addTask(tNav);
   taskManager.addTask(tPos);
   taskManager.addTask(tMove);
+  //taskManager.addTask(tWeightDetect);
   #ifdef DEBUG_POS
   taskManager.addTask(tPrintPos);
   #endif
@@ -126,6 +128,7 @@ void initTask() {
   tNav.enable();
   tPos.enable();
   tMove.enable();
+  //tWeightDetect.enable();
   #ifdef DEBUG_POS
   tPrintPos.enable();
   #endif
