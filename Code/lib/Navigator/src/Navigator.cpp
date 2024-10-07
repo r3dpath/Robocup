@@ -47,14 +47,14 @@ void initNavigator() {
     addTarget({1000, 1000}, false);
     addTarget({2000, 2000}, false);
     */
-    addPoint((map_point_t){2128.20, 334.40, 0});
-    addPoint((map_point_t){228.31, 2810.66, 0});
-    addPoint((map_point_t){2117.33, 4427.41, 0});
-    addPoint((map_point_t){312.57, 4435.70, 0});
-    addPoint((map_point_t){288.11, 2293.85, 0});
-    addPoint((map_point_t){2185.28, 2296.62, 0});
-    addPoint((map_point_t){2160.82, 1033.62, 0});
-    addPoint((map_point_t){309.85, 1069.54, 0});
+    addPoint((map_point_t){300, 300, 0});
+    addPoint((map_point_t){1300, 300, 0});
+    addPoint((map_point_t){1300, 1300, 0});
+    addPoint((map_point_t){300, 1300, 0});
+    addPoint((map_point_t){300, 300, 0});
+    addPoint((map_point_t){1300, 300, 0});
+    addPoint((map_point_t){1300, 1300, 0});
+    addPoint((map_point_t){300, 1300, 0});
         
     
 }
@@ -199,10 +199,10 @@ void moving_s() {
         setMovementSpeed(NAV_DEFAULT_SPEED);
     }
 
-    // weight_info_t check = checkWeight();
-    // if (check.certainty >= NAV_WEIGHT_CERTAINTY_THRESHOLD) {
-    //     setWeightDetected(check);
-    // }
+    weight_info_t check = checkWeight();
+    if (check.certainty >= NAV_WEIGHT_CERTAINTY_THRESHOLD) {
+        setWeightDetected(check);
+    }
 
     obstacleDetection();
 }

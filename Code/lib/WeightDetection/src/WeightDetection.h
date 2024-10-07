@@ -19,7 +19,7 @@ typedef struct {
 } weight_info_t;
 
 weight_info_t weightDetection();
-void weightTask ();
+void weightTask();
 weight_info_t checkWeight();
 
 #endif
