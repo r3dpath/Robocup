@@ -63,8 +63,28 @@ void initNavigator() {
     
 }
 
+void checkStuck() {
+    elapsedMillis checkStuckTime = 0;
+    if (checkStuckTime > 2000) {
+        position_t things[2];
+        things[0] = getPosition();
+        things[1] = last_position;
+        uint16_t dist = distanceBetweenPoints(things);
+        #ifdef DEBUG_NAV
+        Serial.print("Dist since last: ");
+        Serial.println(dist);
+        #endif
+        if (dist < 200) {
+            navigator_state = NAVIGATOR_STUCK;
+        } else {
+            navigator_state = NAVIGATOR_MOVING;
+        }
+        
+        last_position = getPosition();
+    }
+}
+
 void navigatorFSM() {
-    static uint8_t no_move_count = 0;
     position_t current_position = getPosition();
     switch (navigator_state) {
         case NAVIGATOR_PICK_POINT:
@@ -89,33 +109,7 @@ void navigatorFSM() {
             break;
     }
 
-    // STUCK CODE
-
-    position_t things[2];
-    things[0] = current_position;
-    things[1] = last_position;
-    uint16_t dist = distanceBetweenPoints(things);
     #ifdef DEBUG_NAV
-    Serial.print("Dist since last: ");
-    Serial.println(dist);
-    #endif
-    if (dist < 30) {
-        no_move_count += 1;
-    } else {
-        no_move_count = 0;
-    }
-    if (no_move_count > 10) {
-        stuck_time = 0;
-        navigator_state = NAVIGATOR_STUCK;
-    } else if (navigator_state == NAVIGATOR_STUCK) {
-        navigator_state == NAVIGATOR_MOVING;
-    }
-    
-    last_position = current_position;
-
-    // STUCK CODE END
-
-    #ifdef DEBUG
     Serial.print("NAV: ");
     switch (navigator_state) {
         case NAVIGATOR_PICK_POINT:
@@ -148,6 +142,8 @@ void navigatorFSM() {
 
     weight_info_t check = checkWeight();
     setWeight(check);
+
+    checkStuck();
 }
 
 void pickPoint_s() {
@@ -268,6 +264,7 @@ void avoiding_s() {
 void collecting_s() {
     turnToPosition(current_target);
     if (distanceToTarget() < NAV_WEIGHT_ENGAGE_DIST) {
+        turnToPosition(relToAbsPos({-60, 300}));
         terminalGuide_time = 0;
         navigator_state = NAVIGATOR_TERMINAL_GUIDANCE;
         terminalGuidance_s();
@@ -333,9 +330,11 @@ void stuck_s() {
     if (tof_scan_left.bottom[4] < NAV_AVOID_DIST_MAX || tof_scan_right.bottom[0] < NAV_AVOID_DIST_MAX || tof_l.read() < NAV_AVOID_DIST_MAX || tof_r.read() < NAV_AVOID_DIST_MAX) {
         // Fang it backwards
         setMovementSpeed(-10);
+        setMovementHeading(getBodyHeading());
     } else {
         // Fang it forwards
         setMovementSpeed(10);
+        setMovementHeading(getBodyHeading());
     }
     if (stuck_time > 5000) {
         navigator_state = NAVIGATOR_PICK_POINT;
