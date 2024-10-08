@@ -24,6 +24,8 @@ TODO:
 
 extern TOF2 tof_scan_left;
 extern TOF2 tof_scan_right;
+extern TOF tof_l;
+extern TOF tof_r;
 
 void initTask();
 void tof_scan_restart();
@@ -77,6 +79,11 @@ void weightTask_time() {
   Serial.println(" - Weight Task");
 }
 
+void bodgeWeightTick() {
+  tof_l.tick();
+  tof_r.tick();
+}
+
 Scheduler taskManager;
 #ifndef PROFILING
 //Task tScan(35, TASK_ONCE, []() { tof_scan.tick(); });
@@ -90,6 +97,8 @@ Task tPrintPos(200, TASK_FOREVER, printPosition);
 #endif
 #else
 Task tScan(TOF_SCAN_PERIOD, TASK_ONCE, tof_scan_time);
+Task tSL(TOF_SCAN_PERIOD * 5, TASK_FOREVER, []() { tof_l.tick(); });
+Task tSR(TOF_SCAN_PERIOD * 5, TASK_FOREVER, []() { tof_r.tick(); });
 Task tNav(200, TASK_FOREVER, nsm_time);
 Task tPos(15, TASK_FOREVER, positionTick_time);
 Task tMove(50, TASK_FOREVER, movementController_time);
@@ -139,6 +148,8 @@ void initTask() {
   taskManager.addTask(tPos);
   taskManager.addTask(tMove);
   taskManager.addTask(tWeightDetect);
+  taskManager.addTask(tSL);
+  taskManager.addTask(tSR);
   #ifdef DEBUG_POS
   taskManager.addTask(tPrintPos);
   #endif
@@ -149,6 +160,8 @@ void initTask() {
   tPos.enable();
   tMove.enable();
   tWeightDetect.enable();
+  tSL.enable();
+  tSR.enable();
   #ifdef DEBUG_POS
   tPrintPos.enable();
   #endif

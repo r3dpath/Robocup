@@ -27,6 +27,8 @@ public:
     uint16_t read();
     bool timeoutOccurred();
     void startContinuous(uint16_t period = 50);
+    void tick();
+    uint16_t range;
 
 private:
     TOFType type;

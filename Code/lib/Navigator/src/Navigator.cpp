@@ -57,10 +57,10 @@ void initNavigator() {
     addPoint((map_point_t){402.39, 319.14, 0});
     addPoint((map_point_t){454.43, 1090.14, 0});
     addPoint((map_point_t){2424.76, 1101.44, 0});
-    addPoint((map_point_t){2369.26, 2132.28, 0});
+    addPoint((map_point_t){2369.26, 2132.28, 1});
     addPoint((map_point_t){1429.19, 3459.65, 0});
     addPoint((map_point_t){2365.79, 4456.60, 0});
-    addPoint((map_point_t){1432.66, 3448.36, 0});
+    addPoint((map_point_t){1432.66, 3448.36, 1});
     addPoint((map_point_t){475.24, 2875.04, 0});
     addPoint((map_point_t){454.43, 1084.50, 0});
         
@@ -174,11 +174,11 @@ void navigatorFSM() {
     Serial.println(current_target.y);
     #endif
 
-    weight_info_t check = checkWeight();
-    setWeight(check);
+    // weight_info_t check = checkWeight();
+    // setWeight(check);
 
-    checkStuck();
-    checkFucked();
+    // checkStuck();
+    // checkFucked();
 }
 
 void pickPoint_s() {

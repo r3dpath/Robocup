@@ -38,6 +38,8 @@ void movementController()
     // TOF sensor readings for obstacle detection
     uint16_t tof_left = tof_l.read();
     uint16_t tof_right = tof_r.read();
+    // uint16_t tof_left = 500;
+    // uint16_t tof_right = 500;
     uint16_t tof_top_right_centre = tof_scan_right.top[0];
     uint16_t tof_top_left_centre = tof_scan_left.top[4];
     int16_t frontDist = (tof_top_left_centre + tof_top_right_centre) / 2;  // Front sensor reading

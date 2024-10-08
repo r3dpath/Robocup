@@ -13,8 +13,6 @@ TOF tof_count(L0, 6, 0x37, &io);  //TOF for wieght count
 TOF2 tof_scan_left(5, 0x36, 3, 0x34, &io); // Both front facing TOF's
 TOF2 tof_scan_right(4, 0x35, 1, 0x32, &io);
 
-
-
 void initTOF()
 {   
     io.begin(SX1509_ADDRESS);
@@ -73,12 +71,16 @@ bool TOF::init() {
     return true;
 }
 
-uint16_t TOF::read() {
+void TOF::tick() {
     if (type == L0) {
-        return sensorL0.readRangeContinuousMillimeters();
+        range = sensorL0.readRangeContinuousMillimeters();
     } else {
-        return sensorL1.readRangeContinuousMillimeters(false);
+        range = sensorL1.readRangeContinuousMillimeters(false);
     }
+}
+
+uint16_t TOF::read() {
+    return range;
 }
 
 bool TOF::timeoutOccurred() {

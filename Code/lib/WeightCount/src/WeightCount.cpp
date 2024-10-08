@@ -10,12 +10,12 @@ uint8_t WeightCount = 0;
 bool Fully_Collected = false;
 
 unsigned long lastDetectionTIme = 0;
-int weight_count_distance = tof_count.read();
-
+int weight_count_distance;
 
 
 void CheckWeightCount()
 {
+    tof_count.tick();
     weight_count_distance = tof_count.read();
     if ((weight_count_distance < 80)) {
         WeightCount = MAX_COUNT;
