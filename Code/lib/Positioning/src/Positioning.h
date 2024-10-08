@@ -19,7 +19,7 @@ typedef struct {
 
 extern bool POS_OOB;
 
-#define START_BASE BASE_RIGHT
+#define START_BASE BASE_LEFT
 // START ANGLE IN MOVEMENT.H
 
 #define ARENA_WIDTH 2400

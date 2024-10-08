@@ -17,7 +17,7 @@ def select_points(event, x, y, flags, param):
             pass
 
 # Load the image
-image_path = 'IMG_1955.jpg'  # Replace with your image path
+image_path = 'IMG_1957.jpg'  # Replace with your image path
 image = cv2.imread(image_path)
 original_image = image.copy()
 

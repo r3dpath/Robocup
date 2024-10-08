@@ -155,16 +155,6 @@ weight_info_t weightDetection() {
     // Serial.println(tof_scan_right.top[max_idx_right]);
     // Serial.print("Raw_max_scan_Bottom_R:");
     // Serial.println(tof_scan_right.bottom[max_idx_right] * 1.15);
-    
-
-    switch (state.direction) {
-        case FAR_LEFT: Serial.println("FAR LEFT"); break;
-        case LEFT: Serial.println("LEFT"); break;
-        case CENTER: Serial.println("CENTRE"); break;
-        case RIGHT: Serial.println("RIGHT"); break;
-        case FAR_RIGHT: Serial.println("FAR RIGHT"); break;
-        case UNDEFINED: Serial.println("UNDEFINED"); break;
-    }
 
     #ifdef DEBUG
     Serial.print("Direction: ");

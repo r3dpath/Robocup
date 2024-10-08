@@ -54,14 +54,15 @@ void initNavigator() {
     addTarget({1000, 1000}, false);
     addTarget({2000, 2000}, false);
     */
-    addPoint((map_point_t){ARENA_WIDTH-300, 300, 0});
-    addPoint((map_point_t){ARENA_WIDTH-1300, 300, 0});
-    addPoint((map_point_t){ARENA_WIDTH-1300, 1300, 0});
-    addPoint((map_point_t){ARENA_WIDTH-300, 1300, 0});
-    addPoint((map_point_t){ARENA_WIDTH-300, 300, 0});
-    addPoint((map_point_t){ARENA_WIDTH-1300, 300, 0});
-    addPoint((map_point_t){ARENA_WIDTH-1300, 1300, 0});
-    addPoint((map_point_t){ARENA_WIDTH-300, 1300, 0});
+    addPoint((map_point_t){402.39, 319.14, 0});
+    addPoint((map_point_t){454.43, 1090.14, 0});
+    addPoint((map_point_t){2424.76, 1101.44, 0});
+    addPoint((map_point_t){2369.26, 2132.28, 1});
+    addPoint((map_point_t){1429.19, 3459.65, 0});
+    addPoint((map_point_t){2365.79, 4456.60, 1});
+    addPoint((map_point_t){1432.66, 3448.36, 0});
+    addPoint((map_point_t){475.24, 2875.04, 0});
+    addPoint((map_point_t){454.43, 1084.50, 0});
         
     
 }
@@ -73,6 +74,7 @@ void checkFucked() {
         last_target = current_target;
     }
     if (time_since_change > 20000) {
+        Serial.println("!!!!FUCKED!!!!");
         Fucked = true;
     }
 }
@@ -94,6 +96,7 @@ void checkStuck() {
         #endif
         if (dist < 200) {
             navigator_state = NAVIGATOR_STUCK;
+            Serial.println("Stuck");
         } else {
             navigator_state = NAVIGATOR_MOVING;
         }
