@@ -37,6 +37,9 @@ position_t relToAbsPos(position_t target);
 int16_t angleToTarget();
 uint16_t distanceBetweenPoints(position_t* positions);
 void setTarget(position_t candidate);
+double cosd (double angle);
+double sind (double angle);
+
 
 uint16_t distanceToTarget();
 
@@ -229,11 +232,20 @@ void avoiding_s() {
     uint16_t r_dist = tof_r.read();
     uint16_t f_dist = tof_scan_left.top[4];
 
+    bool l = l_dist < 2*NAV_AVOID_DIST_MAX;
+    bool f = f_dist < 2*NAV_AVOID_DIST_MAX;
+    bool r = r_dist < 2*NAV_AVOID_DIST_MAX;
+
+
     // This is gonna be a bit cooked. Basic philosophy is a modified wall follow.
     // If the robot has started in the left base it should turn right and move a bit before trying to get back to the original point. Opposite if it starts in the right base.
     // As this state will be constantly entered from the moving state while avoiding obstacles, it should only avoid while the target is roughly infront of the robot.
     #if START_BASE == BASE_LEFT
-        if (l_dist < NAV_AVOID_DIST_MAX) 
+        if (l) {
+            if (f) {
+                incrementMovementHeading(10);
+            }
+        }
     #else // Same but flipped
         if (l_dist > NAV_AVOID_DIST_MAX) { // If clear to the left
             if (f_dist > NAV_AVOID_DIST_MAX) { // If clear in front
@@ -292,9 +304,11 @@ void setWeight(weight_info_t weight) {
             Serial.print(" and distance: ");
             Serial.println(weight.distance);
             #endif
-            position_t relative = {weight.distance*sin((int8_t)weight.direction), weight.distance*cos((int8_t)weight.direction)};
+            position_t relative = {weight.distance*sind((int8_t)weight.direction), weight.distance*cosd((int8_t)weight.direction)};
             setTarget(relToAbsPos(relative));
             #ifdef DEBUG_NAV
+            Serial.print("Current body heading: ");
+            Serial.println(getBodyHeading());
             Serial.print("Adding weight at position: ");
             Serial.print(current_target.x);
             Serial.print(":");
@@ -365,8 +379,8 @@ void turnToPosition(position_t target) {
 position_t relToAbsPos(position_t target) {
     position_t currentPos = getPosition();
     int16_t angle = getBodyHeading();
-    float dx = target.x * cos(angle) - target.y * sin(angle);
-    float dy = target.x * sin(angle) + target.y * cos(angle);
+    float dx = target.x * cosd(angle) + target.y * sind(angle);
+    float dy = -target.x * sind(angle) + target.y * cosd(angle);
 
     return {currentPos.x + dx, currentPos.y + dy};
 }
@@ -439,4 +453,12 @@ void setTarget(position_t candidate) {
     }
 
     current_target = actual;
+}
+
+double cosd (double angle) {
+    return cos(angle * PI / 180.0);
+}
+
+double sind (double angle) {
+    return sin(angle * PI / 180.0);
 }
