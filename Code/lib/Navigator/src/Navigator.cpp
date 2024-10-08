@@ -57,9 +57,9 @@ void initNavigator() {
     addPoint((map_point_t){402.39, 319.14, 0});
     addPoint((map_point_t){454.43, 1090.14, 0});
     addPoint((map_point_t){2424.76, 1101.44, 0});
-    addPoint((map_point_t){2369.26, 2132.28, 1});
+    addPoint((map_point_t){2369.26, 2132.28, 0});
     addPoint((map_point_t){1429.19, 3459.65, 0});
-    addPoint((map_point_t){2365.79, 4456.60, 1});
+    addPoint((map_point_t){2365.79, 4456.60, 0});
     addPoint((map_point_t){1432.66, 3448.36, 0});
     addPoint((map_point_t){475.24, 2875.04, 0});
     addPoint((map_point_t){454.43, 1084.50, 0});
@@ -94,7 +94,7 @@ void checkStuck() {
         Serial.print("Dist since last: ");
         Serial.println(dist);
         #endif
-        if (dist < 200) {
+        if (dist < 50) {
             navigator_state = NAVIGATOR_STUCK;
             Serial.println("Stuck");
         } else {
@@ -252,6 +252,7 @@ void moving_s() {
     static elapsedMillis last_move = 0;
     uint16_t dist = distanceToTarget();
     if (dist < NAV_CLOSE_ENOUGH_GOOD_ENOUGH) {
+        Serial.println("Going to pickpoint from moving");
         navigator_state = NAVIGATOR_PICK_POINT;
         last_move = 0;
         return;
@@ -385,6 +386,7 @@ void setWeight(weight_info_t weight) {
         case NAVIGATOR_COLLECTING:
             if (weight.certainty == 0) {
                 collectionOff();
+                Serial.println("Going to pickpoint from collection");
                 navigator_state = NAVIGATOR_PICK_POINT;
             }
             break;
@@ -403,9 +405,6 @@ void stuck_s() {
         // Fang it forwards
         setMovementSpeed(10);
         setMovementHeading(getBodyHeading());
-    }
-    if (stuck_time > 5000) {
-        navigator_state = NAVIGATOR_PICK_POINT;
     }
 }
 
