@@ -7,8 +7,11 @@ extern TOF2 tof_scan_right;
 
 navigator_state_t navigator_state = NAVIGATOR_PICK_POINT;
 
+bool Fucked = false;
+
 map_point_t targets[LEN_MAP_POINTS];
 position_t current_target = {-1, -1};
+position_t last_target = {-1, -1};
 uint8_t target_pointer = 0;
 
 weight_info_t weight_detected = {UNDEFINED, -1, 0};
@@ -51,25 +54,40 @@ void initNavigator() {
     addTarget({1000, 1000}, false);
     addTarget({2000, 2000}, false);
     */
-    addPoint((map_point_t){300, 300, 0});
-    addPoint((map_point_t){1300, 300, 0});
-    addPoint((map_point_t){1300, 1300, 0});
-    addPoint((map_point_t){300, 1300, 0});
-    addPoint((map_point_t){300, 300, 0});
-    addPoint((map_point_t){1300, 300, 0});
-    addPoint((map_point_t){1300, 1300, 0});
-    addPoint((map_point_t){300, 1300, 0});
+    addPoint((map_point_t){ARENA_WIDTH-300, 300, 0});
+    addPoint((map_point_t){ARENA_WIDTH-1300, 300, 0});
+    addPoint((map_point_t){ARENA_WIDTH-1300, 1300, 0});
+    addPoint((map_point_t){ARENA_WIDTH-300, 1300, 0});
+    addPoint((map_point_t){ARENA_WIDTH-300, 300, 0});
+    addPoint((map_point_t){ARENA_WIDTH-1300, 300, 0});
+    addPoint((map_point_t){ARENA_WIDTH-1300, 1300, 0});
+    addPoint((map_point_t){ARENA_WIDTH-300, 1300, 0});
         
     
 }
 
+void checkFucked() {
+    static elapsedMillis time_since_change;
+    if (current_target.x != last_target.x || current_target.y != last_target.y) {
+        time_since_change = 0;
+        last_target = current_target;
+    }
+    if (time_since_change > 20000) {
+        Fucked = true;
+    }
+}
+
 void checkStuck() {
-    elapsedMillis checkStuckTime = 0;
-    if (checkStuckTime > 2000) {
-        position_t things[2];
-        things[0] = getPosition();
-        things[1] = last_position;
-        uint16_t dist = distanceBetweenPoints(things);
+    static elapsedMillis checkStuckTime = 0;
+    if (checkStuckTime > 5000) {
+        position_t current = getPosition();
+        Serial.print(current.x);
+        Serial.print(":");
+        Serial.println(current.y);
+        Serial.print(last_position.x);
+        Serial.print(":");
+        Serial.println(last_position.y);
+        uint16_t dist = (uint16_t)sqrt(pow((getPosition().x - last_position.x), 2) + pow((getPosition().y - last_position.y), 2));
         #ifdef DEBUG_NAV
         Serial.print("Dist since last: ");
         Serial.println(dist);
@@ -81,17 +99,30 @@ void checkStuck() {
         }
         
         last_position = getPosition();
+        checkStuckTime = 0;
     }
 }
 
-void navigatorFSM() {
+void el_contingency() {
+    static elapsedMillis this_shouldnt_get_initialised = 10000;
+    if (this_shouldnt_get_initialised >= 10000) {
+        setMovementHeading((int16_t)random(360));
+    }
+}
+
+void navigatorFSM() {  
     position_t current_position = getPosition();
     switch (navigator_state) {
         case NAVIGATOR_PICK_POINT:
             pickPoint_s();
             break;
         case NAVIGATOR_MOVING:
-            moving_s();
+            if (!Fucked) {
+                moving_s();
+            } else {
+                el_contingency();
+            }
+            
             break;
         case NAVIGATOR_AVOIDING:
             //avoiding_s();
@@ -144,6 +175,7 @@ void navigatorFSM() {
     setWeight(check);
 
     checkStuck();
+    checkFucked();
 }
 
 void pickPoint_s() {
@@ -156,6 +188,26 @@ void pickPoint_s() {
     Serial.print(":");
     Serial.println(target_pointer);
     #endif
+
+    CheckWeightCount();
+
+    if (getWeightCount() == 3) {
+        if (current_target.x == homePosition.x && current_target.y == homePosition.y) {
+            setMovementSpeed(0);
+            collectionReverse();
+            delay(1000);
+            setMovementSpeed(-10);
+            delay(500);
+            collectionOff();
+            navigator_state = NAVIGATOR_MOVING;
+            return;
+        }
+        else {
+            current_target = homePosition;
+            navigator_state = NAVIGATOR_MOVING;
+            return;
+        }
+    }
 
     if (target_pointer != 0) {
         if (current_target.x != targets[target_pointer-1].x && current_target.y != targets[target_pointer-1].y) {
@@ -221,50 +273,63 @@ void moving_s() {
 
 // Avoids an obstacle
 void avoiding_s() {
-    avoid_time = 0;
-    position_t current_position = getPosition();
-    int16_t angle = getBodyHeading();
-    uint16_t l_dist = tof_l.read();
-    uint16_t r_dist = tof_r.read();
-    uint16_t f_dist = tof_scan_left.top[4];
+    if (avoid_time > 1000) {
+        position_t current_position = getPosition();
+        int16_t angle = getBodyHeading();
+        uint16_t l_dist = tof_l.read();
+        uint16_t r_dist = tof_r.read();
+        uint16_t f_dist = tof_scan_left.top[4];
 
-    bool l = l_dist < 2*NAV_AVOID_DIST_MAX;
-    bool f = f_dist < 2*NAV_AVOID_DIST_MAX;
-    bool r = r_dist < 2*NAV_AVOID_DIST_MAX;
-
-
-    // This is gonna be a bit cooked. Basic philosophy is a modified wall follow.
-    // If the robot has started in the left base it should turn right and move a bit before trying to get back to the original point. Opposite if it starts in the right base.
-    // As this state will be constantly entered from the moving state while avoiding obstacles, it should only avoid while the target is roughly infront of the robot.
-    #if START_BASE == BASE_LEFT
-        if (l) {
-            if (f) {
-                incrementMovementHeading(10);
-            }
+        if (l_dist > NAV_AVOID_DIST_MAX && f_dist > NAV_AVOID_DIST_MAX && r_dist > NAV_AVOID_DIST_MAX) {
+            navigator_state == NAVIGATOR_MOVING;
+            return;
         }
-    #else // Same but flipped
-        if (l_dist > NAV_AVOID_DIST_MAX) { // If clear to the left
-            if (f_dist > NAV_AVOID_DIST_MAX) { // If clear in front
-                setTarget(relToAbsPos({-100-NAV_CLOSE_ENOUGH_GOOD_ENOUGH, 300}); // Slight left turn
+
+        bool l = l_dist < 2*NAV_AVOID_DIST_MAX;
+        bool f = f_dist < 2*NAV_AVOID_DIST_MAX;
+        bool r = r_dist < 2*NAV_AVOID_DIST_MAX;
+
+
+        // This is gonna be a bit cooked. Basic philosophy is a modified wall follow.
+        // If the robot has started in the left base it should turn right and move a bit before trying to get back to the original point. Opposite if it starts in the right base.
+        // As this state will be constantly entered from the moving state while avoiding obstacles, it should only avoid while the target is roughly infront of the robot.
+        #if START_BASE == BASE_LEFT
+            if (l) {
+                if (f) {
+                    incrementMovementHeading(45);
+                } else {
+                    incrementMovementHeading(10);
+                }
             } else {
-                setTarget(relToAbsPos({-300-NAV_CLOSE_ENOUGH_GOOD_ENOUGH, 0}); // Hard left turn
+                if (f) {
+                    incrementMovementHeading(-45);
+                } else {
+                    incrementMovementHeading(-10);
+                }
             }
-        } else { // Must be blocked to the left so same thing but with should go back a bit too
-            if (f_dist > NAV_AVOID_DIST_MAX) { // If clear in front
-                setTarget(relToAbsPos({100+NAV_CLOSE_ENOUGH_GOOD_ENOUGH, 300}); // Slight right turn
+        #else // Same but flipped
+            if (l) {
+                if (f) {
+                    incrementMovementHeading(45);
+                } else {
+                    incrementMovementHeading(10);
+                }
             } else {
-                setTarget(relToAbsPos({300+NAV_CLOSE_ENOUGH_GOOD_ENOUGH, -300-NAV_CLOSE_ENOUGH_GOOD_ENOUGH}); // Hard right with some reverse
+                if (f) {
+                    incrementMovementHeading(-45);
+                } else {
+                    incrementMovementHeading(-10);
+                }
             }
-        }
-    #endif
-    turnToPosition(current_target);
-    navigator_state = NAVIGATOR_MOVING;
+        #endif
+        turnToPosition(current_target);
+        avoid_time = 0;
+    }
 }
 
 void collecting_s() {
     turnToPosition(current_target);
     if (distanceToTarget() < NAV_WEIGHT_ENGAGE_DIST) {
-        turnToPosition(relToAbsPos({-60, 300}));
         terminalGuide_time = 0;
         navigator_state = NAVIGATOR_TERMINAL_GUIDANCE;
         terminalGuidance_s();

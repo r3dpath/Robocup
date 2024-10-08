@@ -10,6 +10,17 @@ int8_t set_speed = 0;
 int16_t l_integral = 0;
 int16_t r_integral = 0;
 
+// Obstacle detection thresholds (in mm)
+const int16_t obstacleThresholdFront = 200; // Front obstacle distance threshold
+const int16_t obstacleThresholdSide = 200;  // Side obstacle distance threshold
+
+extern TOF tof_l;
+extern TOF tof_r;
+extern TOF2 tof_scan_left;
+extern TOF2 tof_scan_right;
+
+
+
 void initMovement() {
     // Setup servo objects
     motorLeft.attach(PIN_LEFT_MOTOR);
@@ -23,6 +34,14 @@ void movementController()
     // Get current speed
     float lspeed = getLeftEncoderSpeed();
     float rspeed = getRightEncoderSpeed();
+
+    // TOF sensor readings for obstacle detection
+    uint16_t tof_left = tof_l.read();
+    uint16_t tof_right = tof_r.read();
+    uint16_t tof_top_right_centre = tof_scan_right.top[0];
+    uint16_t tof_top_left_centre = tof_scan_left.top[4];
+    int16_t frontDist = (tof_top_left_centre + tof_top_right_centre) / 2;  // Front sensor reading
+    
 
     // #ifdef DEBUG_MOVEMENT
     // Serial.print("LeftActualSpeed: ");
@@ -52,8 +71,33 @@ void movementController()
     // Serial.println(heading_diff);
     // #endif
 
-    int16_t left_set_speed = set_speed * MOVEMENT_P + MOVEMENT_HEADING_MULT * heading_diff;
-    int16_t right_set_speed = set_speed * MOVEMENT_P - MOVEMENT_HEADING_MULT * heading_diff;
+    int16_t left_set_speed = (set_speed * MOVEMENT_P + MOVEMENT_HEADING_MULT * heading_diff);
+    int16_t right_set_speed = (set_speed * MOVEMENT_P - MOVEMENT_HEADING_MULT * heading_diff);
+
+
+    if (frontDist > obstacleThresholdFront && tof_left < obstacleThresholdSide && tof_right < obstacleThresholdSide)
+    {
+
+    }
+    else if (frontDist < obstacleThresholdFront) // && tof_left < obstacleThresholdSide && tof_right < obstacleThresholdSide)
+    {
+        if (tof_left < tof_right) {
+            left_set_speed = 450;
+            right_set_speed = -450;
+        } else {
+            left_set_speed = -450;
+            right_set_speed = 450;
+        }
+    }
+    else if (tof_left < obstacleThresholdSide) {
+        left_set_speed += (obstacleThresholdSide-tof_left)*7.5; 
+        right_set_speed -= (obstacleThresholdSide-tof_left)*7.5;
+    }
+    else if (tof_right < obstacleThresholdSide) {
+        left_set_speed -= (obstacleThresholdSide-tof_right)*7.5;
+        right_set_speed += (obstacleThresholdSide-tof_right)*7.5;
+    }
+    
 
     // Really crappy bodge to overcome stall
     if (abs(lspeed) < 200 && set_speed != 0)

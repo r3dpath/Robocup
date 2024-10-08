@@ -2,13 +2,17 @@
 
 bool POS_OOB = false;
 
-#if START_BASE == BASE_LEFT
-    position_t homePosition = {300, 300};
-#else
-    position_t homePosition = {ARENA_WIDTH - 300, 300};
-#endif
+position_t robotPosition;
+position_t homePosition;
 
-position_t robotPosition = {homePosition.x, homePosition.y};
+void initPositioning() {
+    if (START_BASE == BASE_LEFT) {
+        homePosition = {300, 300};
+    } else {
+        homePosition = {ARENA_WIDTH - 300, 300};
+    }
+    robotPosition = {homePosition.x, homePosition.y};
+}
 
 
 void positionTick()

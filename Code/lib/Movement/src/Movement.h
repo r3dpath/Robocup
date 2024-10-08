@@ -4,6 +4,7 @@
 #include <Servo.h>
 #include <IMU.h>
 #include <Encoder.h>
+#include "TOF.h"
 
 #include <debug.h>
 
@@ -17,7 +18,8 @@
 
 #define MOVEMENT_P 50
 #define MOVEMENT_I 0
-#define MOVEMENT_HEADING_MULT 25
+#define MOVEMENT_HEADING_MULT 15
+#define MOVMENT_HEADING_DIV_TOF 4
 
 #define START_ANGLE 0
 

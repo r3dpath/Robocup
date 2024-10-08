@@ -6,6 +6,7 @@
 #include <Movement.h>
 #include <WeightDetection.h>
 #include <Collection.h>
+#include <WeightCount.h>
 
 #define NAV_AVOID_DIST_MAX 180
 #define NAV_CLOSE_ENOUGH_GOOD_ENOUGH 100

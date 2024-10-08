@@ -120,6 +120,7 @@ void setup() {
     initCollection();
     initEncoder();
     initNavigator();
+    initPositioning();
     
 
     // Initialize the task scheduler
