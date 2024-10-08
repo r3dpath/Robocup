@@ -17,6 +17,10 @@ void CheckWeightCount()
 {
     tof_count.tick();
     weight_count_distance = tof_count.read();
+    #ifdef DEBUG_WEIGHT
+    Serial.print("Weight distance: ");
+    Serial.println(weight_count_distance);
+    #endif
     if ((weight_count_distance < 80)) {
         WeightCount = MAX_COUNT;
         Serial.println("Fully loaded");

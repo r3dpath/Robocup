@@ -88,6 +88,8 @@ Scheduler taskManager;
 #ifndef PROFILING
 //Task tScan(35, TASK_ONCE, []() { tof_scan.tick(); });
 Task tScan(TOF_SCAN_PERIOD, TASK_ONCE, tof_scan_restart);
+Task tSL(TOF_SCAN_PERIOD * 5, TASK_FOREVER, []() { tof_l.tick(); });
+Task tSR(TOF_SCAN_PERIOD * 5, TASK_FOREVER, []() { tof_r.tick(); });
 Task tNav(200, TASK_FOREVER, navigatorFSM);
 Task tPos(15, TASK_FOREVER, positionTick);
 Task tMove(50, TASK_FOREVER, movementController);

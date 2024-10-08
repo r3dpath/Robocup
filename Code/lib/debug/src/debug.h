@@ -4,11 +4,11 @@
 
 //#define DEBUG
 //#define DEBUG_WEIGHT
-#define PROFILING
+//#define PROFILING
 //#define DEBUG_IMU
 #define DEBUG_POS
 //#define DEBUG_MOVEMENT
-#define DEBUG_NAV
+//#define DEBUG_NAV
 //#define DEBUG_TOF
 
 #define Serial Serial2 

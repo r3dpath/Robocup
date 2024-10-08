@@ -3,7 +3,7 @@ import numpy as np
 
 # Real-world dimensions (mm)
 image_height_mm = 4900  # height in mm
-image_width_mm = 2900   # width in mm
+image_width_mm = 2400   # width in mm
 
 # List to store points (with type for weights/targets)
 points = []

@@ -43,6 +43,8 @@ void setTarget(position_t candidate);
 double cosd (double angle);
 double sind (double angle);
 
+uint8_t num_targets;
+
 
 uint16_t distanceToTarget();
 
@@ -54,15 +56,14 @@ void initNavigator() {
     addTarget({1000, 1000}, false);
     addTarget({2000, 2000}, false);
     */
-    addPoint((map_point_t){402.39, 319.14, 0});
-    addPoint((map_point_t){454.43, 1090.14, 0});
-    addPoint((map_point_t){2424.76, 1101.44, 0});
-    addPoint((map_point_t){2369.26, 2132.28, 1});
-    addPoint((map_point_t){1429.19, 3459.65, 0});
-    addPoint((map_point_t){2365.79, 4456.60, 0});
-    addPoint((map_point_t){1432.66, 3448.36, 1});
-    addPoint((map_point_t){475.24, 2875.04, 0});
-    addPoint((map_point_t){454.43, 1084.50, 0});
+    addPoint((map_point_t){312.92, 330.43, 0});
+    addPoint((map_point_t){1234.45, 353.03, 0});
+    addPoint((map_point_t){1955.02, 1835.73, 0});
+    addPoint((map_point_t){1952.15, 2835.50, 0});
+    addPoint((map_point_t){436.36, 2829.86, 0});
+    addPoint((map_point_t){447.85, 1790.55, 0});
+    addPoint((map_point_t){404.78, 1076.02, 0});
+    num_targets = 7;
         
     
 }
@@ -73,7 +74,7 @@ void checkFucked() {
         time_since_change = 0;
         last_target = current_target;
     }
-    if (time_since_change > 20000) {
+    if (time_since_change > 30000) {
         Serial.println("!!!!FUCKED!!!!");
         Fucked = true;
     }
@@ -81,7 +82,7 @@ void checkFucked() {
 
 void checkStuck() {
     static elapsedMillis checkStuckTime = 0;
-    if (checkStuckTime > 5000) {
+    if (checkStuckTime > 3000) {
         position_t current = getPosition();
         Serial.print(current.x);
         Serial.print(":");
@@ -110,6 +111,8 @@ void el_contingency() {
     static elapsedMillis this_shouldnt_get_initialised = 10000;
     if (this_shouldnt_get_initialised >= 10000) {
         setMovementHeading((int16_t)random(360));
+        setMovementSpeed(NAV_DEFAULT_SPEED);
+        this_shouldnt_get_initialised = 0;
     }
 }
 
@@ -174,11 +177,10 @@ void navigatorFSM() {
     Serial.println(current_target.y);
     #endif
 
-    // weight_info_t check = checkWeight();
-    // setWeight(check);
+    weight_info_t check = checkWeight();
+    setWeight(check);
 
-    // checkStuck();
-    // checkFucked();
+    checkStuck();
 }
 
 void pickPoint_s() {
@@ -198,9 +200,9 @@ void pickPoint_s() {
         if (current_target.x == homePosition.x && current_target.y == homePosition.y) {
             setMovementSpeed(0);
             collectionReverse();
-            delay(1000);
+            delay(3000);
             setMovementSpeed(-10);
-            delay(500);
+            delay(3000);
             collectionOff();
             navigator_state = NAVIGATOR_MOVING;
             return;
@@ -241,8 +243,7 @@ void pickPoint_s() {
             }
         }
     } else {
-            setMovementSpeed(0);
-            exit(0);
+            target_pointer = num_targets;
     }
     // Could stop and do a scanning turn at each point maybe?
 }
@@ -397,14 +398,21 @@ void setWeight(weight_info_t weight) {
 }
 
 void stuck_s() {
+    static elapsedMillis time = 0;
+    uint16_t seconds = time / 2000; 
     if (tof_scan_left.bottom[4] < NAV_AVOID_DIST_MAX || tof_scan_right.bottom[0] < NAV_AVOID_DIST_MAX || tof_l.read() < NAV_AVOID_DIST_MAX || tof_r.read() < NAV_AVOID_DIST_MAX) {
         // Fang it backwards
         setMovementSpeed(-10);
         setMovementHeading(getBodyHeading());
     } else {
         // Fang it forwards
-        setMovementSpeed(10);
-        setMovementHeading(getBodyHeading());
+        if (seconds % 2 == 0) {
+            setMovementSpeed(10);
+            setMovementHeading(getBodyHeading());
+        } else {
+            setMovementSpeed(-10);
+            setMovementHeading(getBodyHeading());
+        }
     }
 }
 
