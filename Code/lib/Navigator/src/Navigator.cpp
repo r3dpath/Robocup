@@ -86,10 +86,16 @@ void navigatorFSM() {
             break;
     }
 
+    // STUCK CODE
+
     position_t things[2];
     things[0] = current_position;
     things[1] = last_position;
     uint16_t dist = distanceBetweenPoints(things);
+    #ifdef DEBUG_NAV
+    Serial.print("Dist since last: ");
+    Serial.println(dist);
+    #endif
     if (dist < 30) {
         no_move_count += 1;
     } else {
@@ -103,6 +109,8 @@ void navigatorFSM() {
     }
     
     last_position = current_position;
+
+    // STUCK CODE END
 
     #ifdef DEBUG
     Serial.print("NAV: ");
@@ -219,25 +227,13 @@ void avoiding_s() {
     int16_t angle = getBodyHeading();
     uint16_t l_dist = tof_l.read();
     uint16_t r_dist = tof_r.read();
-    uint16_t f_dist = tof_scan_right.f_distance;
+    uint16_t f_dist = tof_scan_left.top[4];
 
     // This is gonna be a bit cooked. Basic philosophy is a modified wall follow.
     // If the robot has started in the left base it should turn right and move a bit before trying to get back to the original point. Opposite if it starts in the right base.
     // As this state will be constantly entered from the moving state while avoiding obstacles, it should only avoid while the target is roughly infront of the robot.
     #if START_BASE == BASE_LEFT
-        if (r_dist > NAV_AVOID_DIST_MAX) { // If clear to the right
-            if (f_dist > NAV_AVOID_DIST_MAX * 2) { // If clear in front
-                setTarget(relToAbsPos({300+NAV_CLOSE_ENOUGH_GOOD_ENOUGH, 300})); // Slight right turn
-            } else {
-                setTarget(relToAbsPos({300+NAV_CLOSE_ENOUGH_GOOD_ENOUGH, 0})); // Hard right turn
-            }
-        } else { // Must be blocked to the right so same thing but with should go back a bit too
-            if (f_dist > NAV_AVOID_DIST_MAX * 2) { // If clear in front
-                setTarget(relToAbsPos({-300-NAV_CLOSE_ENOUGH_GOOD_ENOUGH, 300})); // Slight left turn
-            } else {
-                setTarget(relToAbsPos({-300-NAV_CLOSE_ENOUGH_GOOD_ENOUGH, -150-NAV_CLOSE_ENOUGH_GOOD_ENOUGH})); // Hard left with some reverse
-            }
-        }
+        if (l_dist < NAV_AVOID_DIST_MAX) 
     #else // Same but flipped
         if (l_dist > NAV_AVOID_DIST_MAX) { // If clear to the left
             if (f_dist > NAV_AVOID_DIST_MAX) { // If clear in front
@@ -290,6 +286,12 @@ void setWeight(weight_info_t weight) {
             if (weight.certainty == 0) {
                 return;
             }
+            #ifdef DEBUG_NAV
+            Serial.print("Detected weight at angle: ");
+            Serial.print(weight.direction);
+            Serial.print(" and distance: ");
+            Serial.println(weight.distance);
+            #endif
             position_t relative = {weight.distance*sin((int8_t)weight.direction), weight.distance*cos((int8_t)weight.direction)};
             setTarget(relToAbsPos(relative));
             #ifdef DEBUG_NAV

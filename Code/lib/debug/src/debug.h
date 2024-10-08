@@ -2,8 +2,8 @@
 #define debug_h
 
 //#define DEBUG
-//#define DEBUG_WEIGHT
-#define PROFILING
+#define DEBUG_WEIGHT
+//#define PROFILING
 //#define DEBUG_IMU
 #define DEBUG_POS
 //#define DEBUG_MOVEMENT

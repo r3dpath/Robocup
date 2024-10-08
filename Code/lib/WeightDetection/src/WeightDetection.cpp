@@ -72,44 +72,67 @@ weight_info_t weightDetection() {
     if (tof_scan_left.differences[max_idx_left] > tof_scan_right.differences[max_idx_right]) {
         // If left TOF detects a weight
         if ((tof_scan_left.differences[max_idx_left] > MIN_VALID_DIFF) && (tof_scan_left.top[max_idx_left] > tof_scan_left.bottom[max_idx_left] * 1.15)) { 
-            consistent_detections++;
-            if (consistent_detections >= CONFIRMATION_THRESHOLD) {
-                state.certainty += 1;
-                state.distance = tof_scan_left.bottom[max_idx_left];
-                consistent_detections = 0; //Resets after confirmation
-                // Assign direction based on SPAD index
-                if (max_idx_left <= 1) 
-                    state.direction = FAR_LEFT;
-                else if (max_idx_left <= 3) 
-                    state.direction = LEFT;
-                else if (max_idx_left == 4) 
-                    state.direction = CENTER;
-            } 
+            
+            state.certainty += 1;
+            state.distance = tof_scan_left.bottom[max_idx_left];
+                
+            // Assign direction based on SPAD index
+            if (max_idx_left == 0 || max_idx_left == 1) 
+                state.direction = FAR_LEFT;
+            else if (max_idx_left == 2 || max_idx_left == 3) 
+                state.direction = LEFT;
+            else if (max_idx_left == 4 || max_idx_left == 0) 
+                state.direction = CENTER;
+            else  {
+                state.direction = UNDEFINED;
+            }
+        } else {
+            state.certainty = 0;
+            state.direction = UNDEFINED;
+            state.distance = -1;
         }
-    } else  if (tof_scan_right.differences[max_idx_right] > tof_scan_left.differences[max_idx_left]) {
+    } else {
         // If right TOF detects a weight
         if ((tof_scan_right.differences[max_idx_right] > MIN_VALID_DIFF) &&  (tof_scan_right.top[max_idx_right] > tof_scan_right.bottom[max_idx_right] * 1.15)) {
-        consistent_detections++;
-        if (consistent_detections >= CONFIRMATION_THRESHOLD) {
+            
             state.certainty += 1;
             state.distance = tof_scan_right.bottom[max_idx_right];
-            consistent_detections = 0; //Resets after confirmation
+            
             // Assign direction based on SPAD index
-            if (max_idx_right >= 3) 
+            if (max_idx_right == 4 || max_idx_right == 3) {
                 state.direction = FAR_RIGHT;
-            else if (max_idx_right >= 1) 
+            }
+                
+            else if (max_idx_right == 2 || max_idx_right == 1) {
                 state.direction = RIGHT;
-            else if (max_idx_right == 0) 
+            } 
+                
+            else if (max_idx_left == 4 || max_idx_right == 0) {
                 state.direction = CENTER;
-        } 
-    }
-    }
-     else {
+            }
+            else {
+                state.direction = UNDEFINED;
+            }
+        } else {
+            state.certainty = 0;
+            state.direction = UNDEFINED;
+            state.distance = -1;
+        }
+    } 
 
-        state.certainty = 0;
-        state.direction = UNDEFINED;
-        state.distance = -1;
-    }
+    // Serial.print("Max Diff right:");
+    // Serial.println(tof_scan_right.differences[max_idx_right]);
+    // Serial.print("Max Diff Left:");
+    // Serial.println(tof_scan_left.differences[max_idx_left]);
+    // Serial.print("Raw_max_scan_TOP_L:");
+    // Serial.println(tof_scan_left.top[max_idx_left]);
+    // Serial.print("Raw_max_scan_Bottom_L:");
+    // Serial.println(tof_scan_left.bottom[max_idx_left] * 1.15);
+    // Serial.print("Raw_max_scan_TOP_R:");
+    // Serial.println(tof_scan_right.top[max_idx_right]);
+    // Serial.print("Raw_max_scan_Bottom_R:");
+    // Serial.println(tof_scan_right.bottom[max_idx_right] * 1.15);
+    
 
     switch (state.direction) {
         case FAR_LEFT: Serial.println("FAR LEFT"); break;
@@ -126,6 +149,15 @@ weight_info_t weightDetection() {
     Serial.print(" Distance: ");
     Serial.println(state.distance);
     #endif 
+
+    if (state.certainty >= CONFIRMATION_THRESHOLD) {
+        Serial.print("S:");
+        Serial.print(tof_scan_left.top[0]); Serial.print(":"); Serial.print(tof_scan_left.top[1]); Serial.print(":"); Serial.print(tof_scan_left.top[2]); Serial.print(":"); Serial.print(tof_scan_left.top[3]); Serial.print(":"); Serial.print(tof_scan_left.top[4]); Serial.print(":");
+        Serial.print(tof_scan_left.bottom[0]); Serial.print(":"); Serial.print(tof_scan_left.bottom[1]); Serial.print(":"); Serial.print(tof_scan_left.bottom[2]); Serial.print(":"); Serial.print(tof_scan_left.bottom[3]); Serial.print(":"); Serial.print(tof_scan_left.bottom[4]); Serial.print(":");
+        Serial.print(tof_scan_right.top[0]); Serial.print(":"); Serial.print(tof_scan_right.top[1]); Serial.print(":"); Serial.print(tof_scan_right.top[2]); Serial.print(":"); Serial.print(tof_scan_right.top[3]); Serial.print(":"); Serial.print(tof_scan_right.top[4]); Serial.print(":");
+        Serial.print(tof_scan_right.bottom[0]); Serial.print(":"); Serial.print(tof_scan_right.bottom[1]); Serial.print(":"); Serial.print(tof_scan_right.bottom[2]); Serial.print(":"); Serial.print(tof_scan_right.bottom[3]); Serial.print(":"); Serial.print(tof_scan_right.bottom[4]); Serial.print(":");
+        Serial.print(state.direction); Serial.print(":"); Serial.println(state.distance);
+    }
 
     #ifdef DEBUG
     Serial.print("S:");
