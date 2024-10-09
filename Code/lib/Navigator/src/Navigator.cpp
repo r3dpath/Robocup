@@ -56,14 +56,17 @@ void initNavigator() {
     addTarget({1000, 1000}, false);
     addTarget({2000, 2000}, false);
     */
-    addPoint((map_point_t){312.92, 330.43, 0});
-    addPoint((map_point_t){1234.45, 353.03, 0});
-    addPoint((map_point_t){1955.02, 1835.73, 0});
-    addPoint((map_point_t){1952.15, 2835.50, 0});
-    addPoint((map_point_t){436.36, 2829.86, 0});
-    addPoint((map_point_t){447.85, 1790.55, 0});
-    addPoint((map_point_t){404.78, 1076.02, 0});
-    num_targets = 7;
+    addPoint((map_point_t){302.52, 308.71, 0});
+    addPoint((map_point_t){239.14, 1358.30, 0});
+    addPoint((map_point_t){218.97, 2315.29, 0});
+    addPoint((map_point_t){412.00, 4588.49, 0});
+    addPoint((map_point_t){2025.45, 4568.84, 0});
+    addPoint((map_point_t){1503.96, 4341.52, 0});
+    addPoint((map_point_t){2036.97, 3030.93, 0});
+    addPoint((map_point_t){1187.03, 2609.97, 0});
+    addPoint((map_point_t){400.48, 3050.57, 0});
+    addPoint((map_point_t){230.49, 2295.65, 0});
+    num_targets = 10;
         
     
 }
@@ -82,7 +85,7 @@ void checkFucked() {
 
 void checkStuck() {
     static elapsedMillis checkStuckTime = 0;
-    if (checkStuckTime > 3000) {
+    if (checkStuckTime > 4000) {
         position_t current = getPosition();
         Serial.print(current.x);
         Serial.print(":");
@@ -181,6 +184,7 @@ void navigatorFSM() {
     setWeight(check);
 
     checkStuck();
+    checkFucked();
 }
 
 void pickPoint_s() {
@@ -243,6 +247,13 @@ void pickPoint_s() {
             }
         }
     } else {
+            setMovementSpeed(0);
+            collectionReverse();
+            delay(3000);
+            setMovementSpeed(-10);
+            delay(3000);
+            collectionOff();
+            navigator_state = NAVIGATOR_MOVING;
             target_pointer = num_targets;
     }
     // Could stop and do a scanning turn at each point maybe?
@@ -273,7 +284,7 @@ void moving_s() {
         setMovementSpeed(NAV_DEFAULT_SPEED);
     }
 
-    obstacleDetection();
+    //obstacleDetection();
 }
 
 // Avoids an obstacle
@@ -403,7 +414,7 @@ void stuck_s() {
     if (tof_scan_left.bottom[4] < NAV_AVOID_DIST_MAX || tof_scan_right.bottom[0] < NAV_AVOID_DIST_MAX || tof_l.read() < NAV_AVOID_DIST_MAX || tof_r.read() < NAV_AVOID_DIST_MAX) {
         // Fang it backwards
         setMovementSpeed(-10);
-        setMovementHeading(getBodyHeading());
+        setMovementHeading(getBodyHeading()+10);
     } else {
         // Fang it forwards
         if (seconds % 2 == 0) {
