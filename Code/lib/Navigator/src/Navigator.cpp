@@ -47,6 +47,7 @@ uint8_t num_targets;
 
 
 uint16_t distanceToTarget();
+void checkCloseEnough();
 
 void initNavigator() {
     position_t current_position = getPosition();
@@ -56,18 +57,15 @@ void initNavigator() {
     addTarget({1000, 1000}, false);
     addTarget({2000, 2000}, false);
     */
-    addPoint((map_point_t){302.52, 308.71, 0});
-    addPoint((map_point_t){239.14, 1358.30, 0});
-    addPoint((map_point_t){218.97, 2315.29, 0});
-    addPoint((map_point_t){412.00, 4588.49, 0});
-    addPoint((map_point_t){2025.45, 4568.84, 0});
-    addPoint((map_point_t){1503.96, 4341.52, 0});
-    addPoint((map_point_t){2036.97, 3030.93, 0});
-    addPoint((map_point_t){1187.03, 2609.97, 0});
-    addPoint((map_point_t){400.48, 3050.57, 0});
-    addPoint((map_point_t){230.49, 2295.65, 0});
-    num_targets = 10;
-        
+    addPoint((map_point_t){1208.35, 738.43, 0});
+    addPoint((map_point_t){2143.85, 941.65, 0});
+    addPoint((map_point_t){2149.42, 2415.65, 1});
+    addPoint((map_point_t){2224.59, 3841.00, 0});
+    addPoint((map_point_t){1188.86, 3812.38, 1});
+    addPoint((map_point_t){256.15, 3755.14, 0});
+    addPoint((map_point_t){264.50, 2189.54, 1});
+    addPoint((map_point_t){272.85, 978.86, 0});
+    num_targets = 8;
     
 }
 
@@ -85,7 +83,7 @@ void checkFucked() {
 
 void checkStuck() {
     static elapsedMillis checkStuckTime = 0;
-    if (checkStuckTime > 4000) {
+    if (checkStuckTime > 8000) {
         position_t current = getPosition();
         Serial.print(current.x);
         Serial.print(":");
@@ -98,10 +96,10 @@ void checkStuck() {
         Serial.print("Dist since last: ");
         Serial.println(dist);
         #endif
-        if (dist < 50) {
+        if (dist < 100) {
             navigator_state = NAVIGATOR_STUCK;
             Serial.println("Stuck");
-        } else {
+        } else if (navigator_state == NAVIGATOR_STUCK) {
             navigator_state = NAVIGATOR_MOVING;
         }
         
@@ -180,11 +178,22 @@ void navigatorFSM() {
     Serial.println(current_target.y);
     #endif
 
-    weight_info_t check = checkWeight();
-    setWeight(check);
+    // weight_info_t check = checkWeight();
+    // setWeight(check);
 
     checkStuck();
     checkFucked();
+    checkCloseEnough();
+}
+
+void checkCloseEnough() {
+    uint16_t dist = distanceToTarget();
+    if (current_target.x == targets[target_pointer-1].x && current_target.y == targets[target_pointer-1].y && dist < NAV_CLOSE_ENOUGH_GOOD_ENOUGH) {
+        #ifdef DEBUG_NAV
+        Serial.println("Close enough");
+        #endif
+        target_pointer--;
+    }
 }
 
 void pickPoint_s() {
@@ -198,24 +207,28 @@ void pickPoint_s() {
     Serial.println(target_pointer);
     #endif
 
+    collectionOff();
     CheckWeightCount();
 
+    if (current_target.x == homePosition.x && current_target.y == homePosition.y) {
+        setMovementSpeed(0);
+        collectionReverse();
+        delay(1500);
+        setMovementSpeed(-10);
+        delay(1500);
+        collectionOff();
+        target_pointer = num_targets;
+    }
+
     if (getWeightCount() == 3) {
-        if (current_target.x == homePosition.x && current_target.y == homePosition.y) {
-            setMovementSpeed(0);
-            collectionReverse();
-            delay(3000);
-            setMovementSpeed(-10);
-            delay(3000);
-            collectionOff();
-            navigator_state = NAVIGATOR_MOVING;
-            return;
-        }
-        else {
+        if (target_pointer < num_targets) {
+            target_pointer += 2;
+        } else {
             current_target = homePosition;
             navigator_state = NAVIGATOR_MOVING;
             return;
         }
+        
     }
 
     if (target_pointer != 0) {
@@ -247,14 +260,8 @@ void pickPoint_s() {
             }
         }
     } else {
-            setMovementSpeed(0);
-            collectionReverse();
-            delay(3000);
-            setMovementSpeed(-10);
-            delay(3000);
-            collectionOff();
-            navigator_state = NAVIGATOR_MOVING;
-            target_pointer = num_targets;
+        Serial.println("No more targets");
+        target_pointer = num_targets;
     }
     // Could stop and do a scanning turn at each point maybe?
 }
@@ -355,13 +362,13 @@ void collecting_s() {
 }
 
 void terminalGuidance_s() {
+    setMovementSpeed(NAV_DEFAULT_SPEED-3);
     collectionOn();
-    Serial.println("TERMINAL_NAV");
     // if (terminalGuide_time < 1) {
     //     position_t centering = {-60, 300}; // Try to allow for the offset 
     //     turnToPosition(relToAbsPos(centering));
     // }
-    if (terminalGuide_time > 6000) {
+    if (terminalGuide_time > 5000) {
         collectionOff();
         navigator_state = NAVIGATOR_PICK_POINT;
     }
