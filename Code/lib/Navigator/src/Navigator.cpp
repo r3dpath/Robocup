@@ -333,7 +333,9 @@ void avoiding_s() {
 }
 
 void collecting_s() {
-    turnToPosition(current_target);
+    if (distanceToTarget() > MINIMAL_TURNING_DISTANCE) {
+        turnToPosition(current_target);}
+    
     if (distanceToTarget() < NAV_WEIGHT_ENGAGE_DIST) {
         terminalGuide_time = 0;
         navigator_state = NAVIGATOR_TERMINAL_GUIDANCE;
