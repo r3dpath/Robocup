@@ -21,7 +21,7 @@ void CheckWeightCount()
     Serial.print("Weight distance: ");
     Serial.println(weight_count_distance);
     #endif
-    if ((weight_count_distance < 80)) {
+    if ((weight_count_distance < 95)) {
         WeightCount = MAX_COUNT;
         Serial.println("Fully loaded");
     } else {

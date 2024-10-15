@@ -57,14 +57,14 @@ void initNavigator() {
     addTarget({1000, 1000}, false);
     addTarget({2000, 2000}, false);
     */
-    addPoint((map_point_t){1208.35, 738.43, 0});
-    addPoint((map_point_t){2143.85, 941.65, 0});
-    addPoint((map_point_t){2149.42, 2415.65, 1});
-    addPoint((map_point_t){2224.59, 3841.00, 0});
-    addPoint((map_point_t){1188.86, 3812.38, 1});
-    addPoint((map_point_t){256.15, 3755.14, 0});
-    addPoint((map_point_t){264.50, 2189.54, 1});
-    addPoint((map_point_t){272.85, 978.86, 0});
+    addPoint((map_point_t){1201.49, 4586.05, 1});
+    addPoint((map_point_t){249.81, 4594.85, 1});
+    addPoint((map_point_t){2138.29, 4632.99, 1});
+    addPoint((map_point_t){1204.46, 4597.78, 0});
+    addPoint((map_point_t){1177.70, 4275.03, 1});
+    addPoint((map_point_t){1174.72, 3488.68, 1});
+    addPoint((map_point_t){297.40, 2361.98, 1});
+    addPoint((map_point_t){255.76, 1006.41, 0});
     num_targets = 8;
     
 }
@@ -121,9 +121,11 @@ void navigatorFSM() {
     position_t current_position = getPosition();
     switch (navigator_state) {
         case NAVIGATOR_PICK_POINT:
+            setAvoid(true);
             pickPoint_s();
             break;
         case NAVIGATOR_MOVING:
+            setAvoid(true);
             if (!Fucked) {
                 moving_s();
             } else {
@@ -362,6 +364,7 @@ void collecting_s() {
 }
 
 void terminalGuidance_s() {
+    setAvoid(false);
     setMovementSpeed(NAV_DEFAULT_SPEED-3);
     collectionOn();
     // if (terminalGuide_time < 1) {
@@ -371,6 +374,7 @@ void terminalGuidance_s() {
     if (terminalGuide_time > 5000) {
         collectionOff();
         navigator_state = NAVIGATOR_PICK_POINT;
+        setAvoid(true);
     }
 }
 

@@ -6,6 +6,8 @@ points = []
 selected_point = None
 dragging = False
 
+image_path = 'IMG_1997.jpg'
+
 # Function to draw the trapezoid and evenly spaced lines corrected for perspective
 def draw_trapezoid(image, points):
     if len(points) == 4:
@@ -44,6 +46,32 @@ def draw_trapezoid(image, points):
             # Draw the perspective-corrected horizontal lines
             cv2.line(image, tuple(top_orig.astype(int)), tuple(bottom_orig.astype(int)), (255, 0, 0), 1)
 
+# Function to zoom into the region around the selected point and add a crosshair
+def zoom_in_on_point(image, point, zoom_factor=2, zoom_size=100, add_crosshair=True):
+    x, y = point
+    h, w = image.shape[:2]
+    
+    # Define the zoom region boundaries
+    x1 = max(0, x - zoom_size)
+    y1 = max(0, y - zoom_size)
+    x2 = min(w, x + zoom_size)
+    y2 = min(h, y + zoom_size)
+    
+    # Crop the region around the point
+    zoom_region = image[y1:y2, x1:x2]
+    
+    # Resize the cropped region to simulate zooming
+    zoomed_image = cv2.resize(zoom_region, (zoom_factor * (x2 - x1), zoom_factor * (y2 - y1)))
+    
+    # Add a crosshair to the zoomed image if required
+    if add_crosshair:
+        center_x = zoomed_image.shape[1] // 2
+        center_y = zoomed_image.shape[0] // 2
+        cv2.line(zoomed_image, (center_x - 20, center_y), (center_x + 20, center_y), (0, 255, 0), 1)  # Horizontal line
+        cv2.line(zoomed_image, (center_x, center_y - 20), (center_x, center_y + 20), (0, 255, 0), 1)  # Vertical line
+
+    return zoomed_image
+
 # Mouse callback function for dragging points
 def mouse_event(event, x, y, flags, param):
     global points, selected_point, dragging, image, original_image
@@ -61,18 +89,25 @@ def mouse_event(event, x, y, flags, param):
             points[selected_point] = [x, y]  # Update the position of the selected point
             temp_image = original_image.copy()  # Reset to original each time
             draw_trapezoid(temp_image, points)
+            
+            # Display zoomed-in area around the selected point with crosshair
+            zoomed_image = zoom_in_on_point(original_image, points[selected_point], add_crosshair=True)
+            cv2.imshow("Zoom", zoomed_image)
+            
+            # Update the main image
             cv2.imshow("Select Trapezoid", temp_image)
 
     elif event == cv2.EVENT_LBUTTONUP:
         dragging = False
         selected_point = None
+        # Close the zoom window when dragging ends
+        cv2.destroyWindow("Zoom")
         # Redraw the final trapezoid
         image = original_image.copy()  # Reset to original
         draw_trapezoid(image, points)
         cv2.imshow("Select Trapezoid", image)
 
-# Load the image
-image_path = 'IMG_1970.jpg'  # Replace with your image path
+# Load the image  # Replace with your image path
 image = cv2.imread(image_path)
 original_image = image.copy()
 

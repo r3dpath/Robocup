@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import subprocess
 
 # Real-world dimensions (mm)
 image_height_mm = 4900  # height in mm
@@ -88,9 +89,17 @@ while True:
 # Close the window
 cv2.destroyAllWindows()
 
+data = ""
+
 # Print the points in reverse order
 print("\nPoints in reverse order (with format):")
 for point in reversed(points):
     x, y, is_weight_point = point
     print(f"addPoint((map_point_t){{{x:.2f}, {y:.2f}, {is_weight_point}}});")
+    data += f"addPoint((map_point_t){{{x:.2f}, {y:.2f}, {is_weight_point}}});\n"
 print(f"num_targets = {len(points)};")
+data += f"num_targets = {len(points)};\n"
+
+subprocess.run("pbcopy", input=data, text=True)
+
+

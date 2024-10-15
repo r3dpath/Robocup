@@ -10,6 +10,8 @@ int8_t set_speed = 0;
 int16_t l_integral = 0;
 int16_t r_integral = 0;
 
+bool avoid = true;
+
 // Obstacle detection thresholds (in mm)
 const int16_t obstacleThresholdFront = 200; // Front obstacle distance threshold
 const int16_t obstacleThresholdSide = 200;  // Side obstacle distance threshold
@@ -19,7 +21,9 @@ extern TOF tof_r;
 extern TOF2 tof_scan_left;
 extern TOF2 tof_scan_right;
 
-
+void setAvoid(bool avoidState) {
+    avoid = avoidState;
+}
 
 void initMovement() {
     // Setup servo objects
@@ -76,28 +80,29 @@ void movementController()
     int16_t left_set_speed = (set_speed * MOVEMENT_P + MOVEMENT_HEADING_MULT * heading_diff);
     int16_t right_set_speed = (set_speed * MOVEMENT_P - MOVEMENT_HEADING_MULT * heading_diff);
 
+    if (avoid) {
+        if (frontDist > obstacleThresholdFront && tof_left < obstacleThresholdSide && tof_right < obstacleThresholdSide)
+        {
 
-    if (frontDist > obstacleThresholdFront && tof_left < obstacleThresholdSide && tof_right < obstacleThresholdSide)
-    {
-
-    }
-    else if (frontDist < obstacleThresholdFront) // && tof_left < obstacleThresholdSide && tof_right < obstacleThresholdSide)
-    {
-        if (tof_left < tof_right) {
-            left_set_speed = 450;
-            right_set_speed = -450;
-        } else {
-            left_set_speed = -450;
-            right_set_speed = 450;
         }
-    }
-    else if (tof_left < obstacleThresholdSide) {
-        left_set_speed += (obstacleThresholdSide-tof_left)*7.5; 
-        right_set_speed -= (obstacleThresholdSide-tof_left)*7.5;
-    }
-    else if (tof_right < obstacleThresholdSide) {
-        left_set_speed -= (obstacleThresholdSide-tof_right)*7.5;
-        right_set_speed += (obstacleThresholdSide-tof_right)*7.5;
+        else if (frontDist < obstacleThresholdFront) // && tof_left < obstacleThresholdSide && tof_right < obstacleThresholdSide)
+        {
+            if (tof_left < tof_right) {
+                left_set_speed = 450;
+                right_set_speed = -450;
+            } else {
+                left_set_speed = -450;
+                right_set_speed = 450;
+            }
+        }
+        else if (tof_left < obstacleThresholdSide) {
+            left_set_speed += (obstacleThresholdSide-tof_left)*7.5; 
+            right_set_speed -= (obstacleThresholdSide-tof_left)*7.5;
+        }
+        else if (tof_right < obstacleThresholdSide) {
+            left_set_speed -= (obstacleThresholdSide-tof_right)*7.5;
+            right_set_speed += (obstacleThresholdSide-tof_right)*7.5;
+        }
     }
     
 

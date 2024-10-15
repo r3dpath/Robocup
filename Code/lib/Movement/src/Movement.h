@@ -31,5 +31,6 @@ int16_t getMovementHeading();
 void setMovementSpeed(int8_t speed);
 int8_t getMovementSpeed();
 int16_t getBodyHeading();
+void setAvoid(bool avoidState);
 
 #endif
