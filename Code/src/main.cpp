@@ -1,27 +1,19 @@
-#include <Wire.h>
-#include <VL53L0X.h>
-#include <VL53L1X.h>
-#include <SparkFunSX1509.h>
-#include <Servo.h>
 #include <Arduino.h>
-#include <QuadEncoder.h>
-#include "BNO055_support.h"
-#include <TOF.h>
-#include <Movement.h>
-#include <WeightDetection.h>
-#include <StateMachine.h>
-#include <IMU.h>
 #include <TaskScheduler.h>
-#include <Collection.h>
 #include "debug.h"
-#include <WeightCount.h>
+#include "Collection.h" // Get rid of this once fsm
+//#include <WeightCount.h>
+#include "Navigator.h"
+#include "Movement.h"
 #include "Encoder.h"
-#include "Positioning.h"
+#include "TOF.h"
+#include "WeightDetection.h"
 
 
 
 //#define TOTAL_ROUND_TIME 2*60*1000
-#define TOTAL_ROUND_TIME -1
+#define TOTAL_ROUND_TIME 100000000UL
+elapsedMillis round_time = 0;
 /*
 
 TODO:
@@ -30,10 +22,13 @@ TODO:
 
 */
 
-void initTask();
-void tof_scan_restart();
 extern TOF2 tof_scan_left;
 extern TOF2 tof_scan_right;
+extern TOF tof_l;
+extern TOF tof_r;
+
+void initTask();
+void tof_scan_restart();
 
 void tof_scan_time() {
   elapsedMicros time;
@@ -43,12 +38,12 @@ void tof_scan_time() {
   Serial.println(" - TOF Scan Tick Task");
 }
 
-void rsm_time() {
+void nsm_time() {
   elapsedMicros time;
   time = 0;
-  Robot_State_Machine();
+  navigatorFSM();
   Serial.print(time);
-  Serial.println(" - State Machine Task");
+  Serial.println(" - Nav FSM Task");
 }
 
 void UpdateIMU_time() {
@@ -67,22 +62,51 @@ void positionTick_time() {
   Serial.println(" - Pos Tick Task");
 }
 
+void movementController_time() {
+  elapsedMicros time;
+  time = 0;
+  movementController();
+  Serial.print(time);
+  Serial.println(" - Movement Task");
+}
+
+
+void weightTask_time() {
+  elapsedMicros time;
+  time = 0;
+  weightTask();
+  Serial.print(time);
+  Serial.println(" - Weight Task");
+}
+
+void bodgeWeightTick() {
+  tof_l.tick();
+  tof_r.tick();
+}
+
 Scheduler taskManager;
 #ifndef PROFILING
 //Task tScan(35, TASK_ONCE, []() { tof_scan.tick(); });
 Task tScan(TOF_SCAN_PERIOD, TASK_ONCE, tof_scan_restart);
-Task tStateMachine(TOF_SCAN_PERIOD*5, TASK_FOREVER, Robot_State_Machine);
-Task tPos(100, TASK_FOREVER, positionTick);
+Task tSL(TOF_SCAN_PERIOD * 5, TASK_FOREVER, []() { tof_l.tick(); });
+Task tSR(TOF_SCAN_PERIOD * 5, TASK_FOREVER, []() { tof_r.tick(); });
+Task tNav(200, TASK_FOREVER, navigatorFSM);
+Task tPos(15, TASK_FOREVER, positionTick);
+Task tMove(50, TASK_FOREVER, movementController);
+Task tWeightDetect(TOF_SCAN_PERIOD * 5, TASK_FOREVER, weightTask);
 #ifdef DEBUG_POS
 Task tPrintPos(200, TASK_FOREVER, printPosition);
 #endif
 #else
-Task tScan(60, TASK_FOREVER, tof_scan_time);
-Task tStateMachine(300, TASK_FOREVER, rsm_time);
-Task tIMU(100, TASK_FOREVER, UpdateIMU_time);
-Task tPos(50, TASK_FOREVER, positionTick_time);
+Task tScan(TOF_SCAN_PERIOD, TASK_ONCE, tof_scan_time);
+Task tSL(TOF_SCAN_PERIOD * 5, TASK_FOREVER, []() { tof_l.tick(); });
+Task tSR(TOF_SCAN_PERIOD * 5, TASK_FOREVER, []() { tof_r.tick(); });
+Task tNav(200, TASK_FOREVER, nsm_time);
+Task tPos(15, TASK_FOREVER, positionTick_time);
+Task tMove(50, TASK_FOREVER, movementController_time);
+Task tWeightDetect(TOF_SCAN_PERIOD * 5, TASK_FOREVER, weightTask_time);
 #ifdef DEBUG_POS
-Task tPrintPos(200, TASK_FOREVER, print_encodercount);
+Task tPrintPos(200, TASK_FOREVER, printPosition);
 #endif
 #endif
 
@@ -101,11 +125,13 @@ void setup() {
     Wire1.setClock(400000UL);
 
     // Initialize TOF controller (includes IMU)
-    init_TOF();
+    initTOF();
     initMovement();
     initIMU();
     initCollection();
     initEncoder();
+    initNavigator();
+    initPositioning();
     
 
     // Initialize the task scheduler
@@ -120,16 +146,24 @@ void initTask() {
  
   // Add tasks to the scheduler
   taskManager.addTask(tScan);
-  taskManager.addTask(tStateMachine);
+  taskManager.addTask(tNav);
   taskManager.addTask(tPos);
+  taskManager.addTask(tMove);
+  taskManager.addTask(tWeightDetect);
+  taskManager.addTask(tSL);
+  taskManager.addTask(tSR);
   #ifdef DEBUG_POS
   taskManager.addTask(tPrintPos);
   #endif
 
   // Enable the tasks
   tScan.enable();
-  tStateMachine.enable();
+  tNav.enable();
   tPos.enable();
+  tMove.enable();
+  tWeightDetect.enable();
+  tSL.enable();
+  tSR.enable();
   #ifdef DEBUG_POS
   tPrintPos.enable();
   #endif
@@ -138,8 +172,6 @@ void initTask() {
 }
 
 void loop() {
-  delay(1000);
-  static elapsedMillis round_time;
   taskManager.execute();
   if (round_time > TOTAL_ROUND_TIME) {
     Serial.print("!Round Over!");

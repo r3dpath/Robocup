@@ -12,9 +12,12 @@ s.connect((HOST, PORT))
 
 def calcs(distances):
     distances = [int(distance) for distance in distances]
-    diffs = np.array(distances[0:5]) - np.array(distances[5:10])
-    print(diffs)
-    print(f"Max diff: {max(diffs)}, greater than average by {(max(diffs)/np.mean(diffs)*100)-100:.2f}%, amounts to top average reduction of {max(diffs)/np.mean(distances[0:5])*100:.2f} ")
+    print(distances)
+    # diffs1 = np.array(distances[0:5]) - np.array(distances[5:10])
+    # diffs2 = np.array(distances[10:15]) - np.array(distances[15:20])
+    # diffs = np.concatenate((diffs1, diffs2))
+    # print(diffs)
+    # print(f"Max diff: {max(diffs)}, greater than average by {(max(diffs)/np.mean(diffs)*100)-100:.2f}%, amounts to top average reduction of {max(diffs)/np.mean(np.concatenate((distances[0:5], distances[15:20])))*100:.2f} ")
 
 class TOFVisualizer:
     def __init__(self, root, serial_port):
@@ -24,24 +27,25 @@ class TOFVisualizer:
         self.canvas.pack()
 
         # Left sensor angles (-10 to 10 degrees from left-angled sensor at 80 degrees)
-        self.right_top_angles = [70, 75, 80, 85, 90]  # Left sensor top
-        self.right_bottom_angles = [71, 76, 81, 86, 91]  # Left sensor bottom
+        self.right_top_angles = [90, 85, 80, 75, 70]  # Left sensor top
+        self.right_bottom_angles = [91, 86, 81, 76, 71]  # Left sensor bottom
 
         # Right sensor angles (-10 to 10 degrees from right-angled sensor at 100 degrees)
-        self.left_top_angles = [90, 95, 100, 105, 110]  # Adjusted by subtracting 10
-        self.left_bottom_angles = [91, 96, 101, 106, 111]  # Adjusted by subtracting 10
+        self.left_top_angles = [110, 105, 100, 95, 90]  # Adjusted by subtracting 10
+        self.left_bottom_angles = [111, 106, 101, 96, 91]  # Adjusted by subtracting 10
 
         # Starting points for sensors (left at 200px, right at 400px, 50px clearance between)
         self.start_points = [
             (290, 650), (290, 650), (290, 650), (290, 650), (290, 650),  # Left sensor top
             (290, 650), (290, 650), (290, 650), (290, 650), (290, 650),  # Left sensor bottom
             (310, 650), (310, 650), (310, 650), (310, 650), (310, 650),  # Right sensor top
-            (310, 650), (310, 650), (310, 650), (310, 650), (310, 650)   # Right sensor bottom
+            (310, 650), (310, 650), (310, 650), (310, 650), (310, 650),   # Right sensor bottom
+            (250, 650), (350, 650)
         ]
 
         # Initialize distances and line objects (20 lines for both sensors)
-        self.tof_distances = [0] * 20
-        self.lines = [None] * 20
+        self.tof_distances = [0] * 22
+        self.lines = [None] * 22
 
         self.draw_square()
 
@@ -59,7 +63,7 @@ class TOFVisualizer:
             except:
                 return
             if distances[0] == 'S':
-                distances = distances[1:21]
+                distances = distances[1:23]
                 self.tof_distances = [int(distance)/3 for distance in distances]
                 calcs(distances)
                 self.visualize_distances()
@@ -108,6 +112,17 @@ class TOFVisualizer:
             if self.lines[i+15]:
                 self.canvas.delete(self.lines[i+15])
             self.lines[i+15] = self.canvas.create_line(start_x, start_y, end_x, end_y, fill='blue')
+
+        for i in range(2):
+            # Center sensors
+            start_x, start_y = self.start_points[i+20]
+            angle_rad = np.deg2rad(135) if i == 0 else np.deg2rad(45)
+            end_x = start_x + self.tof_distances[i+20] * math.cos(angle_rad)
+            end_y = start_y - self.tof_distances[i+20] * math.sin(angle_rad)
+
+            if self.lines[i+20]:
+                self.canvas.delete(self.lines[i+20])
+            self.lines[i+20] = self.canvas.create_line(start_x, start_y, end_x, end_y, fill='purple')
 
     def read_serial(self):
         '''

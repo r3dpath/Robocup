@@ -11,7 +11,7 @@ void initIMU()
 {
     // Initialize IMU
     BNO_Init(&myBNO); // Initialize BNO055
-    bno055_set_operation_mode(OPERATION_MODE_NDOF);
+    bno055_set_operation_mode(OPERATION_MODE_IMUPLUS);
     if (cal == true) {
         bno055_write_sic_matrix_zero(eeprom_read_word((uint16_t*)0));
         bno055_write_sic_matrix_one(eeprom_read_word((uint16_t*)2));
@@ -42,42 +42,14 @@ void UpdateIMU()
     #endif
 }
 
-uint16_t getIMUHeading() {
+int16_t getIMUHeading() {
     static elapsedMillis time;
     if (time > 50) {
         time = 0;
         bno055_read_euler_hrp(&myEulerData);
     }
-    uint16_t Heading =  myEulerData.h / 16;
-    return Heading;
-}
-
-void adjustHeading(int detected_angle) {
-    int current_heading = getIMUHeading();  // Get current IMU heading
-    int target_heading = current_heading + detected_angle;
-
-    // Normalize target heading to stay within 0-360 degrees
-    if (target_heading < 0) {
-        target_heading += 360;
-    } else if (target_heading >= 360) {
-        target_heading -= 360;
-    }
-
-    // Continuously adjust until the current heading matches the target heading
-    while (current_heading != target_heading) {
-        current_heading = getIMUHeading();  // Update current heading
-
-        if (detected_angle < 0) {
-            // Turn left
-            LeftTurn();
-        } else if (detected_angle > 0) {
-            // Turn right
-            RightTurn();
-        }
-    }
-
-    // Once heading is matched, move forward
-    Forward();
+    int16_t heading = myEulerData.h / 16;
+    return heading;
 }
 
 void calibrateIMU()

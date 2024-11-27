@@ -3,12 +3,20 @@
 
 #include <TOF.h>
 
+#define PERCENTAGE_THRESHOLD 1.15 // Top must be more than the bottom by this percentage
+#define MIN_VALID_DIFF 400  // Minimum difference to consider a weight (filter small noise)
+#define MAX_DETECTION_RANGE 1500 // Maximum distance to detect a weight
+
 typedef enum {
-    FAR_LEFT = 0,
-    LEFT = 1,
-    CENTER = 2,
-    RIGHT = 3,
-    FAR_RIGHT = 4,
+    FURTHER_LEFT = -20,
+    FAR_LEFT = -15,
+    LEFT = -10,
+    CENTER_LEFT = -5,
+    CENTER = 0,
+    CENTER_RIGHT = 5,
+    RIGHT = 10,
+    FAR_RIGHT = 15,
+    FURTHER_RIGHT = 20,
     UNDEFINED = -1
 } weight_direction_t;
 
@@ -19,5 +27,7 @@ typedef struct {
 } weight_info_t;
 
 weight_info_t weightDetection();
+void weightTask();
+weight_info_t checkWeight();
 
 #endif

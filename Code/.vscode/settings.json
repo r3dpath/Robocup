@@ -1,10 +1,13 @@
 {
     "files.associations": {
-        "*.tcc": "cpp",
-        "algorithm": "cpp",
-        "iterator": "cpp",
-        "memory": "cpp",
-        "random": "cpp",
-        "functional": "cpp"
+        "cmath": "cpp",
+        "array": "cpp",
+        "deque": "cpp",
+        "string": "cpp",
+        "unordered_map": "cpp",
+        "vector": "cpp",
+        "string_view": "cpp",
+        "initializer_list": "cpp",
+        "ostream": "cpp"
     }
 }

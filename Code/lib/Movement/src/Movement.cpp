@@ -2,179 +2,210 @@
 
 Servo motorLeft, motorRight;
 
+// Heading from 0 to 360
+int16_t set_heading = 0;
+// Speed from -10 to 10
+int8_t set_speed = 0;
+
+int16_t l_integral = 0;
+int16_t r_integral = 0;
+
+bool avoid = true;
+
+// Obstacle detection thresholds (in mm)
+const int16_t obstacleThresholdFront = 200; // Front obstacle distance threshold
+const int16_t obstacleThresholdSide = 200;  // Side obstacle distance threshold
+
 extern TOF tof_l;
 extern TOF tof_r;
 extern TOF2 tof_scan_left;
+extern TOF2 tof_scan_right;
+
+void setAvoid(bool avoidState) {
+    avoid = avoidState;
+}
 
 void initMovement() {
     // Setup servo objects
-    motorLeft.attach(28);
-    motorRight.attach(29);
+    motorLeft.attach(PIN_LEFT_MOTOR);
+    motorRight.attach(PIN_RIGHT_MOTOR);
 }
 
-void movementController() {
-    #ifdef PROFILING
-    elapsedMicros time;
-    #endif
-
-    uint16_t front_TOF = tof_scan_left.f_distance;  // Front
-
-    #ifdef PROFILING
-    Serial.print(time);
-    Serial.println(" - Front");
-    time = 0;
-    #endif
-
-    int Left_TOF = tof_l.read();   // Left side
-
-    #ifdef PROFILING
-    Serial.print(time);
-    Serial.println(" - Left");
-    time = 0;
-    #endif
-
-    int Right_TOF = tof_r.read();  // Right side
-
-    #ifdef PROFILING
-    Serial.print(time);
-    Serial.println(" - Right");
-    time = 0;
-    #endif
-
-
-    #ifdef DEBUG
-    Serial.print("T:");
-    Serial.print(Left_TOF);Serial.print(":");Serial.print(front_TOF);Serial.print(":");Serial.println(Right_TOF);
-    #endif
-
-    if (((Left_TOF <= 350) && (Right_TOF <= 350)) && (front_TOF <= 400)) { 
-        Reverse();
-        //delay(1000); // BAD! Get rid of this
-    }
-
-    if ((Left_TOF <= MOV_MIN_DISTANCE)) {
-        SlowRight();
-    } else if (Right_TOF <= MOV_MIN_DISTANCE) {
-        SlowLeft();
-    } else if (front_TOF <= 250) {     // TODO: Need something more here to avoid ramps. Could be pretty tricky
-        Reverse();
-        int16_t heading;
-        if (Left_TOF < Right_TOF) {
-            uint16_t CurrentHeading = getIMUHeading();
-            heading = CurrentHeading + 90;
-            if (heading > 360) {
-                heading -= 360;
-            }
-        } else {
-            uint16_t CurrentHeading = getIMUHeading();
-            heading = CurrentHeading - 90;
-            if (heading < 0) {
-                heading += 360;
-            }
-        }
-        elapsedMillis time = 0;
-        while (!TurnToHeading(heading) && time<500) { // Seems like a shitty bodge too
-            delay(1);
-        }
-    } else {
-        Forward();
-    }
-}
-
-bool TurnToHeading(uint16_t TargetHeading) // Returns true once rotated to align with heading
+void movementController() 
 {
-    uint16_t CurrentHeading = getIMUHeading();
+    // Get current heading
+    int16_t heading = getBodyHeading();
+    // Get current speed
+    float lspeed = getLeftEncoderSpeed();
+    float rspeed = getRightEncoderSpeed();
 
-    int16_t Heading_Difference = TargetHeading - CurrentHeading;
+    // TOF sensor readings for obstacle detection
+    uint16_t tof_left = tof_l.read();
+    uint16_t tof_right = tof_r.read();
+    // uint16_t tof_left = 500;
+    // uint16_t tof_right = 500;
+    uint16_t tof_top_right_centre = tof_scan_right.top[0];
+    uint16_t tof_top_left_centre = tof_scan_left.top[4];
+    int16_t frontDist = (tof_top_left_centre + tof_top_right_centre) / 2;  // Front sensor reading
+    
 
-    if (Heading_Difference > 180) {
-        Heading_Difference -= 360;
-    } else if (Heading_Difference < -180) {
-        Heading_Difference += 360;
+    // #ifdef DEBUG_MOVEMENT
+    // Serial.print("LeftActualSpeed: ");
+    // Serial.print(lspeed);
+    // Serial.print(" RightActualSpeed: ");
+    // Serial.println(rspeed);
+    // #endif
+
+    // Calculate difference between current and desired heading
+    int16_t heading_diff = set_heading - heading;
+
+    // Calculate difference between current and desired speed
+
+    // If more than 180 degrees, subtract 360
+    if (heading_diff > 180) {
+        heading_diff -= 360;
+    } else if (heading_diff < -180) {
+        heading_diff += 360;
     }
 
-    if (Heading_Difference > 10) {
-        SlowRight();
-    } else if (Heading_Difference < -10) {
-        SlowLeft();
-    } else {
-        return true;
-    }
-    return false;
-}
+    // #ifdef DEBUG_MOVEMENT
+    // Serial.print("Heading: ");
+    // Serial.print(heading);
+    // Serial.print(" SetHeading: ");
+    // Serial.print(set_heading);
+    // Serial.print(" HeadingDiff: ");
+    // Serial.println(heading_diff);
+    // #endif
 
-void turn180() {
-    uint16_t CurrentHeading = getIMUHeading();
-    int16_t Heading_Difference = CurrentHeading - 180;
-    if (Heading_Difference > 180) {
-        Heading_Difference -= 360;
-    } else if (Heading_Difference < -180) {
-        Heading_Difference += 360;
-    }
-    elapsedMillis time = 0;
-    while (time < 1000) {
-        if (Heading_Difference > 5) {
-            SlowRight();
-        } else if (Heading_Difference < -5) {
-            SlowLeft();
-        } else {
-            return;
+    int16_t left_set_speed = (set_speed * MOVEMENT_P + MOVEMENT_HEADING_MULT * heading_diff);
+    int16_t right_set_speed = (set_speed * MOVEMENT_P - MOVEMENT_HEADING_MULT * heading_diff);
+
+    if (avoid) {
+        if (frontDist > obstacleThresholdFront && tof_left < obstacleThresholdSide && tof_right < obstacleThresholdSide)
+        {
+
+        }
+        else if (frontDist < obstacleThresholdFront) // && tof_left < obstacleThresholdSide && tof_right < obstacleThresholdSide)
+        {
+            if (tof_left < tof_right) {
+                left_set_speed = 450;
+                right_set_speed = -450;
+            } else {
+                left_set_speed = -450;
+                right_set_speed = 450;
+            }
+        }
+        else if (tof_left < obstacleThresholdSide) {
+            left_set_speed += (obstacleThresholdSide-tof_left)*7.5; 
+            right_set_speed -= (obstacleThresholdSide-tof_left)*7.5;
+        }
+        else if (tof_right < obstacleThresholdSide) {
+            left_set_speed -= (obstacleThresholdSide-tof_right)*7.5;
+            right_set_speed += (obstacleThresholdSide-tof_right)*7.5;
         }
     }
+    
+
+    // Really crappy bodge to overcome stall
+    if (abs(lspeed) < 200 && set_speed != 0)
+    {
+        left_set_speed *= 2;
+    } 
+
+    if (abs(rspeed) < 200 && set_speed != 0)
+    {
+        right_set_speed *= 2;
+    }
+
+    //Using 6000 counts per second as max speed
+
+    // #ifdef DEBUG_MOVEMENT
+    // Serial.print("SetSpeedLeft: ");
+    // Serial.print(left_set_speed);
+    // Serial.print(" SetSpeedRight: ");
+    // Serial.println(right_set_speed);
+    // #endif
+
+    // Bound speeds
+    if (left_set_speed > SPEED_MAX)
+    {
+        left_set_speed = SPEED_MAX;
+    }
+    else if (left_set_speed < -SPEED_MAX)
+    {
+        left_set_speed = -SPEED_MAX;
+    }
+
+    if (right_set_speed > SPEED_MAX)
+    {
+        right_set_speed = SPEED_MAX;
+    }
+    else if (right_set_speed < -SPEED_MAX)
+    {
+        right_set_speed = -SPEED_MAX;
+    }
+
+    // Set the motor speeds. Left should be negative just bacause of the motor orientation.
+    // #ifdef DEBUG_MOVEMENT
+    // Serial.print("LeftCommandedSpeed: ");
+    // Serial.print(left_set_speed);
+    // Serial.print(" RightCommandedSpeed: ");
+    // Serial.println(right_set_speed);
+    // #endif
+
+    motorLeft.writeMicroseconds(PPM_STOP - left_set_speed);
+    motorRight.writeMicroseconds(PPM_STOP + right_set_speed);
 }
 
-
-void Stationary() {
-    motorLeft.writeMicroseconds(PPM_STOP);
-    motorRight.writeMicroseconds(PPM_STOP);
-}
-void Forward() {
-    motorLeft.writeMicroseconds(PPM_STOP-SPEED_FAST);
-    motorRight.writeMicroseconds(PPM_STOP+SPEED_FAST);
+void setMovementHeading(int16_t heading)
+{
+    set_heading = heading;
 }
 
-void Reverse() {
-    motorLeft.writeMicroseconds(PPM_STOP+SPEED_FAST);
-    motorRight.writeMicroseconds(PPM_STOP-SPEED_FAST);
+void incrementMovementHeading(int16_t heading)
+{
+    set_heading += heading;
+    if (set_heading > 360)
+    {
+        set_heading -= 360;
+    }
+    else if (set_heading < 0)
+    {
+        set_heading += 360;
+    }
 }
 
-void RightTurn() {
-    motorLeft.writeMicroseconds(PPM_STOP-SPEED_FAST);
-    motorRight.writeMicroseconds(PPM_STOP-SPEED_FAST);
+int16_t getMovementHeading()
+{
+    return set_heading;
 }
 
-void LeftTurn() {
-    motorLeft.writeMicroseconds(PPM_STOP+SPEED_FAST);
-    motorRight.writeMicroseconds(PPM_STOP+SPEED_FAST);
+void setMovementSpeed(int8_t speed)
+{
+    if (speed > 10)
+    {
+        speed = 10;
+    }
+    else if (speed < -10)
+    {
+        speed = -10;
+    }
+    set_speed = speed;
 }
 
-void SlowBackward() {
-    motorLeft.writeMicroseconds(PPM_STOP+SPEED_SLOW);
-    motorRight.writeMicroseconds(PPM_STOP-SPEED_SLOW);
+int8_t getMovementSpeed()
+{
+    return set_speed;
 }
 
-void SlowForward() {
-    motorLeft.writeMicroseconds(PPM_STOP-SPEED_SLOW);
-    motorRight.writeMicroseconds(PPM_STOP+SPEED_SLOW);
-}
-
-void SlowLeft() {
-    motorLeft.writeMicroseconds(PPM_STOP+SPEED_SLOW);
-    motorRight.writeMicroseconds(PPM_STOP+SPEED_SLOW);
-}
-
-void SlowRight() {
-    motorLeft.writeMicroseconds(PPM_STOP-SPEED_SLOW);
-    motorRight.writeMicroseconds(PPM_STOP-SPEED_SLOW);
-}
-
-void ForwardLeft() {
-    motorLeft.writeMicroseconds(PPM_STOP+SPEED_SLOW);
-    motorRight.writeMicroseconds(PPM_STOP+SPEED_SLOW-50);
-}
-
-void ForwardRight() {
-    motorLeft.writeMicroseconds(PPM_STOP-SPEED_SLOW+50);
-    motorRight.writeMicroseconds(PPM_STOP-SPEED_SLOW);
+int16_t getBodyHeading()
+{
+    int16_t heading = getIMUHeading() + START_ANGLE;
+    if (heading >= 360) {
+        heading -= 360;
+    } else if (heading < 0) {
+        heading += 360;
+    }
+    return heading;
 }
 

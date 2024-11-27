@@ -17,7 +17,7 @@ enum TOFType {
     L1
 };
 
-void init_TOF();
+void initTOF();
 
 class TOF {
 public:
@@ -27,6 +27,8 @@ public:
     uint16_t read();
     bool timeoutOccurred();
     void startContinuous(uint16_t period = 50);
+    void tick();
+    uint16_t range;
 
 private:
     TOFType type;

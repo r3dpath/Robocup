@@ -1,5 +1,4 @@
 #include "Collection.h"
-#include "debug.h"
 
 void initCollection() {
     pinMode(PIN_STEPA, OUTPUT);
